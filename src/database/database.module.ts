@@ -11,10 +11,11 @@ import { repositories } from './repository';
           type: 'mariadb',
           host: 'localhost',
           port: 3306,
-          database: 'stock-back-end',
           username: 'root',
           password: '12345',
-          entities: ['./entity/*.ts'],
+          database: 'stock-back-end',
+          entities: ['./entity/*.entity{.ts,.js}'],
+          synchronize: true,
           timezone: '+00:00',
           autoLoadEntities: true,
         } as TypeOrmModuleOptions;
