@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Investor } from 'src/core/entity/investor.entity';
+import { Investor } from 'src/common/entity/investor.entity';
 import { InvestorController } from './investor.controller';
 import { InvestorService } from './investor.service';
 

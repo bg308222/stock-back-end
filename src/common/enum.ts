@@ -13,3 +13,10 @@ export enum TimeRestrictiomEnum {
   IOC = 1,
   FOK = 2,
 }
+
+export enum QueryStrategyEnum {
+  value = 0,
+  inArray = 1,
+  range = 2,
+  fuzzy = 3,
+}

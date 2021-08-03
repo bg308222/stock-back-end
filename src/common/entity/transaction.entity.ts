@@ -7,6 +7,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -15,7 +16,7 @@ import { Investor } from './investor.entity';
 import { Stock } from './stock.entity';
 
 @Entity()
-export class Order {
+export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -44,5 +45,5 @@ export class Order {
   priceType: number;
 
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
-  timeRestrictiom: number;
+  timeRestriction: number;
 }
