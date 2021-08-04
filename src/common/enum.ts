@@ -1,6 +1,8 @@
 export enum MethodEnum {
   BUY = 0,
   SELL = 1,
+  CANCEL = 2,
+  UPDATE = 3,
 }
 
 export enum PriceTypeEnum {

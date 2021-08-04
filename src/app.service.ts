@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { MatchService } from './module/match/match.service';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  constructor(private readonly matchService: MatchService) {}
+
+  getHello() {
+    return 1;
   }
 }

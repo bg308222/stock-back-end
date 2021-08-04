@@ -9,6 +9,7 @@ import { OrderModule } from './module/order/order.module';
 import { TransactionModule } from './module/transaction/transaction.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerMiddleware } from './middleware/api.middleware';
+import { MatchModule } from './module/match/match.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { LoggerMiddleware } from './middleware/api.middleware';
     OrderModule,
     TransactionModule,
     ConfigModule,
+    MatchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

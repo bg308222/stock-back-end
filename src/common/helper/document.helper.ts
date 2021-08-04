@@ -23,7 +23,7 @@ export const getEnumDescription = (
       case 'method': {
         return {
           enum: [MethodEnum.BUY, MethodEnum.SELL],
-          description: 'BUY = 0, SELL = 1',
+          description: 'BUY = 0, SELL = 1, CANCEL = 2, UPDATE = 3',
           isArray: true,
         };
       }
@@ -75,4 +75,37 @@ export const getPageDescription = () => {
     type: String,
     description: 'JSON string of {page: number; pageSize: number}',
   };
+};
+
+export const getResponseProperties = (
+  input: {
+    key: string;
+    type: 'number' | 'date' | 'string';
+  }[],
+) => {
+  return input.reduce((p, { key, type }) => {
+    switch (type) {
+      case 'number': {
+        p[key] = {
+          type: 'number',
+          example: 1,
+        };
+        break;
+      }
+      case 'date': {
+        p[key] = {
+          type: 'string',
+          example: '2021-08-03T08:18:14.927Z',
+        };
+        break;
+      }
+      case 'string': {
+        p[key] = {
+          type: 'string',
+          example: 'any string',
+        };
+      }
+    }
+    return p;
+  }, {});
 };

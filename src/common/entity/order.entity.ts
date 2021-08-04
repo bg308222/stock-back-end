@@ -7,9 +7,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { Investor } from './investor.entity';
 import { Stock } from './stock.entity';
@@ -24,9 +25,6 @@ export class Order {
 
   @CreateDateColumn()
   createdTime: Date;
-
-  @UpdateDateColumn()
-  updatedTime: string;
 
   @ManyToOne(() => Stock, { nullable: false })
   stock: Stock;
@@ -45,4 +43,8 @@ export class Order {
 
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
   timeRestriction: number;
+
+  @OneToOne(() => Order, { nullable: true })
+  @JoinColumn({ name: 'cancelOrderId' })
+  cancelOrder: Order;
 }

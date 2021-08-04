@@ -9,6 +9,7 @@ import {
   getEnumDescription,
   getPageDescription,
   getRangeDescription,
+  getResponseProperties,
 } from 'src/common/helper/document.helper';
 import { IPage, IQueryStategy, IRange } from 'src/common/type';
 
@@ -40,55 +41,11 @@ export class IOrderQuery {
   @ApiPropertyOptional(getEnumDescription('timeRestriction'))
   timeRestriction?: TimeRestrictiomEnum[];
 
+  @ApiPropertyOptional()
+  orderId: number;
+
   @ApiPropertyOptional(getPageDescription())
   page: IPage;
-}
-
-export class IOrderQueryResponse {
-  @ApiProperty({
-    type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        id: {
-          type: 'number',
-          example: 1,
-        },
-        createdTime: {
-          type: 'string',
-          example: '2021-08-03T08:18:14.927Z',
-        },
-        updatedTime: {
-          type: 'string',
-          example: '2021-08-03T08:18:14.927Z',
-        },
-        method: {
-          type: 'number',
-          example: 0,
-        },
-        price: {
-          type: 'number',
-          example: 0,
-        },
-        quantity: {
-          type: 'number',
-          example: 0,
-        },
-        priceType: {
-          type: 'number',
-          example: 0,
-        },
-        timeRestriction: {
-          type: 'number',
-          example: 0,
-        },
-      },
-    },
-  })
-  content: Record<string, any>;
-
-  @ApiProperty({ example: 10 })
-  totalSize: number;
 }
 
 export const queryStrategy: IQueryStategy<IOrderQuery> = {
@@ -101,7 +58,31 @@ export const queryStrategy: IQueryStategy<IOrderQuery> = {
   quantity: QueryStrategyEnum.range,
   priceType: QueryStrategyEnum.inArray,
   timeRestriction: QueryStrategyEnum.inArray,
+  orderId: QueryStrategyEnum.value,
 };
+
+export class IOrderQueryResponse {
+  @ApiProperty({
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: getResponseProperties([
+        { key: 'id', type: 'number' },
+        { key: 'createdTime', type: 'date' },
+        { key: 'method', type: 'number' },
+        { key: 'price', type: 'number' },
+        { key: 'quantity', type: 'number' },
+        { key: 'priceType', type: 'number' },
+        { key: 'timeRestriction', type: 'number' },
+        { key: 'cancelOrderId', type: 'number' },
+      ]),
+    },
+  })
+  content: Record<string, any>;
+
+  @ApiProperty({ example: 10 })
+  totalSize: number;
+}
 
 export class IOrderBody {
   @ApiProperty({
