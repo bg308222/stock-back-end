@@ -1,4 +1,9 @@
-import { MethodEnum, PriceTypeEnum, TimeRestrictiomEnum } from '../enum';
+import {
+  MethodEnum,
+  PriceTypeEnum,
+  TimeRestrictiomEnum,
+  TransactionStatusEnum,
+} from '../enum';
 
 export const getRangeDescription = (isNumber = true) => {
   if (isNumber) {
@@ -15,7 +20,7 @@ export const getRangeDescription = (isNumber = true) => {
 };
 
 export const getEnumDescription = (
-  type: 'method' | 'priceType' | 'timeRestriction',
+  type: 'method' | 'priceType' | 'timeRestriction' | 'transactionStatus',
   isArray = true,
 ) => {
   if (isArray) {
@@ -45,6 +50,13 @@ export const getEnumDescription = (
           isArray: true,
         };
       }
+      case 'transactionStatus': {
+        return {
+          enum: [TransactionStatusEnum.PARTIAL, TransactionStatusEnum.FULL],
+          description: 'PARTIAL = 0, FULL = 1',
+          isArray: true,
+        };
+      }
     }
   } else {
     switch (type) {
@@ -66,6 +78,12 @@ export const getEnumDescription = (
           example: 0,
         };
       }
+      case 'transactionStatus': {
+        return {
+          description: 'PARTIAL = 0, FULL = 1',
+          example: 0,
+        };
+      }
     }
   }
 };
@@ -77,9 +95,9 @@ export const getPageDescription = () => {
   };
 };
 
-export const getResponseProperties = (
+export const getResponseProperties = <T = any>(
   input: {
-    key: string;
+    key: keyof T;
     type: 'number' | 'date' | 'string';
   }[],
 ) => {
@@ -107,5 +125,5 @@ export const getResponseProperties = (
       }
     }
     return p;
-  }, {});
+  }, {} as any);
 };

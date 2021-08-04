@@ -13,6 +13,18 @@ import {
 } from 'src/common/helper/document.helper';
 import { IPage, IQueryStategy, IRange } from 'src/common/type';
 
+export interface IOrderSchema {
+  id: number;
+  investorId: number;
+  createdTime: string;
+  stockId: number;
+  method: number;
+  price: number;
+  quantity: number;
+  priceType: number;
+  timeRestriction: number;
+  orderId: number;
+}
 export class IOrderQuery {
   @ApiPropertyOptional()
   id?: number;
@@ -66,15 +78,17 @@ export class IOrderQueryResponse {
     type: 'array',
     items: {
       type: 'object',
-      properties: getResponseProperties([
+      properties: getResponseProperties<IOrderSchema>([
         { key: 'id', type: 'number' },
+        { key: 'investorId', type: 'number' },
         { key: 'createdTime', type: 'date' },
+        { key: 'stockId', type: 'number' },
         { key: 'method', type: 'number' },
         { key: 'price', type: 'number' },
         { key: 'quantity', type: 'number' },
         { key: 'priceType', type: 'number' },
         { key: 'timeRestriction', type: 'number' },
-        { key: 'cancelOrderId', type: 'number' },
+        { key: 'orderId', type: 'number' },
       ]),
     },
   })
@@ -104,9 +118,9 @@ export class IOrderBody {
   @ApiProperty()
   quantity: number;
 
-  @ApiProperty(getEnumDescription('method', false))
+  @ApiProperty(getEnumDescription('priceType', false))
   priceType: PriceTypeEnum;
 
-  @ApiProperty(getEnumDescription('method', false))
+  @ApiProperty(getEnumDescription('timeRestriction', false))
   timeRestriction: TimeRestrictiomEnum;
 }

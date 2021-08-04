@@ -4,6 +4,7 @@ import {
   PriceTypeEnum,
   QueryStrategyEnum,
   TimeRestrictiomEnum,
+  TransactionStatusEnum,
 } from 'src/common/enum';
 import {
   getEnumDescription,
@@ -42,7 +43,10 @@ export class ITransactionQuery {
   timeRestriction?: TimeRestrictiomEnum[];
 
   @ApiPropertyOptional()
-  cancelOrderId: number;
+  orderId: number;
+
+  @ApiPropertyOptional(getEnumDescription('transactionStatus'))
+  status: TransactionStatusEnum[];
 
   @ApiPropertyOptional(getPageDescription())
   page: IPage;
@@ -58,7 +62,8 @@ export const queryStrategy: IQueryStategy<ITransactionQuery> = {
   quantity: QueryStrategyEnum.range,
   priceType: QueryStrategyEnum.inArray,
   timeRestriction: QueryStrategyEnum.inArray,
-  cancelOrderId: QueryStrategyEnum.value,
+  orderId: QueryStrategyEnum.value,
+  status: QueryStrategyEnum.inArray,
 };
 
 export class ITransactionQueryResponse {
@@ -68,13 +73,16 @@ export class ITransactionQueryResponse {
       type: 'object',
       properties: getResponseProperties([
         { key: 'id', type: 'number' },
+        { key: 'investorId', type: 'number' },
         { key: 'createdTime', type: 'date' },
+        { key: 'stockId', type: 'number' },
         { key: 'method', type: 'number' },
         { key: 'price', type: 'number' },
         { key: 'quantity', type: 'number' },
         { key: 'priceType', type: 'number' },
         { key: 'timeRestriction', type: 'number' },
         { key: 'orderId', type: 'number' },
+        { key: 'status', type: 'number' },
       ]),
     },
   })
@@ -105,9 +113,15 @@ export class ITransactionBody {
   @ApiProperty()
   quantity: number;
 
-  @ApiProperty(getEnumDescription('method', false))
+  @ApiProperty(getEnumDescription('priceType', false))
   priceType: PriceTypeEnum;
 
-  @ApiProperty(getEnumDescription('method', false))
+  @ApiProperty(getEnumDescription('timeRestriction', false))
   timeRestriction: TimeRestrictiomEnum;
+
+  @ApiProperty()
+  orderId: number;
+
+  @ApiProperty()
+  status: number;
 }

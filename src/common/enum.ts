@@ -16,6 +16,11 @@ export enum TimeRestrictiomEnum {
   FOK = 2,
 }
 
+export enum TransactionStatusEnum {
+  PARTIAL = 0,
+  FULL = 1,
+}
+
 export enum QueryStrategyEnum {
   value = 0,
   inArray = 1,

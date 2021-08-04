@@ -2,6 +2,7 @@ import {
   MethodEnum,
   PriceTypeEnum,
   TimeRestrictiomEnum,
+  TransactionStatusEnum,
 } from 'src/common/enum';
 import {
   Column,
@@ -19,12 +20,16 @@ export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  investorId: number;
   @ManyToOne(() => Investor, { nullable: false })
   investor: Investor;
 
   @CreateDateColumn()
   createdTime: Date;
 
+  @Column()
+  stockId: number;
   @ManyToOne(() => Stock, { nullable: false })
   stock: Stock;
 
@@ -43,6 +48,11 @@ export class Transaction {
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
   timeRestriction: number;
 
+  @Column()
+  orderId: number;
   @ManyToOne(() => Order)
   order: Order;
+
+  @Column({ type: 'enum', enum: TransactionStatusEnum })
+  status: number;
 }

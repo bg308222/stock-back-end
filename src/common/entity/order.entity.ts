@@ -20,12 +20,16 @@ export class Order {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  investorId: number;
   @ManyToOne(() => Investor, { nullable: false })
   investor: Investor;
 
   @CreateDateColumn()
   createdTime: Date;
 
+  @Column()
+  stockId: number;
   @ManyToOne(() => Stock, { nullable: false })
   stock: Stock;
 
@@ -44,7 +48,9 @@ export class Order {
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
   timeRestriction: number;
 
-  @OneToOne(() => Order, { nullable: true })
-  @JoinColumn({ name: 'cancelOrderId' })
+  @Column({ default: null, nullable: true })
+  orderId: number;
+  @OneToOne(() => Order)
+  @JoinColumn({ name: 'orderId' })
   cancelOrder: Order;
 }
