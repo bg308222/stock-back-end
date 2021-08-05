@@ -7,11 +7,22 @@ import {
 import { IOrderSchema } from '../order/order.dto';
 import { ITransactionBody } from '../transaction/transaction.dto';
 
-interface IMarketInformation {
+export interface IMarketInformation {
+  stockId: number;
   // openedPricet: number;
   // highestPricet: number;
   closedPrice: number;
   // lowestPricet: number
+}
+
+export interface IMarketBook {
+  marketBuy: IOrderSchema[];
+  marketSell: IOrderSchema[];
+  limitBuy: LimitBook;
+  limitSell: LimitBook;
+  currentPrice: number;
+  accumulatedQuantity: number;
+  marketInformation: IMarketInformation;
 }
 
 interface IDoCallAuctionResponse {
@@ -25,9 +36,14 @@ interface IDoCallAuctionResponse {
 }
 
 class LimitBook {
-  constructor() {
-    this.orders = {};
-    this.firstOrderPrice = null;
+  constructor(initialLimitBook?: LimitBook) {
+    if (initialLimitBook) {
+      this.orders = initialLimitBook.orders;
+      this.firstOrderPrice = initialLimitBook.firstOrderPrice;
+    } else {
+      this.orders = {};
+      this.firstOrderPrice = null;
+    }
   }
 
   public orders: Record<string, IOrderSchema[]>;
@@ -35,6 +51,12 @@ class LimitBook {
 
   public popFirstOrder(price: number) {
     this.orders[price] = this.orders[price].slice(1);
+  }
+
+  public getNonEmptyOrderSize() {
+    return Object.entries(this.orders).filter(([, orders]) => {
+      return orders.length !== 0;
+    }).length;
   }
 
   public adaptHighestLowestPrice(type: 'Buy' | 'Sell') {
@@ -62,29 +84,23 @@ class LimitBook {
 }
 
 export class StockMarket {
-  constructor(
-    private marketInformation: IMarketInformation,
-    private currentPrice: number,
-  ) {
+  constructor(marketInformation: IMarketInformation, currentPrice: number) {
     this.marketBook = {
       marketBuy: [],
       marketSell: [],
       limitBuy: new LimitBook(),
       limitSell: new LimitBook(),
+      currentPrice,
+      marketInformation,
+      accumulatedQuantity: 0,
     };
   }
 
-  public dumpMarketInformation() {
-    console.log(this.marketBook);
-    // console.log('Current price: ', this.currentPrice);
+  public dumpMarketBook() {
+    return this.marketBook;
   }
 
-  private marketBook: {
-    marketBuy: IOrderSchema[];
-    marketSell: IOrderSchema[];
-    limitBuy: LimitBook;
-    limitSell: LimitBook;
-  };
+  private marketBook: IMarketBook;
 
   private popFirstOrder(order: IOrderSchema, method: 'Sell' | 'Buy') {
     if (order.priceType === PriceTypeEnum.MARKET) {
@@ -92,24 +108,32 @@ export class StockMarket {
         this.marketBook[`market${method}`].slice(1);
     }
     if (order.priceType === PriceTypeEnum.LIMIT) {
-      this.marketBook.limitSell.popFirstOrder(order.price);
+      this.marketBook[`limit${method}`].popFirstOrder(order.price);
     }
   }
 
   private transferOrderToTransaction(
-    { id, createdTime, orderId, quantity: q, ...order }: IOrderSchema,
+    { id, createdTime, orderId, quantity: q, price: p, ...order }: IOrderSchema,
     status: TransactionStatusEnum,
     quantity: number,
+    price: number,
   ): ITransactionBody {
-    return { ...order, orderId: id, status, quantity };
+    return { ...order, orderId: id, status, quantity, price };
+  }
+
+  public setMarketInformation(marketInformation: Partial<IMarketInformation>) {
+    this.marketBook.marketInformation = {
+      ...this.marketBook.marketInformation,
+      ...marketInformation,
+    };
   }
 
   public doCallAuction(order: IOrderSchema): IDoCallAuctionResponse {
     const returnResponse: IDoCallAuctionResponse = {
       transactions: [],
     };
+    this.marketBook.accumulatedQuantity = 0;
     const originMarketBook = JSON.stringify(this.marketBook);
-    const originCurrentPrice = this.currentPrice;
     let isNeverTransaction = true;
 
     // TODO 1 Check order method
@@ -141,37 +165,57 @@ export class StockMarket {
         return returnResponse;
     }
 
+    this.marketBook[`limit${currentSideMethod}`].adaptHighestLowestPrice(
+      currentSideMethod,
+    );
+    this.marketBook[`limit${inverseSideMethod}`].adaptHighestLowestPrice(
+      inverseSideMethod,
+    );
+
     // 3 Match and transaction
     while (order.quantity !== 0) {
       //Choose inverse side order
-      this.marketBook[`limit${inverseSideMethod}`].adaptHighestLowestPrice(
-        inverseSideMethod,
-      );
       let inverseSideOrder: IOrderSchema =
         this.marketBook[`limit${inverseSideMethod}`].firstOrderPrice === null
           ? null
           : this.marketBook[`limit${inverseSideMethod}`].orders[
               this.marketBook[`limit${inverseSideMethod}`].firstOrderPrice
             ][0];
-      if (this.marketBook.marketSell.length !== 0) {
-        inverseSideOrder = this.marketBook.marketSell[0];
-        inverseSideOrder.price = Math.min(
-          this.currentPrice,
-          this.marketBook.limitBuy.firstOrderPrice,
-          this.marketBook.limitSell.firstOrderPrice,
-        );
+      if (this.marketBook[`market${inverseSideMethod}`].length !== 0) {
+        inverseSideOrder = this.marketBook[`market${inverseSideMethod}`][0];
+        if (inverseSideMethod === 'Buy') {
+          inverseSideOrder.price = Math.max(
+            this.marketBook.currentPrice,
+            this.marketBook.limitBuy.firstOrderPrice,
+            this.marketBook.limitSell.firstOrderPrice,
+          );
+        } else {
+          inverseSideOrder.price = Math.min(
+            this.marketBook.currentPrice || Number.MAX_VALUE,
+            this.marketBook.limitBuy.firstOrderPrice || Number.MAX_VALUE,
+            this.marketBook.limitSell.firstOrderPrice || Number.MAX_VALUE,
+          );
+        }
       }
 
       //Can not match
       if (!inverseSideOrder) break;
 
       //Transfer current side market price
-      if ((order.priceType = PriceTypeEnum.MARKET)) {
-        order.price = Math.max(
-          this.currentPrice,
-          this.marketBook.limitBuy.firstOrderPrice,
-          this.marketBook.limitSell.firstOrderPrice,
-        );
+      if (order.priceType === PriceTypeEnum.MARKET) {
+        if (currentSideMethod === 'Buy') {
+          order.price = Math.max(
+            this.marketBook.currentPrice,
+            this.marketBook.limitBuy.firstOrderPrice,
+            this.marketBook.limitSell.firstOrderPrice,
+          );
+        } else {
+          order.price = Math.min(
+            this.marketBook.currentPrice || Number.MAX_VALUE,
+            this.marketBook.limitBuy.firstOrderPrice || Number.MAX_VALUE,
+            this.marketBook.limitSell.firstOrderPrice || Number.MAX_VALUE,
+          );
+        }
       }
 
       if (
@@ -181,28 +225,27 @@ export class StockMarket {
           order.price <= inverseSideOrder.price)
       ) {
         //Match
-        //Transaction
         if (order.quantity > inverseSideOrder.quantity) {
           //Inverse side order is finished.
-          order.quantity -= inverseSideOrder.quantity;
-
           returnResponse.transactions.push(
             this.transferOrderToTransaction(
               order,
               TransactionStatusEnum.PARTIAL,
               inverseSideOrder.quantity,
+              this.marketBook.currentPrice,
             ),
-          );
-          returnResponse.transactions.push(
             this.transferOrderToTransaction(
               inverseSideOrder,
               TransactionStatusEnum.FULL,
               inverseSideOrder.quantity,
+              this.marketBook.currentPrice,
             ),
           );
 
+          this.marketBook.currentPrice = inverseSideOrder.price;
+          this.marketBook.accumulatedQuantity += inverseSideOrder.quantity;
           isNeverTransaction = false;
-          this.currentPrice = inverseSideOrder.price;
+          order.quantity -= inverseSideOrder.quantity;
           this.popFirstOrder(inverseSideOrder, inverseSideMethod);
         } else if (order.quantity < inverseSideOrder.quantity) {
           //Current side order is finished
@@ -217,20 +260,23 @@ export class StockMarket {
                 order,
                 TransactionStatusEnum.FULL,
                 order.quantity,
+                this.marketBook.currentPrice,
               ),
-            );
-            returnResponse.transactions.push(
               this.transferOrderToTransaction(
                 inverseSideOrder,
                 TransactionStatusEnum.PARTIAL,
                 order.quantity,
+                this.marketBook.currentPrice,
               ),
             );
 
+            this.marketBook.currentPrice = inverseSideOrder.price;
+            this.marketBook.accumulatedQuantity += order.quantity;
             isNeverTransaction = false;
-            this.currentPrice = inverseSideOrder.price;
-            order.price = 0;
+            inverseSideOrder.quantity -= order.quantity;
+            order.quantity = 0;
             this.popFirstOrder(order, currentSideMethod);
+
             if (inverseSideOrder.timeRestriction === TimeRestrictiomEnum.IOC)
               this.popFirstOrder(inverseSideOrder, inverseSideMethod);
           }
@@ -241,19 +287,20 @@ export class StockMarket {
               order,
               TransactionStatusEnum.FULL,
               order.quantity,
+              this.marketBook.currentPrice,
             ),
-          );
-          returnResponse.transactions.push(
             this.transferOrderToTransaction(
               inverseSideOrder,
               TransactionStatusEnum.FULL,
               order.quantity,
+              this.marketBook.currentPrice,
             ),
           );
 
+          this.marketBook.currentPrice = inverseSideOrder.price;
+          this.marketBook.accumulatedQuantity += order.quantity;
           isNeverTransaction = false;
-          this.currentPrice = inverseSideOrder.price;
-          order.price = 0;
+          order.quantity = 0;
           this.popFirstOrder(order, currentSideMethod);
           this.popFirstOrder(inverseSideOrder, inverseSideMethod);
         }
@@ -261,14 +308,27 @@ export class StockMarket {
         //Can not match
         break;
       }
+
+      this.marketBook[`limit${currentSideMethod}`].adaptHighestLowestPrice(
+        currentSideMethod,
+      );
+      this.marketBook[`limit${inverseSideMethod}`].adaptHighestLowestPrice(
+        inverseSideMethod,
+      );
     }
 
     // 4 Check is current side order finished
     if (order.quantity !== 0) {
       if (!isNeverTransaction) {
         if (order.timeRestriction === TimeRestrictiomEnum.FOK) {
-          this.marketBook = JSON.parse(originMarketBook);
-          this.currentPrice = originCurrentPrice;
+          const recoveryMarketBook = JSON.parse(
+            originMarketBook,
+          ) as IMarketBook;
+          this.marketBook = {
+            ...recoveryMarketBook,
+            limitBuy: new LimitBook(recoveryMarketBook.limitBuy),
+            limitSell: new LimitBook(recoveryMarketBook.limitSell),
+          };
           returnResponse.transactions = [];
         }
         if (order.timeRestriction === TimeRestrictiomEnum.IOC) {
@@ -281,10 +341,17 @@ export class StockMarket {
         }
       }
     }
+
+    this.marketBook[`limit${currentSideMethod}`].adaptHighestLowestPrice(
+      currentSideMethod,
+    );
+    this.marketBook[`limit${inverseSideMethod}`].adaptHighestLowestPrice(
+      inverseSideMethod,
+    );
     return returnResponse;
   }
 
   public doContinuousTrading() {
-    console.log(1);
+    //
   }
 }

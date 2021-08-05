@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   MethodEnum,
   PriceTypeEnum,
@@ -8,13 +8,12 @@ import {
 } from 'src/common/enum';
 import {
   getEnumDescription,
-  getPageDescription,
   getRangeDescription,
   getResponseProperties,
 } from 'src/common/helper/document.helper';
-import { IPage, IQueryStategy, IRange } from 'src/common/type';
+import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
-export class ITransactionQuery {
+export class ITransactionQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional()
   id?: number;
 
@@ -46,10 +45,7 @@ export class ITransactionQuery {
   orderId: number;
 
   @ApiPropertyOptional(getEnumDescription('transactionStatus'))
-  status: TransactionStatusEnum[];
-
-  @ApiPropertyOptional(getPageDescription())
-  page: IPage;
+  status?: TransactionStatusEnum[];
 }
 
 export const queryStrategy: IQueryStategy<ITransactionQuery> = {

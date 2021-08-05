@@ -1,8 +1,10 @@
+import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import {
   MethodEnum,
   PriceTypeEnum,
   TimeRestrictiomEnum,
   TransactionStatusEnum,
+  UpperLowerLimitEnum,
 } from '../enum';
 
 export const getRangeDescription = (isNumber = true) => {
@@ -20,14 +22,24 @@ export const getRangeDescription = (isNumber = true) => {
 };
 
 export const getEnumDescription = (
-  type: 'method' | 'priceType' | 'timeRestriction' | 'transactionStatus',
+  type:
+    | 'method'
+    | 'priceType'
+    | 'timeRestriction'
+    | 'transactionStatus'
+    | 'upperLowerLimit',
   isArray = true,
 ) => {
   if (isArray) {
     switch (type) {
       case 'method': {
         return {
-          enum: [MethodEnum.BUY, MethodEnum.SELL],
+          enum: [
+            MethodEnum.BUY,
+            MethodEnum.SELL,
+            MethodEnum.CANCEL,
+            MethodEnum.UPDATE,
+          ],
           description: 'BUY = 0, SELL = 1, CANCEL = 2, UPDATE = 3',
           isArray: true,
         };
@@ -54,6 +66,17 @@ export const getEnumDescription = (
         return {
           enum: [TransactionStatusEnum.PARTIAL, TransactionStatusEnum.FULL],
           description: 'PARTIAL = 0, FULL = 1',
+          isArray: true,
+        };
+      }
+      case 'upperLowerLimit': {
+        return {
+          enum: [
+            UpperLowerLimitEnum.LIMIT_UP,
+            UpperLowerLimitEnum.LIMIT_DOWN,
+            UpperLowerLimitEnum.SPACE,
+          ],
+          description: 'LIMIT_UP = 0, LIMIT_DOWN = 1, SPACE = 2',
           isArray: true,
         };
       }
@@ -84,6 +107,12 @@ export const getEnumDescription = (
           example: 0,
         };
       }
+      case 'upperLowerLimit': {
+        return {
+          description: 'LIMIT_UP = 0, LIMIT_DOWN = 1, SPACE = 2',
+          example: 0,
+        };
+      }
     }
   }
 };
@@ -98,10 +127,11 @@ export const getPageDescription = () => {
 export const getResponseProperties = <T = any>(
   input: {
     key: keyof T;
-    type: 'number' | 'date' | 'string';
+    type: 'number' | 'date' | 'string' | 'json';
+    option?: SchemaObject;
   }[],
 ) => {
-  return input.reduce((p, { key, type }) => {
+  return input.reduce((p, { key, type, option }) => {
     switch (type) {
       case 'number': {
         p[key] = {
@@ -123,7 +153,19 @@ export const getResponseProperties = <T = any>(
           example: 'any string',
         };
       }
+      case 'json': {
+        p[key] = {
+          type: 'object',
+          description: 'object',
+        };
+      }
+    }
+    if (option) {
+      p[key] = {
+        ...p[key],
+        ...option,
+      };
     }
     return p;
-  }, {} as any);
+  }, {} as Record<keyof T, SchemaObject>);
 };

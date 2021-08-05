@@ -29,13 +29,13 @@ export class IOrderQuery {
   @ApiPropertyOptional()
   id?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 1 })
   investorId?: number;
 
   @ApiPropertyOptional(getRangeDescription(false))
   createdTime?: IRange<string>;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 1 })
   stockId?: number;
 
   @ApiPropertyOptional(getEnumDescription('method'))
@@ -54,10 +54,10 @@ export class IOrderQuery {
   timeRestriction?: TimeRestrictiomEnum[];
 
   @ApiPropertyOptional()
-  orderId: number;
+  orderId?: number;
 
   @ApiPropertyOptional(getPageDescription())
-  page: IPage;
+  page?: IPage;
 }
 
 export const queryStrategy: IQueryStategy<IOrderQuery> = {
@@ -99,14 +99,10 @@ export class IOrderQueryResponse {
 }
 
 export class IOrderBody {
-  @ApiProperty({
-    example: 1,
-  })
+  @ApiProperty({ example: 1 })
   investorId: number;
 
-  @ApiProperty({
-    example: 1,
-  })
+  @ApiProperty({ example: 1 })
   stockId: number;
 
   @ApiProperty(getEnumDescription('method', false))

@@ -50,7 +50,5 @@ export const getQueryBuilderContent = async (
     fullQueryBuilder.limit(query.page.pageSize);
   }
   fullQueryBuilder.orderBy('createdTime', 'DESC');
-  // DEBUG
-  // console.log(fullQueryBuilder.getSql());
   return { fullQueryBuilder, totalSize };
 };

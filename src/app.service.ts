@@ -6,6 +6,6 @@ export class AppService {
   constructor(private readonly matchService: MatchService) {}
 
   getHello() {
-    return 1;
+    return 'Hello world';
   }
 }

@@ -1,4 +1,6 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { QueryStrategyEnum } from './enum';
+import { getPageDescription } from './helper/document.helper';
 
 export interface IRange<T = any> {
   min?: T;
@@ -14,3 +16,8 @@ export type IQueryStategy<T = any> = Record<
   Exclude<keyof T, 'page'>,
   QueryStrategyEnum
 >;
+
+export class CommonQuery {
+  @ApiPropertyOptional(getPageDescription())
+  page?: IPage;
+}

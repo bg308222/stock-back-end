@@ -1,51 +1,174 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Order } from 'src/common/entity/order.entity';
-import { Transaction } from 'src/common/entity/transaction.entity';
-import { Repository } from 'typeorm';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { TransactionStatusEnum, UpperLowerLimitEnum } from 'src/common/enum';
+import { IDisplayBody } from '../display/display.dto';
+import { DisplayService } from '../display/display.service';
 import { IOrderSchema } from '../order/order.dto';
-import { StockMarket } from './match.helper';
+import { ITransactionBody } from '../transaction/transaction.dto';
+import { TransactionService } from '../transaction/transaction.service';
+import { IMarketBook, IMarketInformation, StockMarket } from './match.helper';
+
+export const getTick = (currentPrice: number) => {
+  if (currentPrice < 5) return 0.01;
+  else if (currentPrice < 10) return 0.05;
+  else if (currentPrice < 50) return 0.1;
+  else if (currentPrice < 100) return 0.5;
+  else if (currentPrice < 500) return 1;
+  else return 5;
+};
 
 @Injectable()
 export class MatchService {
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-
-    @InjectRepository(Transaction)
-    private readonly transactionRepository: Repository<Transaction>,
+    private readonly transactionService: TransactionService,
+    private readonly displayService: DisplayService,
   ) {
     this.stockMarketList = {};
   }
 
   private stockMarketList: Record<string, StockMarket>;
+
+  private getDisplayBody(marketBook: IMarketBook): IDisplayBody {
+    const maxPrice = marketBook.marketInformation.closedPrice * 1.1;
+    const minPrice = marketBook.marketInformation.closedPrice * 0.9;
+
+    // ---
+    let buyUpperLowerLimit: UpperLowerLimitEnum = UpperLowerLimitEnum.SPACE,
+      sellUpperLowerLimit: UpperLowerLimitEnum = UpperLowerLimitEnum.SPACE;
+
+    if (marketBook.currentPrice + getTick(marketBook.currentPrice) > maxPrice) {
+      buyUpperLowerLimit = UpperLowerLimitEnum.LIMIT_UP;
+      sellUpperLowerLimit = UpperLowerLimitEnum.LIMIT_UP;
+    }
+
+    if (marketBook.currentPrice - getTick(marketBook.currentPrice) < minPrice) {
+      buyUpperLowerLimit = UpperLowerLimitEnum.LIMIT_DOWN;
+      sellUpperLowerLimit = UpperLowerLimitEnum.LIMIT_DOWN;
+    }
+
+    // ---
+    let minTick = marketBook.currentPrice;
+    while (minTick - getTick(minTick) > minPrice) minTick -= getTick(minTick);
+    let maxTick = marketBook.currentPrice;
+    while (maxTick + getTick(maxTick) < maxPrice) maxTick += getTick(maxTick);
+    const buyFiveTick: Record<string, number> = {};
+    const sellFiveTick: Record<string, number> = {};
+
+    for (
+      let currentTick = minTick;
+      currentTick <= maxTick;
+      currentTick += getTick(currentTick)
+    ) {
+      const limitBuyOrders = marketBook.limitBuy.orders[currentTick];
+      buyFiveTick[currentTick] = !limitBuyOrders
+        ? 0
+        : limitBuyOrders.reduce<number>((p, order) => {
+            p += order.quantity;
+            return p;
+          }, 0);
+
+      const limitSellOrders = marketBook.limitSell.orders[currentTick];
+      sellFiveTick[currentTick] = !limitSellOrders
+        ? 0
+        : limitSellOrders.reduce<number>((p, order) => {
+            p += order.quantity;
+            return p;
+          }, 0);
+    }
+
+    return {
+      stockId: marketBook.marketInformation.stockId,
+      matchPrice: marketBook.currentPrice,
+      matchQuantity: marketBook.accumulatedQuantity,
+      buyTickSize: marketBook.limitBuy.getNonEmptyOrderSize(),
+      buyUpperLowerLimit,
+      buyFiveTick: JSON.stringify(buyFiveTick),
+      sellTickSize: marketBook.limitSell.getNonEmptyOrderSize(),
+      sellUpperLowerLimit,
+      sellFiveTick: JSON.stringify(sellFiveTick),
+    };
+  }
+
+  private getTransactionBody(
+    transactions: ITransactionBody[],
+  ): ITransactionBody[] {
+    const sortedObject = transactions.reduce<
+      Record<string, ITransactionBody[]>
+    >((p, transaction) => {
+      if (!p[transaction.orderId]) p[transaction.orderId] = [];
+      p[transaction.orderId].push(transaction);
+      return p;
+    }, {});
+
+    const sortedArray = Object.values(sortedObject).map<ITransactionBody>(
+      (transactionArray) => {
+        if (transactionArray.length === 1) return transactionArray[0];
+        const mergeTransaction = transactionArray.reduce<
+          Pick<ITransactionBody, 'status' | 'quantity' | 'price'>
+        >(
+          (p, { status, quantity, price }) => {
+            if (status === TransactionStatusEnum.FULL)
+              p.status = TransactionStatusEnum.FULL;
+            p.quantity += quantity;
+            p.price += price * quantity;
+            return p;
+          },
+          { status: TransactionStatusEnum.PARTIAL, quantity: 0, price: 0 },
+        );
+        return {
+          ...transactionArray[0],
+          ...mergeTransaction,
+          price: mergeTransaction.price / mergeTransaction.quantity,
+        };
+      },
+    );
+
+    return sortedArray;
+  }
+
   public async dispatchOrder(order: IOrderSchema) {
     if (!this.stockMarketList[order.stockId]) {
+      // TODO Dynamic stock market information
       this.stockMarketList[order.stockId] = new StockMarket(
         {
+          stockId: order.stockId,
           closedPrice: 150,
         },
-        100,
+        150,
       );
     }
 
     //TODO Recognize when to doCallAuction or doContinuousTrading
     if (true) {
-      const result = this.stockMarketList[order.stockId].doCallAuction(order);
-      this.stockMarketList[order.stockId].dumpMarketInformation();
-      console.log(result);
+      const { transactions, cancelInformation, updateInformation } =
+        this.stockMarketList[order.stockId].doCallAuction(order);
+
+      if (cancelInformation) {
+      } else if (updateInformation) {
+      } else {
+        // Match successfully
+        const marketBook = this.stockMarketList[order.stockId].dumpMarketBook();
+        console.log(marketBook);
+        await this.displayService.insert(this.getDisplayBody(marketBook));
+        if (transactions.length !== 0) {
+          await this.transactionService.insert(
+            this.getTransactionBody(transactions),
+          );
+        }
+      }
     } else {
-      this.stockMarketList[order.stockId].doContinuousTrading();
+      // this.stockMarketList[order.stockId].doContinuousTrading();
     }
     return 1;
   }
-}
 
-// function getTick(currentPrice: number) {
-//   if (currentPrice < 5) return 0.01;
-//   else if (currentPrice < 10) return 0.05;
-//   else if (currentPrice < 50) return 0.1;
-//   else if (currentPrice < 100) return 0.5;
-//   else if (currentPrice < 500) return 1;
-//   else return 5;
-// }
+  public setMarketInformation(
+    stockId: number,
+    marketInformation: Partial<IMarketInformation>,
+  ) {
+    if (!this.stockMarketList[stockId]) {
+      throw new BadRequestException("This stock market doesn't exist");
+    } else {
+      this.stockMarketList[stockId].setMarketInformation(marketInformation);
+    }
+  }
+}

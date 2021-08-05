@@ -17,6 +17,7 @@ const runSwagger = (
     .addTag('Stock')
     .addTag('Order')
     .addTag('Transaction')
+    .addTag('Display')
     .addServer(`http://${host}:${port}`)
     .build();
 
@@ -27,6 +28,7 @@ const runSwagger = (
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
+  app.enableCors();
 
   const configService = app.get(ConfigService);
 

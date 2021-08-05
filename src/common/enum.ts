@@ -21,6 +21,12 @@ export enum TransactionStatusEnum {
   FULL = 1,
 }
 
+export enum UpperLowerLimitEnum {
+  LIMIT_UP = 0,
+  LIMIT_DOWN = 1,
+  SPACE = 2,
+}
+
 export enum QueryStrategyEnum {
   value = 0,
   inArray = 1,
