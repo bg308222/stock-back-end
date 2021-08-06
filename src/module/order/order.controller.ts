@@ -39,6 +39,9 @@ export class OrderController {
     return true;
   }
 
+  @ApiOperation({
+    summary: '取消委託',
+  })
   @Delete()
   public async delete(@Body() body: IOrderDelete) {
     const order = await this.orderService.delete(body);
