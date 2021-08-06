@@ -127,7 +127,7 @@ export const getPageDescription = () => {
 export const getResponseProperties = <T = any>(
   input: {
     key: keyof T;
-    type: 'number' | 'date' | 'string' | 'json';
+    type: 'number' | 'date' | 'string' | 'json' | 'numberArray';
     option?: SchemaObject;
   }[],
 ) => {
@@ -157,6 +157,12 @@ export const getResponseProperties = <T = any>(
         p[key] = {
           type: 'object',
           description: 'object',
+        };
+      }
+      case 'numberArray': {
+        p[key] = {
+          type: 'array',
+          example: [],
         };
       }
     }

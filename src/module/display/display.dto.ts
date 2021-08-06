@@ -7,38 +7,6 @@ import {
 } from 'src/common/helper/document.helper';
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
-const tickExample = {
-  '136': 2,
-  '137': 2,
-  '138': 1,
-  '139': 1,
-  '140': 0,
-  '141': 2,
-  '142': 0,
-  '143': 1,
-  '144': 1,
-  '145': 1,
-  '146': 1,
-  '147': 0,
-  '148': 0,
-  '149': 0,
-  '150': 1,
-  '151': 0,
-  '152': 0,
-  '153': 0,
-  '154': 0,
-  '155': 1,
-  '156': 1,
-  '157': 1,
-  '158': 1,
-  '159': 0,
-  '160': 0,
-  '161': 0,
-  '162': 0,
-  '163': 0,
-  '164': 0,
-};
-
 export class IDisplayQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional()
   id?: number;
@@ -77,10 +45,43 @@ export class IDisplayQueryResponse {
         { key: 'matchQuantity', type: 'number' },
         { key: 'buyTickSize', type: 'number' },
         { key: 'buyUpperLowerLimit', type: 'number' },
-        { key: 'buyFiveTick', type: 'json', option: { example: tickExample } },
         { key: 'sellTickSize', type: 'number' },
         { key: 'sellUpperLowerLimit', type: 'number' },
-        { key: 'sellFiveTick', type: 'json', option: { example: tickExample } },
+        {
+          key: 'buyFiveTick',
+          type: 'numberArray',
+          option: {
+            example: [
+              [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+              ],
+            ],
+          },
+        },
+        {
+          key: 'sellFiveTick',
+          type: 'numberArray',
+          option: {
+            example: [
+              [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+              ],
+            ],
+          },
+        },
+        {
+          key: 'tickRange',
+          type: 'numberArray',
+          option: {
+            example: [
+              164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152,
+              151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139,
+              138, 137, 136,
+            ],
+          },
+        },
       ]),
     },
   })
@@ -117,4 +118,7 @@ export class IDisplayBody {
 
   @ApiProperty()
   sellFiveTick: string;
+
+  @ApiProperty()
+  tickRange: string;
 }

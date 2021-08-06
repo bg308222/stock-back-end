@@ -16,59 +16,60 @@ export const getNextTick = (currentPrice: number) => {
   else return 5;
 };
 
-export const getTickList = (
-  closedPrice: number,
-  currentPrice: number,
-  orders?: {
-    buyOrders: Record<string, IOrderSchema[]>;
-    sellOrders: Record<string, IOrderSchema[]>;
-  },
-) => {
+export const getTickRange = (closedPrice: number) => {
   const maxPrice = closedPrice * 1.1;
   const minPrice = closedPrice * 0.9;
 
-  let minTick = currentPrice;
+  let minTick = closedPrice;
   while (minTick - getNextTick(minTick) > minPrice)
     minTick -= getNextTick(minTick);
-  let maxTick = currentPrice;
+  let maxTick = closedPrice;
   while (maxTick + getNextTick(maxTick) < maxPrice)
     maxTick += getNextTick(maxTick);
 
-  if (!orders) {
-    const tickList: Record<string, number> = {};
-    for (
-      let currentTick = minTick;
-      currentTick <= maxTick;
-      currentTick += getNextTick(currentTick)
-    )
-      tickList[currentTick] = 0;
-    return { tickList };
-  } else {
-    const buyFiveTick: Record<string, number> = {};
-    const sellFiveTick: Record<string, number> = {};
-    for (
-      let currentTick = minTick;
-      currentTick <= maxTick;
-      currentTick += getNextTick(currentTick)
-    ) {
-      const limitBuyOrders = orders.buyOrders[currentTick];
-      buyFiveTick[currentTick] = !limitBuyOrders
+  const tickRange: number[] = [];
+
+  for (
+    let currentTick = maxTick;
+    currentTick >= minTick;
+    currentTick -= getNextTick(currentTick)
+  ) {
+    tickRange.push(currentTick);
+  }
+
+  return tickRange;
+};
+
+export const getTickList = (
+  tickRange: number[],
+  buyOrders: Record<string, IOrderSchema[]>,
+  sellOrders: Record<string, IOrderSchema[]>,
+) => {
+  const buyFiveTick: number[] = [];
+  const sellFiveTick: number[] = [];
+  tickRange.forEach((currentTick) => {
+    const limitBuyOrders = buyOrders[currentTick];
+    buyFiveTick.push(
+      !limitBuyOrders
         ? 0
         : limitBuyOrders.reduce<number>((p, order) => {
             p += order.quantity;
             return p;
-          }, 0);
+          }, 0),
+    );
 
-      const limitSellOrders = orders.sellOrders[currentTick];
-      sellFiveTick[currentTick] = !limitSellOrders
+    const limitSellOrders = sellOrders[currentTick];
+    sellFiveTick.push(
+      !limitSellOrders
         ? 0
         : limitSellOrders.reduce<number>((p, order) => {
             p += order.quantity;
             return p;
-          }, 0);
-    }
-    return { buyFiveTick, sellFiveTick };
-  }
+          }, 0),
+    );
+  });
+
+  return { tickRange, buyFiveTick, sellFiveTick };
 };
 
 @Injectable()
@@ -107,13 +108,10 @@ export class MatchService {
     }
 
     // ---
-    const { buyFiveTick, sellFiveTick } = getTickList(
-      marketBook.marketInformation.closedPrice,
-      marketBook.currentPrice,
-      {
-        buyOrders: marketBook.limitBuy.orders,
-        sellOrders: marketBook.limitSell.orders,
-      },
+    const { tickRange, buyFiveTick, sellFiveTick } = getTickList(
+      getTickRange(marketBook.marketInformation.closedPrice),
+      marketBook.limitBuy.orders,
+      marketBook.limitSell.orders,
     );
 
     return {
@@ -126,6 +124,7 @@ export class MatchService {
       sellTickSize: marketBook.limitSell.getNonEmptyOrderSize(),
       sellUpperLowerLimit,
       sellFiveTick: JSON.stringify(sellFiveTick),
+      tickRange: JSON.stringify(tickRange),
     };
   }
 

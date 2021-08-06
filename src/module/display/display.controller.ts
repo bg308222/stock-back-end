@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { getTickRange } from '../match/match.service';
 import { IDisplayQuery, IDisplayQueryResponse } from './display.dto';
 import { DisplayService } from './display.service';
 
@@ -12,11 +13,26 @@ export class DisplayController {
   @ApiOperation({
     summary: '前端展示圖表用(K線、分時走勢、五檔報價圖)',
     description:
-      'page傳{"page":1,"pageSize":1}來取得最新一筆資料，五檔的資料在buy/sellFiveTick中\n',
+      'matchPrice為成交價，用來繪製線圖。若index = i,則tickRange[i]的值為價格,buyFiveTick[i]和sellFiveTick[i]的值為該價格下，買單和賣單的數量',
   })
   @Get()
   public async get(@Query() query: IDisplayQuery) {
     const result = await this.displayService.get(query);
     return result;
+  }
+
+  @Get('tickRange')
+  @ApiOperation({
+    summary:
+      '若display中沒有資料或tickRange為空陣列，則要先call這一支來獲取報價資訊',
+    description: '根據收盤價，得到該市場可以交易的價格',
+  })
+  @ApiQuery({
+    name: 'closedPrice',
+    type: Number,
+    example: 150,
+  })
+  public async getTickRange(@Query('closedPrice') closedPrice: number) {
+    return getTickRange(closedPrice);
   }
 }

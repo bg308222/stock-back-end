@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
+import { getNextTick } from '../match/match.service';
 import { IDisplayBody, IDisplayQuery, queryStrategy } from './display.dto';
 
 @Injectable()
@@ -21,11 +22,12 @@ export class DisplayService {
     );
     return {
       content: (await fullQueryBuilder.getMany()).map(
-        ({ buyFiveTick, sellFiveTick, ...data }) => {
+        ({ buyFiveTick, sellFiveTick, tickRange, ...data }) => {
           return {
             ...data,
             buyFiveTick: JSON.parse(buyFiveTick),
             sellFiveTick: JSON.parse(sellFiveTick),
+            tickRange: JSON.parse(tickRange),
           };
         },
       ),

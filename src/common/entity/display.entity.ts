@@ -33,7 +33,7 @@ export class Display {
   @Column({ type: 'enum', enum: UpperLowerLimitEnum })
   buyUpperLowerLimit: number;
 
-  @Column({ type: 'json', default: '"{}"' })
+  @Column({ type: 'json', default: '"[]"' })
   buyFiveTick: string;
 
   @Column({ type: 'int' })
@@ -42,6 +42,9 @@ export class Display {
   @Column({ type: 'enum', enum: UpperLowerLimitEnum })
   sellUpperLowerLimit: number;
 
-  @Column({ type: 'json', default: '"{}"' })
+  @Column({ type: 'json', default: '"[]"' })
   sellFiveTick: string;
+
+  @Column({ type: 'json', default: '"[]"' })
+  tickRange: string;
 }
