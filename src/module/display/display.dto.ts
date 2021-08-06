@@ -1,12 +1,13 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { QueryStrategyEnum, UpperLowerLimitEnum } from 'src/common/enum';
+import { Display } from 'src/common/entity/display.entity';
+import { QueryStrategyEnum } from 'src/common/enum';
 import {
-  getEnumDescription,
   getRangeDescription,
   getResponseProperties,
 } from 'src/common/helper/document.helper';
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
+export type IDisplaySchema = Omit<Display, 'stock'>;
 export class IDisplayQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional({ description: '設為true可只拿取最新一筆，預設為false' })
   isGetLatest?: boolean;
@@ -41,7 +42,16 @@ export class IDisplayQueryResponse {
     type: 'array',
     items: {
       type: 'object',
-      properties: getResponseProperties([
+      properties: getResponseProperties<
+        IDisplaySchema & {
+          buyTickSize: number;
+          buyUpperLowerLimit: number;
+          firstOrderBuyPrice: number;
+          sellTickSize: number;
+          sellUpperLowerLimit: number;
+          firstOrderSellPrice: number;
+        }
+      >([
         { key: 'id', type: 'number' },
         { key: 'createdTime', type: 'date' },
         { key: 'stockId', type: 'number' },
@@ -108,19 +118,7 @@ export class IDisplayInsert {
   matchQuantity: number;
 
   @ApiProperty()
-  buyTickSize: number;
-
-  @ApiProperty(getEnumDescription('upperLowerLimit', false))
-  buyUpperLowerLimit: UpperLowerLimitEnum;
-
-  @ApiProperty()
   buyFiveTick: string;
-
-  @ApiProperty()
-  sellTickSize: number;
-
-  @ApiProperty(getEnumDescription('upperLowerLimit', false))
-  sellUpperLowerLimit: UpperLowerLimitEnum;
 
   @ApiProperty()
   sellFiveTick: string;

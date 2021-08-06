@@ -1,4 +1,3 @@
-import { UpperLowerLimitEnum } from 'src/common/enum';
 import {
   Column,
   CreateDateColumn,
@@ -27,20 +26,8 @@ export class Display {
   @Column({ type: 'int' })
   matchQuantity: number;
 
-  @Column({ type: 'int' })
-  buyTickSize: number;
-
-  @Column({ type: 'enum', enum: UpperLowerLimitEnum })
-  buyUpperLowerLimit: number;
-
   @Column({ type: 'json', default: '"[]"' })
   buyFiveTick: string;
-
-  @Column({ type: 'int' })
-  sellTickSize: number;
-
-  @Column({ type: 'enum', enum: UpperLowerLimitEnum })
-  sellUpperLowerLimit: number;
 
   @Column({ type: 'json', default: '"[]"' })
   sellFiveTick: string;

@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import {
   ITransactionInsert,
   ITransactionQuery,
+  ITransactionSchema,
   queryStrategy,
 } from './transaction.dto';
 
@@ -17,12 +18,13 @@ export class TransactionService {
   ) {}
 
   public async get(query: ITransactionQuery) {
-    const { fullQueryBuilder, totalSize } = await getQueryBuilderContent(
-      'transaction',
-      this.transactionRepository.createQueryBuilder('transaction'),
-      queryStrategy,
-      query,
-    );
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<ITransactionSchema>(
+        'transaction',
+        this.transactionRepository.createQueryBuilder('transaction'),
+        queryStrategy,
+        query,
+      );
     return {
       content: await fullQueryBuilder.getMany(),
       totalSize,

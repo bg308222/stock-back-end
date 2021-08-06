@@ -3,16 +3,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
-import { IDisplayInsert, IDisplayQuery, queryStrategy } from './display.dto';
+import {
+  IDisplayInsert,
+  IDisplayQuery,
+  IDisplaySchema,
+  queryStrategy,
+} from './display.dto';
 
-const transferResult = (datas) => {
-  if (!datas) return null;
+const transferResult = (displaySchema?: IDisplaySchema) => {
+  if (!displaySchema) return null;
   const {
     buyFiveTick: buyFiveTickJson,
     sellFiveTick: sellFiveTickJson,
     tickRange: tickRangeJson,
     ...data
-  } = datas;
+  } = displaySchema;
   const buyFiveTick = JSON.parse(buyFiveTickJson) as number[];
   const sellFiveTick = JSON.parse(sellFiveTickJson) as number[];
   const tickRange = JSON.parse(tickRangeJson) as number[];
@@ -41,12 +46,13 @@ export class DisplayService {
   ) {}
 
   public async get(query: IDisplayQuery) {
-    const { fullQueryBuilder, totalSize } = await getQueryBuilderContent(
-      'display',
-      this.displayRepository.createQueryBuilder('display'),
-      queryStrategy,
-      query,
-    );
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<IDisplaySchema>(
+        'display',
+        this.displayRepository.createQueryBuilder('display'),
+        queryStrategy,
+        query,
+      );
 
     if (query.isGetLatest) {
       return transferResult(await fullQueryBuilder.getOne());

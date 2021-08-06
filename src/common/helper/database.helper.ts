@@ -2,9 +2,9 @@ import { SelectQueryBuilder } from 'typeorm';
 import { QueryStrategyEnum } from '../enum';
 import { IQueryStategy } from '../type';
 
-export const getQueryBuilderContent = async (
+export const getQueryBuilderContent = async <T = any>(
   alias: string,
-  queryBuilder: SelectQueryBuilder<any>,
+  queryBuilder: SelectQueryBuilder<T>,
   queryStrategy: IQueryStategy<any>,
   query: Record<string, any>,
 ) => {

@@ -84,30 +84,6 @@ export class MatchService {
   private stockMarketList: Record<string, StockMarket>;
 
   private getDisplayBody(marketBook: IMarketBook): IDisplayInsert {
-    const maxPrice = marketBook.marketInformation.closedPrice * 1.1;
-    const minPrice = marketBook.marketInformation.closedPrice * 0.9;
-
-    // ---
-    let buyUpperLowerLimit: UpperLowerLimitEnum = UpperLowerLimitEnum.SPACE,
-      sellUpperLowerLimit: UpperLowerLimitEnum = UpperLowerLimitEnum.SPACE;
-
-    if (
-      marketBook.currentPrice + getNextTick(marketBook.currentPrice) >
-      maxPrice
-    ) {
-      buyUpperLowerLimit = UpperLowerLimitEnum.LIMIT_UP;
-      sellUpperLowerLimit = UpperLowerLimitEnum.LIMIT_UP;
-    }
-
-    if (
-      marketBook.currentPrice - getNextTick(marketBook.currentPrice) <
-      minPrice
-    ) {
-      buyUpperLowerLimit = UpperLowerLimitEnum.LIMIT_DOWN;
-      sellUpperLowerLimit = UpperLowerLimitEnum.LIMIT_DOWN;
-    }
-
-    // ---
     const { tickRange, buyFiveTick, sellFiveTick } = getTickList(
       getTickRange(marketBook.marketInformation.closedPrice),
       marketBook.limitBuy.orders,
@@ -118,11 +94,7 @@ export class MatchService {
       stockId: marketBook.marketInformation.stockId,
       matchPrice: marketBook.currentPrice,
       matchQuantity: marketBook.accumulatedQuantity,
-      buyTickSize: marketBook.limitBuy.getNonEmptyOrderSize(),
-      buyUpperLowerLimit,
       buyFiveTick: JSON.stringify(buyFiveTick),
-      sellTickSize: marketBook.limitSell.getNonEmptyOrderSize(),
-      sellUpperLowerLimit,
       sellFiveTick: JSON.stringify(sellFiveTick),
       tickRange: JSON.stringify(tickRange),
     };

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Order } from 'src/common/entity/order.entity';
 import {
   MethodEnum,
   OrderStatusEnum,
@@ -15,20 +16,8 @@ import {
 } from 'src/common/helper/document.helper';
 import { IPage, IQueryStategy, IRange } from 'src/common/type';
 
-export interface IOrderSchema {
-  id: number;
-  investorId: number;
-  createdTime: string;
-  stockId: number;
-  method: number;
-  subMethod?: number;
-  price: number;
-  quantity: number;
-  priceType: number;
-  timeRestriction: number;
-  orderId: number;
-  status: number;
-}
+export type IOrderSchema = Omit<Order, 'investor' | 'stock' | 'order'>;
+
 export class IOrderQuery {
   @ApiPropertyOptional()
   id?: number;

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Transaction } from 'src/common/entity/transaction.entity';
 import {
   MethodEnum,
   PriceTypeEnum,
@@ -13,6 +14,10 @@ import {
 } from 'src/common/helper/document.helper';
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
+export type ITransactionSchema = Omit<
+  Transaction,
+  'investor' | 'stock' | 'order'
+>;
 export class ITransactionQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional()
   id?: number;
@@ -67,7 +72,7 @@ export class ITransactionQueryResponse {
     type: 'array',
     items: {
       type: 'object',
-      properties: getResponseProperties([
+      properties: getResponseProperties<ITransactionSchema>([
         { key: 'id', type: 'number' },
         { key: 'investorId', type: 'number' },
         { key: 'createdTime', type: 'date' },
@@ -88,7 +93,6 @@ export class ITransactionQueryResponse {
   totalSize: number;
 }
 
-//TODO insert transaction
 export class ITransactionInsert {
   @ApiProperty({
     example: 1,

@@ -20,12 +20,13 @@ export class OrderService {
   ) {}
 
   public async get(query: IOrderQuery) {
-    const { fullQueryBuilder, totalSize } = await getQueryBuilderContent(
-      'order',
-      this.orderRepository.createQueryBuilder('order'),
-      queryStrategy,
-      query,
-    );
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<IOrderSchema>(
+        'order',
+        this.orderRepository.createQueryBuilder('order'),
+        queryStrategy,
+        query,
+      );
     return {
       content: await fullQueryBuilder.getMany(),
       totalSize,
