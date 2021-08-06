@@ -37,14 +37,20 @@ class LimitBook {
     if (initialLimitBook) {
       this.orders = initialLimitBook.orders;
       this.firstOrderPrice = initialLimitBook.firstOrderPrice;
+      this.highestOrderPrice = initialLimitBook.highestOrderPrice;
+      this.lowestOrderPrice = initialLimitBook.lowestOrderPrice;
     } else {
       this.orders = {};
       this.firstOrderPrice = null;
+      this.highestOrderPrice = null;
+      this.lowestOrderPrice = null;
     }
   }
 
   public orders: Record<string, IOrderSchema[]>;
   public firstOrderPrice: number;
+  public highestOrderPrice: number;
+  public lowestOrderPrice: number;
 
   public popFirstOrder(price: number) {
     this.orders[price] = this.orders[price].slice(1);
@@ -67,12 +73,16 @@ class LimitBook {
 
     if (sortedOrderArray.length === 0) {
       this.firstOrderPrice = null;
+      this.highestOrderPrice = null;
+      this.lowestOrderPrice = null;
     } else {
+      this.highestOrderPrice =
+        +sortedOrderArray[sortedOrderArray.length - 1][0];
+      this.lowestOrderPrice = +sortedOrderArray[0][0];
       if (type === 'Buy') {
-        this.firstOrderPrice =
-          +sortedOrderArray[sortedOrderArray.length - 1][0];
+        this.firstOrderPrice = this.highestOrderPrice;
       } else {
-        (this.firstOrderPrice = +sortedOrderArray[0][0]), 10;
+        this.firstOrderPrice = this.lowestOrderPrice;
       }
     }
   }
@@ -208,14 +218,14 @@ export class StockMarket {
         if (inverseSideMethod === 'Buy') {
           inverseSideOrder.price = Math.max(
             this.marketBook.currentPrice,
-            this.marketBook.limitBuy.firstOrderPrice,
-            this.marketBook.limitSell.firstOrderPrice,
+            this.marketBook.limitBuy.highestOrderPrice,
+            this.marketBook.limitSell.highestOrderPrice,
           );
         } else {
           inverseSideOrder.price = Math.min(
             this.marketBook.currentPrice || Number.MAX_VALUE,
-            this.marketBook.limitBuy.firstOrderPrice || Number.MAX_VALUE,
-            this.marketBook.limitSell.firstOrderPrice || Number.MAX_VALUE,
+            this.marketBook.limitBuy.lowestOrderPrice || Number.MAX_VALUE,
+            this.marketBook.limitSell.lowestOrderPrice || Number.MAX_VALUE,
           );
         }
       }
@@ -228,14 +238,14 @@ export class StockMarket {
         if (currentSideMethod === 'Buy') {
           order.price = Math.max(
             this.marketBook.currentPrice,
-            this.marketBook.limitBuy.firstOrderPrice,
-            this.marketBook.limitSell.firstOrderPrice,
+            this.marketBook.limitBuy.highestOrderPrice,
+            this.marketBook.limitSell.highestOrderPrice,
           );
         } else {
           order.price = Math.min(
             this.marketBook.currentPrice || Number.MAX_VALUE,
-            this.marketBook.limitBuy.firstOrderPrice || Number.MAX_VALUE,
-            this.marketBook.limitSell.firstOrderPrice || Number.MAX_VALUE,
+            this.marketBook.limitBuy.lowestOrderPrice || Number.MAX_VALUE,
+            this.marketBook.limitSell.lowestOrderPrice || Number.MAX_VALUE,
           );
         }
       }

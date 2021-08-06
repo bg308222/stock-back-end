@@ -23,14 +23,22 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   const tickRange: number[] = JSON.parse(tickRangeJson);
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
+
   const transferTickRange = tickRange.map((price, index) => {
+    let marketBuyAdder = 0;
+    let marketSellAdder = 0;
+    if (price === data.matchPrice) {
+      marketBuyAdder = data.marketBuyQuantity;
+      marketSellAdder = data.marketSellQuantity;
+    }
+
     if (firstOrderBuyPrice === null && buyTick[index] !== 0)
       firstOrderBuyPrice = price;
     if (sellTick[index] !== 0) firstOrderSellPrice = price;
     return {
       price,
-      buyQuantity: buyTick[index] || 0,
-      sellQuantity: sellTick[index] || 0,
+      buyQuantity: buyTick[index] + marketBuyAdder || 0,
+      sellQuantity: sellTick[index] + marketSellAdder || 0,
     };
   });
 
