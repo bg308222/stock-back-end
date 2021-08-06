@@ -26,6 +26,12 @@ export class Display {
   @Column({ type: 'int' })
   matchQuantity: number;
 
+  @Column({ type: 'int' })
+  marketBuyQuantity: number;
+
+  @Column({ type: 'int' })
+  marketSellQuantity: number;
+
   @Column({ type: 'json', default: '"[]"' })
   buyTick: string;
 

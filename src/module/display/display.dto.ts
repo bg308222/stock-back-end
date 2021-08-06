@@ -58,6 +58,8 @@ export class IDisplayQueryResponse {
         { key: 'stockId', type: 'number' },
         { key: 'matchPrice', type: 'number' },
         { key: 'matchQuantity', type: 'number' },
+        { key: 'marketBuyQuantity', type: 'number' },
+        { key: 'marketSellQuantity', type: 'number' },
         { key: 'firstOrderBuyPrice', type: 'number' },
         { key: 'firstOrderSellPrice', type: 'number' },
         {
@@ -231,6 +233,12 @@ export class IDisplayInsert {
 
   @ApiProperty()
   matchQuantity: number;
+
+  @ApiProperty()
+  marketBuyQuantity: number;
+
+  @ApiProperty()
+  marketSellQuantity: number;
 
   @ApiProperty()
   buyTick: string;

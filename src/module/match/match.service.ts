@@ -7,6 +7,14 @@ import { ITransactionInsert } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
 import { IMarketBook, IMarketInformation, StockMarket } from './match.helper';
 
+export const getOrderQuantity = (orders: IOrderSchema[]) => {
+  const quantity = orders.reduce<number>((p, order) => {
+    p += order.quantity;
+    return p;
+  }, 0);
+  return quantity;
+};
+
 export const getNextTick = (currentPrice: number) => {
   if (currentPrice < 5) return 0.01;
   else if (currentPrice < 10) return 0.05;
@@ -16,6 +24,7 @@ export const getNextTick = (currentPrice: number) => {
   else return 5;
 };
 
+//只有@get /display/tickRange 需要拿ITickRange[] 其他都拿number[]
 export const getTickRange = (closedPrice: number) => {
   const maxPrice = closedPrice * 1.1;
   const minPrice = closedPrice * 0.9;
@@ -47,36 +56,36 @@ export const getTickRange = (closedPrice: number) => {
   };
 };
 
-export const getTickList = (
-  tickRange: number[],
-  buyOrders: Record<string, IOrderSchema[]>,
-  sellOrders: Record<string, IOrderSchema[]>,
-) => {
+export const getTickList = ({
+  limitBuy,
+  limitSell,
+  marketBuy,
+  marketSell,
+  ...marketBook
+}: IMarketBook) => {
+  const { numTickRange: tickRange } = getTickRange(
+    marketBook.marketInformation.closedPrice,
+  );
+
   const buyTick: number[] = [];
   const sellTick: number[] = [];
   tickRange.forEach((price) => {
-    const limitBuyOrders = buyOrders[price];
-    buyTick.push(
-      !limitBuyOrders
-        ? 0
-        : limitBuyOrders.reduce<number>((p, order) => {
-            p += order.quantity;
-            return p;
-          }, 0),
-    );
+    const limitBuyOrders = limitBuy.orders[price];
+    buyTick.push(!limitBuyOrders ? 0 : getOrderQuantity(limitBuyOrders));
 
-    const limitSellOrders = sellOrders[price];
-    sellTick.push(
-      !limitSellOrders
-        ? 0
-        : limitSellOrders.reduce<number>((p, order) => {
-            p += order.quantity;
-            return p;
-          }, 0),
-    );
+    const limitSellOrders = limitSell.orders[price];
+    sellTick.push(!limitSellOrders ? 0 : getOrderQuantity(limitSellOrders));
   });
+  const marketBuyQuantity = getOrderQuantity(marketBuy);
+  const marketSellQuantity = getOrderQuantity(marketSell);
 
-  return { tickRange, buyTick, sellTick };
+  return {
+    tickRange,
+    buyTick,
+    sellTick,
+    marketBuyQuantity,
+    marketSellQuantity,
+  };
 };
 
 @Injectable()
@@ -91,11 +100,13 @@ export class MatchService {
   private stockMarketList: Record<string, StockMarket>;
 
   private getDisplayBody(marketBook: IMarketBook): IDisplayInsert {
-    const { tickRange, buyTick, sellTick } = getTickList(
-      getTickRange(marketBook.marketInformation.closedPrice).numTickRange,
-      marketBook.limitBuy.orders,
-      marketBook.limitSell.orders,
-    );
+    const {
+      tickRange,
+      buyTick,
+      sellTick,
+      marketBuyQuantity,
+      marketSellQuantity,
+    } = getTickList(marketBook);
 
     return {
       stockId: marketBook.marketInformation.stockId,
@@ -104,6 +115,8 @@ export class MatchService {
       buyTick: JSON.stringify(buyTick),
       sellTick: JSON.stringify(sellTick),
       tickRange: JSON.stringify(tickRange),
+      marketBuyQuantity,
+      marketSellQuantity,
     };
   }
 

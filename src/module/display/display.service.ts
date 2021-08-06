@@ -7,7 +7,6 @@ import {
   IDisplayInsert,
   IDisplayQuery,
   IDisplaySchema,
-  ITickRange,
   queryStrategy,
 } from './display.dto';
 
@@ -24,7 +23,6 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   const tickRange: number[] = JSON.parse(tickRangeJson);
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
-  //從DB得到 quantity不需要自己塞零
   const transferTickRange = tickRange.map((price, index) => {
     if (firstOrderBuyPrice === null && buyTick[index] !== 0)
       firstOrderBuyPrice = price;
