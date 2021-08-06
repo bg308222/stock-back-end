@@ -1,8 +1,16 @@
 export enum MethodEnum {
   BUY = 0,
   SELL = 1,
-  CANCEL = 2,
-  UPDATE = 3,
+}
+
+export enum SubMethodEnum {
+  CANCEL = 0,
+  UPDATE = 1,
+}
+
+export enum OrderStatusEnum {
+  SUCCESS = 1,
+  FAIL = 0,
 }
 
 export enum PriceTypeEnum {

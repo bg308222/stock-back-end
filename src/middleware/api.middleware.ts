@@ -20,7 +20,7 @@ export class LoggerMiddleware implements NestMiddleware {
       } catch {}
     });
 
-    checkRequest(req, !req.baseUrl.endsWith('display'));
+    checkRequest(req, !req.baseUrl.includes('display'));
 
     next();
   }

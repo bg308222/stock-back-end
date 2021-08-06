@@ -36,7 +36,7 @@ export class Transaction {
   @Column({ type: 'enum', enum: MethodEnum })
   method: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float' })
   price: number;
 
   @Column({ type: 'int' })

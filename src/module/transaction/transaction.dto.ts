@@ -89,7 +89,7 @@ export class ITransactionQueryResponse {
 }
 
 //TODO insert transaction
-export class ITransactionBody {
+export class ITransactionInsert {
   @ApiProperty({
     example: 1,
   })

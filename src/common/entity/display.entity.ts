@@ -21,7 +21,7 @@ export class Display {
   @ManyToOne(() => Stock, { nullable: false })
   stock: Stock;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float' })
   matchPrice: number;
 
   @Column({ type: 'int' })

@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   MethodEnum,
+  OrderStatusEnum,
   PriceTypeEnum,
   QueryStrategyEnum,
+  SubMethodEnum,
   TimeRestrictiomEnum,
 } from 'src/common/enum';
 import {
@@ -19,11 +21,13 @@ export interface IOrderSchema {
   createdTime: string;
   stockId: number;
   method: number;
+  subMethod?: number;
   price: number;
   quantity: number;
   priceType: number;
   timeRestriction: number;
   orderId: number;
+  status: number;
 }
 export class IOrderQuery {
   @ApiPropertyOptional()
@@ -41,6 +45,9 @@ export class IOrderQuery {
   @ApiPropertyOptional(getEnumDescription('method'))
   method?: MethodEnum[];
 
+  @ApiPropertyOptional(getEnumDescription('subMethod'))
+  subMethod?: SubMethodEnum[];
+
   @ApiPropertyOptional(getRangeDescription())
   price?: IRange<number>;
 
@@ -56,6 +63,9 @@ export class IOrderQuery {
   @ApiPropertyOptional()
   orderId?: number;
 
+  @ApiPropertyOptional(getEnumDescription('orderStatus'))
+  status: OrderStatusEnum[];
+
   @ApiPropertyOptional(getPageDescription())
   page?: IPage;
 }
@@ -66,11 +76,13 @@ export const queryStrategy: IQueryStategy<IOrderQuery> = {
   createdTime: QueryStrategyEnum.range,
   stockId: QueryStrategyEnum.value,
   method: QueryStrategyEnum.inArray,
+  subMethod: QueryStrategyEnum.inArray,
   price: QueryStrategyEnum.range,
   quantity: QueryStrategyEnum.range,
   priceType: QueryStrategyEnum.inArray,
   timeRestriction: QueryStrategyEnum.inArray,
   orderId: QueryStrategyEnum.value,
+  status: QueryStrategyEnum.inArray,
 };
 
 export class IOrderQueryResponse {
@@ -84,11 +96,13 @@ export class IOrderQueryResponse {
         { key: 'createdTime', type: 'date' },
         { key: 'stockId', type: 'number' },
         { key: 'method', type: 'number' },
+        { key: 'subMethod', type: 'number' },
         { key: 'price', type: 'number' },
         { key: 'quantity', type: 'number' },
         { key: 'priceType', type: 'number' },
         { key: 'timeRestriction', type: 'number' },
         { key: 'orderId', type: 'number' },
+        { key: 'status', type: 'number' },
       ]),
     },
   })
@@ -98,7 +112,7 @@ export class IOrderQueryResponse {
   totalSize: number;
 }
 
-export class IOrderBody {
+export class IOrderInsert {
   @ApiProperty({ example: 1 })
   investorId: number;
 
@@ -119,4 +133,14 @@ export class IOrderBody {
 
   @ApiProperty(getEnumDescription('timeRestriction', false))
   timeRestriction: TimeRestrictiomEnum;
+
+  orderId?: number;
+}
+
+export class IOrderDelete {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  quantity: number;
 }

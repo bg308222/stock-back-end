@@ -1,7 +1,9 @@
 import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import {
   MethodEnum,
+  OrderStatusEnum,
   PriceTypeEnum,
+  SubMethodEnum,
   TimeRestrictiomEnum,
   TransactionStatusEnum,
   UpperLowerLimitEnum,
@@ -24,23 +26,27 @@ export const getRangeDescription = (isNumber = true) => {
 export const getEnumDescription = (
   type:
     | 'method'
+    | 'subMethod'
     | 'priceType'
     | 'timeRestriction'
     | 'transactionStatus'
-    | 'upperLowerLimit',
+    | 'upperLowerLimit'
+    | 'orderStatus',
   isArray = true,
 ) => {
   if (isArray) {
     switch (type) {
       case 'method': {
         return {
-          enum: [
-            MethodEnum.BUY,
-            MethodEnum.SELL,
-            MethodEnum.CANCEL,
-            MethodEnum.UPDATE,
-          ],
-          description: 'BUY = 0, SELL = 1, CANCEL = 2, UPDATE = 3',
+          enum: [MethodEnum.BUY, MethodEnum.SELL],
+          description: 'BUY = 0, SELL = 1',
+          isArray: true,
+        };
+      }
+      case 'subMethod': {
+        return {
+          enum: [SubMethodEnum.CANCEL, SubMethodEnum.UPDATE],
+          description: 'CANCEL = 0, UPDATE = 1',
           isArray: true,
         };
       }
@@ -80,12 +86,25 @@ export const getEnumDescription = (
           isArray: true,
         };
       }
+      case 'orderStatus': {
+        return {
+          enum: [OrderStatusEnum.FAIL, OrderStatusEnum.SUCCESS],
+          description: 'FAIL = 0, SUCCESS = 1',
+          isArray: true,
+        };
+      }
     }
   } else {
     switch (type) {
       case 'method': {
         return {
           description: 'BUY = 0, SELL = 1',
+          example: 0,
+        };
+      }
+      case 'subMethod': {
+        return {
+          description: 'CANCEL = 0, UPDATE = 1',
           example: 0,
         };
       }

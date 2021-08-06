@@ -4,7 +4,7 @@ import { Display } from 'src/common/entity/display.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
 import { getNextTick } from '../match/match.service';
-import { IDisplayBody, IDisplayQuery, queryStrategy } from './display.dto';
+import { IDisplayInsert, IDisplayQuery, queryStrategy } from './display.dto';
 
 @Injectable()
 export class DisplayService {
@@ -35,7 +35,7 @@ export class DisplayService {
     };
   }
 
-  public async insert(body: IDisplayBody) {
+  public async insert(body: IDisplayInsert) {
     return await this.displayRepository.insert({
       ...body,
       stock: { id: body.stockId },

@@ -1,7 +1,12 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MatchService } from '../match/match.service';
-import { IOrderBody, IOrderQuery, IOrderQueryResponse } from './order.dto';
+import {
+  IOrderDelete,
+  IOrderInsert,
+  IOrderQuery,
+  IOrderQueryResponse,
+} from './order.dto';
 import { OrderService } from './order.service';
 
 @ApiTags('Order')
@@ -28,14 +33,17 @@ export class OrderController {
       'investorId, stockId先傳1，等未來實作完stock跟investor再調成動態的',
   })
   @Post()
-  public async insert(@Body() body: IOrderBody) {
-    const { generatedMaps } = await this.orderService.insert(body);
-    this.matchService.dispatchOrder({
-      id: generatedMaps[0].id,
-      createdTime: generatedMaps[0].createdTime,
-      orderId: generatedMaps[0].orderId,
-      ...body,
-    });
-    return 1;
+  public async insert(@Body() body: IOrderInsert) {
+    const order = await this.orderService.insert(body);
+    this.matchService.dispatchOrder(order);
+    return true;
+  }
+
+  @Delete()
+  public async delete(@Body() body: IOrderDelete) {
+    const order = await this.orderService.delete(body);
+    const result = await this.matchService.dispatchOrder(order);
+    if (result === false) this.orderService.updateStatusToFail(order.id);
+    return result;
   }
 }

@@ -4,7 +4,7 @@ import { Transaction } from 'src/common/entity/transaction.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
 import {
-  ITransactionBody,
+  ITransactionInsert,
   ITransactionQuery,
   queryStrategy,
 } from './transaction.dto';
@@ -29,7 +29,7 @@ export class TransactionService {
     };
   }
 
-  public async insert(body: ITransactionBody[]) {
+  public async insert(body: ITransactionInsert[]) {
     return await this.transactionRepository.insert(
       body.map((data) => {
         return {

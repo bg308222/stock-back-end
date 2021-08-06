@@ -1,6 +1,8 @@
 import {
   MethodEnum,
+  OrderStatusEnum,
   PriceTypeEnum,
+  SubMethodEnum,
   TimeRestrictiomEnum,
 } from 'src/common/enum';
 import {
@@ -36,7 +38,10 @@ export class Order {
   @Column({ type: 'enum', enum: MethodEnum })
   method: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'enum', enum: SubMethodEnum, nullable: true, default: null })
+  subMethod: number;
+
+  @Column({ type: 'float' })
   price: number;
 
   @Column({ type: 'int' })
@@ -50,7 +55,10 @@ export class Order {
 
   @Column({ default: null, nullable: true })
   orderId: number;
-  @OneToOne(() => Order)
+  @ManyToOne(() => Order)
   @JoinColumn({ name: 'orderId' })
-  cancelOrder: Order;
+  order: Order;
+
+  @Column({ default: OrderStatusEnum.SUCCESS })
+  status: number;
 }

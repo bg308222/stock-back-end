@@ -91,7 +91,7 @@ export class IDisplayQueryResponse {
   totalSize: number;
 }
 
-export class IDisplayBody {
+export class IDisplayInsert {
   @ApiProperty()
   stockId: number;
 

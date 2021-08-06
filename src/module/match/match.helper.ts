@@ -1,11 +1,12 @@
 import {
   MethodEnum,
   PriceTypeEnum,
+  SubMethodEnum,
   TimeRestrictiomEnum,
   TransactionStatusEnum,
 } from 'src/common/enum';
 import { IOrderSchema } from '../order/order.dto';
-import { ITransactionBody } from '../transaction/transaction.dto';
+import { ITransactionInsert } from '../transaction/transaction.dto';
 
 export interface IMarketInformation {
   stockId: number;
@@ -26,13 +27,9 @@ export interface IMarketBook {
 }
 
 interface IDoCallAuctionResponse {
-  transactions: ITransactionBody[];
-  cancelInformation?: {
-    orderId: number;
-  };
-  updateInformation?: {
-    orderId: number;
-  };
+  transactions: ITransactionInsert[];
+  isCancelSuccessfully?: boolean;
+  isUpdateSuccessfully?: boolean;
 }
 
 class LimitBook {
@@ -65,19 +62,17 @@ class LimitBook {
         return orders.length !== 0;
       })
       .sort(([priceA], [priceB]) => {
-        return parseInt(priceA, 10) - parseInt(priceB, 10);
+        return +priceA - +priceB;
       });
 
     if (sortedOrderArray.length === 0) {
       this.firstOrderPrice = null;
     } else {
       if (type === 'Buy') {
-        this.firstOrderPrice = parseInt(
-          sortedOrderArray[sortedOrderArray.length - 1][0],
-          10,
-        );
+        this.firstOrderPrice =
+          +sortedOrderArray[sortedOrderArray.length - 1][0];
       } else {
-        this.firstOrderPrice = parseInt(sortedOrderArray[0][0], 10);
+        (this.firstOrderPrice = +sortedOrderArray[0][0]), 10;
       }
     }
   }
@@ -117,7 +112,7 @@ export class StockMarket {
     status: TransactionStatusEnum,
     quantity: number,
     price: number,
-  ): ITransactionBody {
+  ): ITransactionInsert {
     return { ...order, orderId: id, status, quantity, price };
   }
 
@@ -131,22 +126,49 @@ export class StockMarket {
   public doCallAuction(order: IOrderSchema): IDoCallAuctionResponse {
     const returnResponse: IDoCallAuctionResponse = {
       transactions: [],
+      isCancelSuccessfully: undefined,
+      isUpdateSuccessfully: undefined,
     };
-    this.marketBook.accumulatedQuantity = 0;
+    const currentSideMethod = order.method === MethodEnum.BUY ? 'Buy' : 'Sell';
+    const inverseSideMethod = order.method === MethodEnum.BUY ? 'Sell' : 'Buy';
     const originMarketBook = JSON.stringify(this.marketBook);
     let isNeverTransaction = true;
 
+    this.marketBook.accumulatedQuantity = 0;
+
     // TODO 1 Check order method
-    if (order.method === MethodEnum.CANCEL) {
+    if (order.subMethod === SubMethodEnum.CANCEL) {
+      returnResponse.isCancelSuccessfully = false;
+
+      let targetOrderList: IOrderSchema[];
+      if (order.priceType === PriceTypeEnum.LIMIT) {
+        targetOrderList =
+          this.marketBook[`limit${currentSideMethod}`].orders[order.price];
+      } else if (order.priceType === PriceTypeEnum.MARKET) {
+        targetOrderList = this.marketBook[`market${currentSideMethod}`];
+      }
+      if (targetOrderList) {
+        const orderIndex = targetOrderList.findIndex(({ id }) => {
+          return id === order.orderId;
+        });
+        if (orderIndex !== -1) {
+          const { quantity } = targetOrderList[orderIndex];
+          if (order.quantity === quantity) {
+            targetOrderList.splice(orderIndex, 1);
+            returnResponse.isCancelSuccessfully = true;
+          } else if (order.quantity < quantity) {
+            targetOrderList[orderIndex].quantity -= order.quantity;
+            returnResponse.isCancelSuccessfully = true;
+          }
+        }
+      }
       return returnResponse;
     }
-    if (order.method === MethodEnum.UPDATE) {
+    if (order.subMethod === SubMethodEnum.UPDATE) {
       return returnResponse;
     }
 
     // 2 Classification
-    const currentSideMethod = order.method === MethodEnum.BUY ? 'Buy' : 'Sell';
-    const inverseSideMethod = order.method === MethodEnum.BUY ? 'Sell' : 'Buy';
     if (order.priceType === PriceTypeEnum.MARKET) {
       //Market buy
       if (this.marketBook[`market${currentSideMethod}`].push(order) !== 1)

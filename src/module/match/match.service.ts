@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { TransactionStatusEnum, UpperLowerLimitEnum } from 'src/common/enum';
-import { IDisplayBody } from '../display/display.dto';
+import { IDisplayInsert } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IOrderSchema } from '../order/order.dto';
-import { ITransactionBody } from '../transaction/transaction.dto';
+import { ITransactionInsert } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
 import { IMarketBook, IMarketInformation, StockMarket } from './match.helper';
 
@@ -83,7 +83,7 @@ export class MatchService {
 
   private stockMarketList: Record<string, StockMarket>;
 
-  private getDisplayBody(marketBook: IMarketBook): IDisplayBody {
+  private getDisplayBody(marketBook: IMarketBook): IDisplayInsert {
     const maxPrice = marketBook.marketInformation.closedPrice * 1.1;
     const minPrice = marketBook.marketInformation.closedPrice * 0.9;
 
@@ -129,21 +129,21 @@ export class MatchService {
   }
 
   private getTransactionBody(
-    transactions: ITransactionBody[],
-  ): ITransactionBody[] {
+    transactions: ITransactionInsert[],
+  ): ITransactionInsert[] {
     const sortedObject = transactions.reduce<
-      Record<string, ITransactionBody[]>
+      Record<string, ITransactionInsert[]>
     >((p, transaction) => {
       if (!p[transaction.orderId]) p[transaction.orderId] = [];
       p[transaction.orderId].push(transaction);
       return p;
     }, {});
 
-    const sortedArray = Object.values(sortedObject).map<ITransactionBody>(
+    const sortedArray = Object.values(sortedObject).map<ITransactionInsert>(
       (transactionArray) => {
         if (transactionArray.length === 1) return transactionArray[0];
         const mergeTransaction = transactionArray.reduce<
-          Pick<ITransactionBody, 'status' | 'quantity' | 'price'>
+          Pick<ITransactionInsert, 'status' | 'quantity' | 'price'>
         >(
           (p, { status, quantity, price }) => {
             if (status === TransactionStatusEnum.FULL)
@@ -165,29 +165,44 @@ export class MatchService {
     return sortedArray;
   }
 
+  private async insertDisplay(stockId: number) {
+    const marketBook = this.stockMarketList[stockId].dumpMarketBook();
+    await this.displayService.insert(this.getDisplayBody(marketBook));
+  }
+
   public async dispatchOrder(order: IOrderSchema) {
     if (!this.stockMarketList[order.stockId]) {
       // TODO Dynamic stock market information
+      // db find stock
       this.stockMarketList[order.stockId] = new StockMarket(
         {
           stockId: order.stockId,
-          closedPrice: 150,
+          closedPrice: 100,
         },
-        150,
+        100,
       );
     }
 
     //TODO Recognize when to doCallAuction or doContinuousTrading
     if (true) {
-      const { transactions, cancelInformation, updateInformation } =
+      const { transactions, isCancelSuccessfully, isUpdateSuccessfully } =
         this.stockMarketList[order.stockId].doCallAuction(order);
 
-      if (cancelInformation) {
-      } else if (updateInformation) {
+      if (isCancelSuccessfully !== undefined) {
+        if (isCancelSuccessfully === true) {
+          await this.insertDisplay(order.stockId);
+          return true;
+        }
+        return false;
+      } else if (isUpdateSuccessfully !== undefined) {
+        if (isUpdateSuccessfully === true) {
+          return true;
+        }
+        return false;
       } else {
         // Match successfully
-        const marketBook = this.stockMarketList[order.stockId].dumpMarketBook();
-        await this.displayService.insert(this.getDisplayBody(marketBook));
+        await this.insertDisplay(order.stockId);
+
         if (transactions.length !== 0) {
           await this.transactionService.insert(
             this.getTransactionBody(transactions),
@@ -197,7 +212,7 @@ export class MatchService {
     } else {
       // this.stockMarketList[order.stockId].doContinuousTrading();
     }
-    return 1;
+    return true;
   }
 
   public setMarketInformation(
