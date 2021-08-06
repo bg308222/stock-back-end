@@ -147,7 +147,6 @@ export class MatchService {
       } else {
         // Match successfully
         const marketBook = this.stockMarketList[order.stockId].dumpMarketBook();
-        console.log(marketBook);
         await this.displayService.insert(this.getDisplayBody(marketBook));
         if (transactions.length !== 0) {
           await this.transactionService.insert(
