@@ -7,13 +7,68 @@ import { ITransactionBody } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
 import { IMarketBook, IMarketInformation, StockMarket } from './match.helper';
 
-export const getTick = (currentPrice: number) => {
+export const getNextTick = (currentPrice: number) => {
   if (currentPrice < 5) return 0.01;
   else if (currentPrice < 10) return 0.05;
   else if (currentPrice < 50) return 0.1;
   else if (currentPrice < 100) return 0.5;
   else if (currentPrice < 500) return 1;
   else return 5;
+};
+
+export const getTickList = (
+  closedPrice: number,
+  currentPrice: number,
+  orders?: {
+    buyOrders: Record<string, IOrderSchema[]>;
+    sellOrders: Record<string, IOrderSchema[]>;
+  },
+) => {
+  const maxPrice = closedPrice * 1.1;
+  const minPrice = closedPrice * 0.9;
+
+  let minTick = currentPrice;
+  while (minTick - getNextTick(minTick) > minPrice)
+    minTick -= getNextTick(minTick);
+  let maxTick = currentPrice;
+  while (maxTick + getNextTick(maxTick) < maxPrice)
+    maxTick += getNextTick(maxTick);
+
+  if (!orders) {
+    const tickList: Record<string, number> = {};
+    for (
+      let currentTick = minTick;
+      currentTick <= maxTick;
+      currentTick += getNextTick(currentTick)
+    )
+      tickList[currentTick] = 0;
+    return { tickList };
+  } else {
+    const buyFiveTick: Record<string, number> = {};
+    const sellFiveTick: Record<string, number> = {};
+    for (
+      let currentTick = minTick;
+      currentTick <= maxTick;
+      currentTick += getNextTick(currentTick)
+    ) {
+      const limitBuyOrders = orders.buyOrders[currentTick];
+      buyFiveTick[currentTick] = !limitBuyOrders
+        ? 0
+        : limitBuyOrders.reduce<number>((p, order) => {
+            p += order.quantity;
+            return p;
+          }, 0);
+
+      const limitSellOrders = orders.sellOrders[currentTick];
+      sellFiveTick[currentTick] = !limitSellOrders
+        ? 0
+        : limitSellOrders.reduce<number>((p, order) => {
+            p += order.quantity;
+            return p;
+          }, 0);
+    }
+    return { buyFiveTick, sellFiveTick };
+  }
 };
 
 @Injectable()
@@ -35,45 +90,31 @@ export class MatchService {
     let buyUpperLowerLimit: UpperLowerLimitEnum = UpperLowerLimitEnum.SPACE,
       sellUpperLowerLimit: UpperLowerLimitEnum = UpperLowerLimitEnum.SPACE;
 
-    if (marketBook.currentPrice + getTick(marketBook.currentPrice) > maxPrice) {
+    if (
+      marketBook.currentPrice + getNextTick(marketBook.currentPrice) >
+      maxPrice
+    ) {
       buyUpperLowerLimit = UpperLowerLimitEnum.LIMIT_UP;
       sellUpperLowerLimit = UpperLowerLimitEnum.LIMIT_UP;
     }
 
-    if (marketBook.currentPrice - getTick(marketBook.currentPrice) < minPrice) {
+    if (
+      marketBook.currentPrice - getNextTick(marketBook.currentPrice) <
+      minPrice
+    ) {
       buyUpperLowerLimit = UpperLowerLimitEnum.LIMIT_DOWN;
       sellUpperLowerLimit = UpperLowerLimitEnum.LIMIT_DOWN;
     }
 
     // ---
-    let minTick = marketBook.currentPrice;
-    while (minTick - getTick(minTick) > minPrice) minTick -= getTick(minTick);
-    let maxTick = marketBook.currentPrice;
-    while (maxTick + getTick(maxTick) < maxPrice) maxTick += getTick(maxTick);
-    const buyFiveTick: Record<string, number> = {};
-    const sellFiveTick: Record<string, number> = {};
-
-    for (
-      let currentTick = minTick;
-      currentTick <= maxTick;
-      currentTick += getTick(currentTick)
-    ) {
-      const limitBuyOrders = marketBook.limitBuy.orders[currentTick];
-      buyFiveTick[currentTick] = !limitBuyOrders
-        ? 0
-        : limitBuyOrders.reduce<number>((p, order) => {
-            p += order.quantity;
-            return p;
-          }, 0);
-
-      const limitSellOrders = marketBook.limitSell.orders[currentTick];
-      sellFiveTick[currentTick] = !limitSellOrders
-        ? 0
-        : limitSellOrders.reduce<number>((p, order) => {
-            p += order.quantity;
-            return p;
-          }, 0);
-    }
+    const { buyFiveTick, sellFiveTick } = getTickList(
+      marketBook.marketInformation.closedPrice,
+      marketBook.currentPrice,
+      {
+        buyOrders: marketBook.limitBuy.orders,
+        sellOrders: marketBook.limitSell.orders,
+      },
+    );
 
     return {
       stockId: marketBook.marketInformation.stockId,
