@@ -22,12 +22,30 @@ export class DisplayService {
     );
     return {
       content: (await fullQueryBuilder.getMany()).map(
-        ({ buyFiveTick, sellFiveTick, tickRange, ...data }) => {
+        ({
+          buyFiveTick: buyFiveTickJson,
+          sellFiveTick: sellFiveTickJson,
+          tickRange: tickRangeJson,
+          ...data
+        }) => {
+          const buyFiveTick = JSON.parse(buyFiveTickJson) as number[];
+          const sellFiveTick = JSON.parse(sellFiveTickJson) as number[];
+          const tickRange = JSON.parse(tickRangeJson) as number[];
+          let firstOrderBuyPrice = null;
+          let firstOrderSellPrice = null;
+          tickRange.forEach((price, index) => {
+            if (firstOrderBuyPrice === null && buyFiveTick[index] !== 0)
+              firstOrderBuyPrice = price;
+            if (sellFiveTick[index] !== 0) firstOrderSellPrice = price;
+          });
+
           return {
             ...data,
-            buyFiveTick: JSON.parse(buyFiveTick),
-            sellFiveTick: JSON.parse(sellFiveTick),
-            tickRange: JSON.parse(tickRange),
+            buyFiveTick,
+            sellFiveTick,
+            tickRange,
+            firstOrderBuyPrice,
+            firstOrderSellPrice,
           };
         },
       ),

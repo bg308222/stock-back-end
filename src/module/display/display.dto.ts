@@ -59,6 +59,7 @@ export class IDisplayQueryResponse {
             ],
           },
         },
+        { key: 'firstOrderBuyPrice', type: 'number' },
         {
           key: 'sellFiveTick',
           type: 'numberArray',
@@ -71,6 +72,7 @@ export class IDisplayQueryResponse {
             ],
           },
         },
+        { key: 'firstOrderSellPrice', type: 'number' },
         {
           key: 'tickRange',
           type: 'numberArray',
