@@ -6,6 +6,32 @@ import { Repository } from 'typeorm';
 import { getNextTick } from '../match/match.service';
 import { IDisplayInsert, IDisplayQuery, queryStrategy } from './display.dto';
 
+const transferResult = ({
+  buyFiveTick: buyFiveTickJson,
+  sellFiveTick: sellFiveTickJson,
+  tickRange: tickRangeJson,
+  ...data
+}) => {
+  const buyFiveTick = JSON.parse(buyFiveTickJson) as number[];
+  const sellFiveTick = JSON.parse(sellFiveTickJson) as number[];
+  const tickRange = JSON.parse(tickRangeJson) as number[];
+  let firstOrderBuyPrice = null;
+  let firstOrderSellPrice = null;
+  tickRange.forEach((price, index) => {
+    if (firstOrderBuyPrice === null && buyFiveTick[index] !== 0)
+      firstOrderBuyPrice = price;
+    if (sellFiveTick[index] !== 0) firstOrderSellPrice = price;
+  });
+
+  return {
+    ...data,
+    buyFiveTick,
+    sellFiveTick,
+    tickRange,
+    firstOrderBuyPrice,
+    firstOrderSellPrice,
+  };
+};
 @Injectable()
 export class DisplayService {
   constructor(
@@ -20,35 +46,12 @@ export class DisplayService {
       queryStrategy,
       query,
     );
-    return {
-      content: (await fullQueryBuilder.getMany()).map(
-        ({
-          buyFiveTick: buyFiveTickJson,
-          sellFiveTick: sellFiveTickJson,
-          tickRange: tickRangeJson,
-          ...data
-        }) => {
-          const buyFiveTick = JSON.parse(buyFiveTickJson) as number[];
-          const sellFiveTick = JSON.parse(sellFiveTickJson) as number[];
-          const tickRange = JSON.parse(tickRangeJson) as number[];
-          let firstOrderBuyPrice = null;
-          let firstOrderSellPrice = null;
-          tickRange.forEach((price, index) => {
-            if (firstOrderBuyPrice === null && buyFiveTick[index] !== 0)
-              firstOrderBuyPrice = price;
-            if (sellFiveTick[index] !== 0) firstOrderSellPrice = price;
-          });
 
-          return {
-            ...data,
-            buyFiveTick,
-            sellFiveTick,
-            tickRange,
-            firstOrderBuyPrice,
-            firstOrderSellPrice,
-          };
-        },
-      ),
+    if (query.isGetLatest) {
+      return transferResult(await fullQueryBuilder.getOne());
+    }
+    return {
+      content: (await fullQueryBuilder.getMany()).map(transferResult),
       totalSize,
     };
   }

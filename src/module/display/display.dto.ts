@@ -8,6 +8,9 @@ import {
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export class IDisplayQuery extends PartialType(CommonQuery) {
+  @ApiPropertyOptional({ description: '設為true可只拿取最新一筆，預設為false' })
+  isGetLatest?: boolean;
+
   @ApiPropertyOptional()
   id?: number;
 
@@ -24,13 +27,14 @@ export class IDisplayQuery extends PartialType(CommonQuery) {
   matchQuantity?: IRange<number>;
 }
 
-export const queryStrategy: IQueryStategy<IDisplayQuery> = {
-  id: QueryStrategyEnum.value,
-  createdTime: QueryStrategyEnum.range,
-  stockId: QueryStrategyEnum.value,
-  matchPrice: QueryStrategyEnum.range,
-  matchQuantity: QueryStrategyEnum.range,
-};
+export const queryStrategy: IQueryStategy<Omit<IDisplayQuery, 'isGetLatest'>> =
+  {
+    id: QueryStrategyEnum.value,
+    createdTime: QueryStrategyEnum.range,
+    stockId: QueryStrategyEnum.value,
+    matchPrice: QueryStrategyEnum.range,
+    matchQuantity: QueryStrategyEnum.range,
+  };
 
 export class IDisplayQueryResponse {
   @ApiProperty({
