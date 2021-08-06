@@ -8,6 +8,11 @@ import {
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export type IDisplaySchema = Omit<Display, 'stock'>;
+export interface ITickRange {
+  price: number;
+  buyQuantity: number;
+  sellQuantity: number;
+}
 export class IDisplayQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional({ description: '設為true可只拿取最新一筆，預設為false' })
   isGetLatest?: boolean;
@@ -44,11 +49,7 @@ export class IDisplayQueryResponse {
       type: 'object',
       properties: getResponseProperties<
         IDisplaySchema & {
-          buyTickSize: number;
-          buyUpperLowerLimit: number;
           firstOrderBuyPrice: number;
-          sellTickSize: number;
-          sellUpperLowerLimit: number;
           firstOrderSellPrice: number;
         }
       >([
@@ -57,44 +58,158 @@ export class IDisplayQueryResponse {
         { key: 'stockId', type: 'number' },
         { key: 'matchPrice', type: 'number' },
         { key: 'matchQuantity', type: 'number' },
-        { key: 'buyTickSize', type: 'number' },
-        { key: 'buyUpperLowerLimit', type: 'number' },
-        { key: 'sellTickSize', type: 'number' },
-        { key: 'sellUpperLowerLimit', type: 'number' },
-        {
-          key: 'buyFiveTick',
-          type: 'numberArray',
-          option: {
-            example: [
-              [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0,
-              ],
-            ],
-          },
-        },
         { key: 'firstOrderBuyPrice', type: 'number' },
-        {
-          key: 'sellFiveTick',
-          type: 'numberArray',
-          option: {
-            example: [
-              [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0,
-              ],
-            ],
-          },
-        },
         { key: 'firstOrderSellPrice', type: 'number' },
         {
           key: 'tickRange',
           type: 'numberArray',
           option: {
             example: [
-              164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152,
-              151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139,
-              138, 137, 136,
+              {
+                price: 110,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 109,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 108,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 107,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 106,
+                buyQuantity: 2,
+                sellQuantity: 0,
+              },
+              {
+                price: 105,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 104,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 103,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 102,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 101,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 100,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 99,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 98.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 98,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 97.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 97,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 96.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 96,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 95.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 95,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 94.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 94,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 93.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 93,
+                buyQuantity: 1,
+                sellQuantity: 0,
+              },
+              {
+                price: 92.5,
+                buyQuantity: 1,
+                sellQuantity: 0,
+              },
+              {
+                price: 92,
+                buyQuantity: 1,
+                sellQuantity: 0,
+              },
+              {
+                price: 91.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 91,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 90.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
             ],
           },
         },
@@ -118,10 +233,10 @@ export class IDisplayInsert {
   matchQuantity: number;
 
   @ApiProperty()
-  buyFiveTick: string;
+  buyTick: string;
 
   @ApiProperty()
-  sellFiveTick: string;
+  sellTick: string;
 
   @ApiProperty()
   tickRange: string;

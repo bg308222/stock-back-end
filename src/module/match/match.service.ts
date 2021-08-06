@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { TransactionStatusEnum, UpperLowerLimitEnum } from 'src/common/enum';
-import { IDisplayInsert } from '../display/display.dto';
+import { TransactionStatusEnum } from 'src/common/enum';
+import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IOrderSchema } from '../order/order.dto';
 import { ITransactionInsert } from '../transaction/transaction.dto';
@@ -27,17 +27,24 @@ export const getTickRange = (closedPrice: number) => {
   while (maxTick + getNextTick(maxTick) < maxPrice)
     maxTick += getNextTick(maxTick);
 
-  const tickRange: number[] = [];
-
+  const numTickRange: number[] = [];
+  const tickRange: ITickRange[] = [];
   for (
     let currentTick = maxTick;
     currentTick >= minTick;
     currentTick -= getNextTick(currentTick)
   ) {
-    tickRange.push(currentTick);
+    numTickRange.push(currentTick);
+    tickRange.push({
+      price: currentTick,
+      buyQuantity: 0,
+      sellQuantity: 0,
+    });
   }
-
-  return tickRange;
+  return {
+    tickRange,
+    numTickRange,
+  };
 };
 
 export const getTickList = (
@@ -45,11 +52,11 @@ export const getTickList = (
   buyOrders: Record<string, IOrderSchema[]>,
   sellOrders: Record<string, IOrderSchema[]>,
 ) => {
-  const buyFiveTick: number[] = [];
-  const sellFiveTick: number[] = [];
-  tickRange.forEach((currentTick) => {
-    const limitBuyOrders = buyOrders[currentTick];
-    buyFiveTick.push(
+  const buyTick: number[] = [];
+  const sellTick: number[] = [];
+  tickRange.forEach((price) => {
+    const limitBuyOrders = buyOrders[price];
+    buyTick.push(
       !limitBuyOrders
         ? 0
         : limitBuyOrders.reduce<number>((p, order) => {
@@ -58,8 +65,8 @@ export const getTickList = (
           }, 0),
     );
 
-    const limitSellOrders = sellOrders[currentTick];
-    sellFiveTick.push(
+    const limitSellOrders = sellOrders[price];
+    sellTick.push(
       !limitSellOrders
         ? 0
         : limitSellOrders.reduce<number>((p, order) => {
@@ -69,7 +76,7 @@ export const getTickList = (
     );
   });
 
-  return { tickRange, buyFiveTick, sellFiveTick };
+  return { tickRange, buyTick, sellTick };
 };
 
 @Injectable()
@@ -84,8 +91,8 @@ export class MatchService {
   private stockMarketList: Record<string, StockMarket>;
 
   private getDisplayBody(marketBook: IMarketBook): IDisplayInsert {
-    const { tickRange, buyFiveTick, sellFiveTick } = getTickList(
-      getTickRange(marketBook.marketInformation.closedPrice),
+    const { tickRange, buyTick, sellTick } = getTickList(
+      getTickRange(marketBook.marketInformation.closedPrice).numTickRange,
       marketBook.limitBuy.orders,
       marketBook.limitSell.orders,
     );
@@ -94,8 +101,8 @@ export class MatchService {
       stockId: marketBook.marketInformation.stockId,
       matchPrice: marketBook.currentPrice,
       matchQuantity: marketBook.accumulatedQuantity,
-      buyFiveTick: JSON.stringify(buyFiveTick),
-      sellFiveTick: JSON.stringify(sellFiveTick),
+      buyTick: JSON.stringify(buyTick),
+      sellTick: JSON.stringify(sellTick),
       tickRange: JSON.stringify(tickRange),
     };
   }

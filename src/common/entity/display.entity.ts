@@ -27,10 +27,10 @@ export class Display {
   matchQuantity: number;
 
   @Column({ type: 'json', default: '"[]"' })
-  buyFiveTick: string;
+  buyTick: string;
 
   @Column({ type: 'json', default: '"[]"' })
-  sellFiveTick: string;
+  sellTick: string;
 
   @Column({ type: 'json', default: '"[]"' })
   tickRange: string;

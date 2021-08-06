@@ -7,33 +7,39 @@ import {
   IDisplayInsert,
   IDisplayQuery,
   IDisplaySchema,
+  ITickRange,
   queryStrategy,
 } from './display.dto';
 
 const transferResult = (displaySchema?: IDisplaySchema) => {
   if (!displaySchema) return null;
   const {
-    buyFiveTick: buyFiveTickJson,
-    sellFiveTick: sellFiveTickJson,
+    buyTick: buyTickJson,
+    sellTick: sellTickJson,
     tickRange: tickRangeJson,
     ...data
   } = displaySchema;
-  const buyFiveTick = JSON.parse(buyFiveTickJson) as number[];
-  const sellFiveTick = JSON.parse(sellFiveTickJson) as number[];
-  const tickRange = JSON.parse(tickRangeJson) as number[];
+  const buyTick = JSON.parse(buyTickJson) as number[];
+  const sellTick = JSON.parse(sellTickJson) as number[];
+  const tickRange: number[] = JSON.parse(tickRangeJson);
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
-  tickRange.forEach((price, index) => {
-    if (firstOrderBuyPrice === null && buyFiveTick[index] !== 0)
+  //從DB得到 quantity不需要自己塞零
+  const transferTickRange = tickRange.map((price, index) => {
+    if (firstOrderBuyPrice === null && buyTick[index] !== 0)
       firstOrderBuyPrice = price;
-    if (sellFiveTick[index] !== 0) firstOrderSellPrice = price;
+    if (sellTick[index] !== 0) firstOrderSellPrice = price;
+    return {
+      price,
+      buyQuantity: buyTick[index] || 0,
+      sellQuantity: sellTick[index] || 0,
+    };
   });
 
   return {
     ...data,
-    buyFiveTick,
-    sellFiveTick,
-    tickRange,
+
+    tickRange: transferTickRange,
     firstOrderBuyPrice,
     firstOrderSellPrice,
   };

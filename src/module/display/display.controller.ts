@@ -13,7 +13,7 @@ export class DisplayController {
   @ApiOperation({
     summary: '前端展示圖表用(K線、分時走勢、五檔報價圖)',
     description:
-      'matchPrice為成交價，用來繪製線圖。若index = i,則tickRange[i]的值為價格,buyFiveTick[i]和sellFiveTick[i]的值為該價格下，買單和賣單的數量',
+      'matchPrice為成交價，用來繪製線圖。若index = i,則tickRange[i]的值為價格,buyTick[i]和sellTick[i]的值為該價格下，買單和賣單的數量',
   })
   @Get()
   public async get(@Query() query: IDisplayQuery) {
@@ -33,6 +33,6 @@ export class DisplayController {
     example: 150,
   })
   public async getTickRange(@Query('closedPrice') closedPrice: number) {
-    return getTickRange(closedPrice);
+    return getTickRange(closedPrice).tickRange;
   }
 }
