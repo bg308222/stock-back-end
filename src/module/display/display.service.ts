@@ -3,15 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
-import { getNextTick } from '../match/match.service';
 import { IDisplayInsert, IDisplayQuery, queryStrategy } from './display.dto';
 
-const transferResult = ({
-  buyFiveTick: buyFiveTickJson,
-  sellFiveTick: sellFiveTickJson,
-  tickRange: tickRangeJson,
-  ...data
-}) => {
+const transferResult = (datas) => {
+  if (!datas) return null;
+  const {
+    buyFiveTick: buyFiveTickJson,
+    sellFiveTick: sellFiveTickJson,
+    tickRange: tickRangeJson,
+    ...data
+  } = datas;
   const buyFiveTick = JSON.parse(buyFiveTickJson) as number[];
   const sellFiveTick = JSON.parse(sellFiveTickJson) as number[];
   const tickRange = JSON.parse(tickRangeJson) as number[];
