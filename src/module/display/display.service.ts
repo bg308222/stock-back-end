@@ -26,7 +26,7 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
 
-  let fiveTickRange: number[];
+  let fiveTickRange: number[] = [];
   const transferTickRange: ITickRange[] = tickRange.map((price, index) => {
     let marketBuyAdder = 0;
     let marketSellAdder = 0;
