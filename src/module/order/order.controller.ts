@@ -35,7 +35,7 @@ export class OrderController {
   @Post()
   public async insert(@Body() body: IOrderInsert) {
     const order = await this.orderService.insert(body);
-    this.matchService.dispatchOrder(order);
+    await this.matchService.dispatchOrder(order);
     return true;
   }
 

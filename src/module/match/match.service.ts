@@ -4,7 +4,6 @@ import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IOrderSchema } from '../order/order.dto';
 import { OrderService } from '../order/order.service';
-import { IStockSchema } from '../stock/stock.dto';
 import { StockService } from '../stock/stock.service';
 import { ITransactionInsert } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
@@ -242,7 +241,7 @@ export class MatchService {
       content: [stock],
     } = await this.stockService.get({ id: stockId });
     this.stockMarketList[stockId].setMarketBook(stock, marketBook);
-    this.insertDisplay(stock.id);
+    await this.insertDisplay(stock.id);
     return true;
   }
 }
