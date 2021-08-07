@@ -32,12 +32,12 @@ export class Display {
   @Column({ type: 'int' })
   marketSellQuantity: number;
 
-  @Column({ type: 'json', default: '"[]"' })
+  @Column({ type: 'longtext', default: '"[]"' })
   buyTick: string;
 
-  @Column({ type: 'json', default: '"[]"' })
+  @Column({ type: 'longtext', default: '"[]"' })
   sellTick: string;
 
-  @Column({ type: 'json', default: '"[]"' })
-  tickRange: string;
+  @Column({ type: 'float' })
+  closedPrice: number;
 }

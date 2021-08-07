@@ -1,11 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TransactionStatusEnum } from 'src/common/enum';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IOrderSchema } from '../order/order.dto';
+import { OrderService } from '../order/order.service';
+import { IStockSchema } from '../stock/stock.dto';
+import { StockService } from '../stock/stock.service';
 import { ITransactionInsert } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
-import { IMarketBook, IMarketInformation, StockMarket } from './match.helper';
+import { IMarketBook, StockMarket } from './match.helper';
 
 export const getOrderQuantity = (orders: IOrderSchema[]) => {
   const quantity = orders.reduce<number>((p, order) => {
@@ -24,7 +27,6 @@ export const getNextTick = (currentPrice: number) => {
   else return 5;
 };
 
-//只有@get /display/tickRange 需要拿ITickRange[] 其他都拿number[]
 export const getTickRange = (closedPrice: number) => {
   const maxPrice = closedPrice * 1.1;
   const minPrice = closedPrice * 0.9;
@@ -64,7 +66,7 @@ export const getTickList = ({
   ...marketBook
 }: IMarketBook) => {
   const { numTickRange: tickRange } = getTickRange(
-    marketBook.marketInformation.closedPrice,
+    marketBook.stock.closedPrice,
   );
 
   const buyTick: number[] = [];
@@ -93,28 +95,32 @@ export class MatchService {
   constructor(
     private readonly transactionService: TransactionService,
     private readonly displayService: DisplayService,
+    private readonly stockService: StockService,
+    private readonly orderService: OrderService,
   ) {
     this.stockMarketList = {};
+  }
+
+  private async createMarket(id: number, marketId?: number) {
+    const {
+      content: [stock],
+    } = await this.stockService.get({ id });
+    this.stockMarketList[marketId || stock.id] = new StockMarket(stock);
   }
 
   private stockMarketList: Record<string, StockMarket>;
 
   private getDisplayBody(marketBook: IMarketBook): IDisplayInsert {
-    const {
-      tickRange,
-      buyTick,
-      sellTick,
-      marketBuyQuantity,
-      marketSellQuantity,
-    } = getTickList(marketBook);
+    const { buyTick, sellTick, marketBuyQuantity, marketSellQuantity } =
+      getTickList(marketBook);
 
     return {
-      stockId: marketBook.marketInformation.stockId,
-      matchPrice: marketBook.currentPrice,
+      stockId: marketBook.stock.id,
+      matchPrice: marketBook.stock.currentPrice,
       matchQuantity: marketBook.accumulatedQuantity,
       buyTick: JSON.stringify(buyTick),
       sellTick: JSON.stringify(sellTick),
-      tickRange: JSON.stringify(tickRange),
+      closedPrice: marketBook.stock.closedPrice,
       marketBuyQuantity,
       marketSellQuantity,
     };
@@ -159,21 +165,14 @@ export class MatchService {
 
   private async insertDisplay(stockId: number) {
     const marketBook = this.stockMarketList[stockId].dumpMarketBook();
-    await this.displayService.insert(this.getDisplayBody(marketBook));
+    await this.displayService.insert({
+      ...this.getDisplayBody(marketBook),
+    });
   }
 
-  public async dispatchOrder(order: IOrderSchema) {
-    if (!this.stockMarketList[order.stockId]) {
-      // TODO Dynamic stock market information
-      // db find stock
-      this.stockMarketList[order.stockId] = new StockMarket(
-        {
-          stockId: order.stockId,
-          closedPrice: 100,
-        },
-        100,
-      );
-    }
+  public async dispatchOrder(order: IOrderSchema, isWriteDb = true) {
+    if (!this.stockMarketList[order.stockId])
+      await this.createMarket(order.stockId);
 
     //TODO Recognize when to doCallAuction or doContinuousTrading
     if (true) {
@@ -182,7 +181,7 @@ export class MatchService {
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          await this.insertDisplay(order.stockId);
+          if (isWriteDb) await this.insertDisplay(order.stockId);
           return true;
         }
         return false;
@@ -193,12 +192,13 @@ export class MatchService {
         return false;
       } else {
         // Match successfully
-        await this.insertDisplay(order.stockId);
+        if (isWriteDb) await this.insertDisplay(order.stockId);
 
         if (transactions.length !== 0) {
-          await this.transactionService.insert(
-            this.getTransactionBody(transactions),
-          );
+          if (isWriteDb)
+            await this.transactionService.insert(
+              this.getTransactionBody(transactions),
+            );
         }
       }
     } else {
@@ -207,14 +207,42 @@ export class MatchService {
     return true;
   }
 
-  public setMarketInformation(
+  public async getReplayOrdersAndMarketBook(
     stockId: number,
-    marketInformation: Partial<IMarketInformation>,
+    createdTime?: string,
   ) {
-    if (!this.stockMarketList[stockId]) {
-      throw new BadRequestException("This stock market doesn't exist");
-    } else {
-      this.stockMarketList[stockId].setMarketInformation(marketInformation);
+    const marketId = new Date().getTime();
+    await this.createMarket(stockId, marketId);
+
+    if (createdTime) {
+      const { content: beforeOrders } = await this.orderService.get({
+        createdTime: { max: createdTime },
+      });
+      for (const order of beforeOrders) {
+        this.stockMarketList[marketId].doCallAuction(order);
+      }
     }
+
+    const { content: orders } = await this.orderService.get({
+      createdTime: createdTime ? { min: createdTime } : undefined,
+      order: { orderBy: 'createdTime', order: 'ASC' },
+    });
+    const marketBook = this.stockMarketList[marketId].dumpMarketBook();
+
+    delete this.stockMarketList[marketId];
+
+    return {
+      orders,
+      marketBook,
+    };
+  }
+
+  public async setMarketBook(stockId: number, marketBook: IMarketBook) {
+    const {
+      content: [stock],
+    } = await this.stockService.get({ id: stockId });
+    this.stockMarketList[stockId].setMarketBook(stock, marketBook);
+    this.insertDisplay(stock.id);
+    return true;
   }
 }

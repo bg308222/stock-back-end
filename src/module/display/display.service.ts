@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
+import { getTickRange } from '../match/match.service';
 import {
   IDisplayInsert,
   IDisplayQuery,
@@ -15,12 +16,12 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   const {
     buyTick: buyTickJson,
     sellTick: sellTickJson,
-    tickRange: tickRangeJson,
+    closedPrice,
     ...data
   } = displaySchema;
   const buyTick = JSON.parse(buyTickJson) as number[];
   const sellTick = JSON.parse(sellTickJson) as number[];
-  const tickRange: number[] = JSON.parse(tickRangeJson);
+  const { numTickRange: tickRange } = getTickRange(closedPrice);
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
 
@@ -46,6 +47,7 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
     ...data,
 
     tickRange: transferTickRange,
+    //TODO  fiveTickRange:
     firstOrderBuyPrice,
     firstOrderSellPrice,
   };
@@ -67,12 +69,14 @@ export class DisplayService {
       );
 
     if (query.isGetLatest) {
-      return transferResult(await fullQueryBuilder.getOne());
+      const result = transferResult(await fullQueryBuilder.getOne());
+      return result;
     }
-    return {
+    const result = {
       content: (await fullQueryBuilder.getMany()).map(transferResult),
       totalSize,
     };
+    return result;
   }
 
   public async insert(body: IDisplayInsert) {

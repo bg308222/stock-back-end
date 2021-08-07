@@ -13,30 +13,36 @@ export const getQueryBuilderContent = async <T = any>(
     if (!value) return;
     switch (queryStrategy[key]) {
       case QueryStrategyEnum.value: {
-        fullQueryBuilder.andWhere(`${alias}.${key} = :value`, { value });
+        const param = {};
+        param[key] = value;
+        fullQueryBuilder.andWhere(`${alias}.${key} = :${key}`, param);
         break;
       }
       case QueryStrategyEnum.inArray: {
-        fullQueryBuilder.andWhere(`${alias}.${key} IN (:...value)`, { value });
+        const param = {};
+        param[key] = value;
+        fullQueryBuilder.andWhere(`${alias}.${key} IN (:...${key})`, param);
         break;
       }
       case QueryStrategyEnum.range: {
         if (value.max) {
-          fullQueryBuilder.andWhere(`${alias}.${key} < value`, {
-            value,
-          });
+          const param = {};
+          const paramKey = `${key}Max`;
+          param[paramKey] = value.max;
+          fullQueryBuilder.andWhere(`${alias}.${key} < :${paramKey}`, param);
         }
         if (value.min) {
-          fullQueryBuilder.andWhere(`${alias}.${key} => value`, {
-            value,
-          });
+          const param = {};
+          const paramKey = `${key}Min`;
+          param[paramKey] = value.min;
+          fullQueryBuilder.andWhere(`${alias}.${key} >= :${paramKey}`, param);
         }
         break;
       }
       case QueryStrategyEnum.fuzzy: {
-        fullQueryBuilder.andWhere(`${alias}.${key} LIKE :value`, {
-          value: `%${value}%`,
-        });
+        const param = {};
+        param[key] = `%${value}%`;
+        fullQueryBuilder.andWhere(`${alias}.${key} LIKE :${key}`, param);
         break;
       }
       default: {
@@ -44,11 +50,16 @@ export const getQueryBuilderContent = async <T = any>(
     }
   });
 
+  if (query.order && query.order.order && query.order.orderBy) {
+    fullQueryBuilder.orderBy(query.order.orderBy, query.order.order);
+  } else {
+    fullQueryBuilder.orderBy('createdTime', 'DESC');
+  }
+
   const totalSize = await fullQueryBuilder.getCount();
   if (query.page && query.page.page && query.page.pageSize) {
     fullQueryBuilder.offset((query.page.page - 1) * query.page.pageSize);
     fullQueryBuilder.limit(query.page.pageSize);
   }
-  fullQueryBuilder.orderBy('createdTime', 'DESC');
   return { fullQueryBuilder, totalSize };
 };

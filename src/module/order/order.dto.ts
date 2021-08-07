@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Order } from 'src/common/entity/order.entity';
 import {
   MethodEnum,
@@ -10,15 +10,14 @@ import {
 } from 'src/common/enum';
 import {
   getEnumDescription,
-  getPageDescription,
   getRangeDescription,
   getResponseProperties,
 } from 'src/common/helper/document.helper';
-import { IPage, IQueryStategy, IRange } from 'src/common/type';
+import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export type IOrderSchema = Omit<Order, 'investor' | 'stock' | 'order'>;
 
-export class IOrderQuery {
+export class IOrderQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional()
   id?: number;
 
@@ -53,10 +52,7 @@ export class IOrderQuery {
   orderId?: number;
 
   @ApiPropertyOptional(getEnumDescription('orderStatus'))
-  status: OrderStatusEnum[];
-
-  @ApiPropertyOptional(getPageDescription())
-  page?: IPage;
+  status?: OrderStatusEnum[];
 }
 
 export const queryStrategy: IQueryStategy<IOrderQuery> = {

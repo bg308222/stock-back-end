@@ -1,6 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { getTickRange } from '../match/match.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IDisplayQuery, IDisplayQueryResponse } from './display.dto';
 import { DisplayService } from './display.service';
 
@@ -19,20 +18,5 @@ export class DisplayController {
   public async get(@Query() query: IDisplayQuery) {
     const result = await this.displayService.get(query);
     return result;
-  }
-
-  @Get('tickRange')
-  @ApiOperation({
-    summary:
-      '若display中沒有資料或tickRange為空陣列，則要先call這一支來獲取報價資訊',
-    description: '根據收盤價，得到該市場可以交易的價格',
-  })
-  @ApiQuery({
-    name: 'closedPrice',
-    type: Number,
-    example: 150,
-  })
-  public async getTickRange(@Query('closedPrice') closedPrice: number) {
-    return getTickRange(closedPrice).tickRange;
   }
 }

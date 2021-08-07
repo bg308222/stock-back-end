@@ -12,12 +12,19 @@ export interface IPage {
   pageSize: number;
 }
 
-export type IQueryStategy<T = any> = Record<
-  Exclude<keyof T, 'page'>,
-  QueryStrategyEnum
->;
+export interface IOrder {
+  orderBy: string;
+  order: 'ASC' | 'DESC';
+}
 
 export class CommonQuery {
   @ApiPropertyOptional(getPageDescription())
   page?: IPage;
+
+  order?: IOrder;
 }
+
+export type IQueryStategy<T = any> = Record<
+  Exclude<keyof T, 'page' | 'order'>,
+  QueryStrategyEnum
+>;

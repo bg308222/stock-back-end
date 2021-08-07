@@ -51,6 +51,8 @@ export class IDisplayQueryResponse {
         IDisplaySchema & {
           firstOrderBuyPrice: number;
           firstOrderSellPrice: number;
+          tickRange: ITickRange[];
+          fiveTickRange: ITickRange[];
         }
       >([
         { key: 'id', type: 'number' },
@@ -64,7 +66,7 @@ export class IDisplayQueryResponse {
         { key: 'firstOrderSellPrice', type: 'number' },
         {
           key: 'tickRange',
-          type: 'numberArray',
+          type: 'array',
           option: {
             example: [
               {
@@ -215,6 +217,64 @@ export class IDisplayQueryResponse {
             ],
           },
         },
+        {
+          key: 'fiveTickRange',
+          type: 'array',
+          option: {
+            example: [
+              {
+                price: 104,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 103,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 102,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 101,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 100,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 99,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 98.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 98,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 97.5,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+              {
+                price: 97,
+                buyQuantity: 0,
+                sellQuantity: 0,
+              },
+            ],
+          },
+        },
       ]),
     },
   })
@@ -225,27 +285,24 @@ export class IDisplayQueryResponse {
 }
 
 export class IDisplayInsert {
-  @ApiProperty()
   stockId: number;
 
-  @ApiProperty()
   matchPrice: number;
 
-  @ApiProperty()
   matchQuantity: number;
 
-  @ApiProperty()
   marketBuyQuantity: number;
 
-  @ApiProperty()
   marketSellQuantity: number;
 
-  @ApiProperty()
   buyTick: string;
 
-  @ApiProperty()
   sellTick: string;
 
-  @ApiProperty()
-  tickRange: string;
+  closedPrice: number;
+}
+
+export class IMarketBookInsert {
+  marketBook: string;
+  displayId: number;
 }
