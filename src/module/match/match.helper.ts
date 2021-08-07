@@ -14,8 +14,8 @@ export interface IMarketBook {
   marketSell: IOrderSchema[];
   limitBuy: LimitBook;
   limitSell: LimitBook;
-  accumulatedQuantity: number;
   stock: IStockSchema;
+  accumulatedQuantity: number;
 }
 
 interface IDoCallAuctionResponse {

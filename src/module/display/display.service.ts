@@ -8,6 +8,7 @@ import {
   IDisplayInsert,
   IDisplayQuery,
   IDisplaySchema,
+  ITickRange,
   queryStrategy,
 } from './display.dto';
 
@@ -25,12 +26,56 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
 
-  const transferTickRange = tickRange.map((price, index) => {
+  let fiveTickRange: number[];
+  const transferTickRange: ITickRange[] = tickRange.map((price, index) => {
     let marketBuyAdder = 0;
     let marketSellAdder = 0;
     if (price === data.matchPrice) {
       marketBuyAdder = data.marketBuyQuantity;
       marketSellAdder = data.marketSellQuantity;
+
+      if (buyTick[index] === 0 && sellTick[index] !== 0) {
+        fiveTickRange = [
+          index - 4,
+          index - 3,
+          index - 2,
+          index - 1,
+          index,
+          index + 1,
+          index + 2,
+          index + 3,
+          index + 4,
+          index + 5,
+        ];
+      }
+      if (buyTick[index] !== 0 && sellTick[index] === 0) {
+        fiveTickRange = [
+          index - 5,
+          index - 4,
+          index - 3,
+          index - 2,
+          index - 1,
+          index,
+          index + 1,
+          index + 2,
+          index + 3,
+          index + 4,
+        ];
+      }
+      if (buyTick[index] === 0 && sellTick[index] === 0) {
+        fiveTickRange = [
+          index - 4,
+          index - 3,
+          index - 2,
+          index - 1,
+          index,
+          index + 1,
+          index + 2,
+          index + 3,
+          index + 4,
+          index + 5,
+        ];
+      }
     }
 
     if (firstOrderBuyPrice === null && buyTick[index] !== 0)
@@ -47,7 +92,9 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
     ...data,
 
     tickRange: transferTickRange,
-    //TODO  fiveTickRange:
+    fiveTickRange: transferTickRange.filter((v, index) => {
+      return fiveTickRange.includes(index);
+    }),
     firstOrderBuyPrice,
     firstOrderSellPrice,
   };
