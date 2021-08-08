@@ -4,7 +4,7 @@ import { Display } from 'src/common/entity/display.entity';
 import { TrendFlagEnum } from 'src/common/enum';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
-import { getTickRange } from '../match/match.service';
+import { getTickAfterNTick, getTickRange } from '../match/match.service';
 import {
   IDisplayInsert,
   IDisplayQuery,
@@ -27,35 +27,72 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
 
-  let buyFiveTickRange: number[] = [];
-  let sellFiveTickRange: number[] = [];
+  let currentPriceIndex: number;
+  let fiveTickRange: number[] = [];
   const transferTickRange: ITickRange[] = tickRange.map((price, index) => {
     let marketBuyAdder = 0;
     let marketSellAdder = 0;
     if (price === data.matchPrice) {
       marketBuyAdder = data.marketBuyQuantity;
       marketSellAdder = data.marketSellQuantity;
-
+      currentPriceIndex = index;
       // FALL
-      if (displaySchema.trendFlag === TrendFlagEnum.FALL) {
-        buyFiveTickRange = [
+      if (buyTick[index] === 0 && sellTick[index] !== 0) {
+        fiveTickRange = [
+          index - 4,
+          index - 3,
+          index - 2,
+          index - 1,
+          index,
           index + 1,
           index + 2,
           index + 3,
           index + 4,
           index + 5,
         ];
-        sellFiveTickRange = [index - 4, index - 3, index - 2, index - 1, index];
-      } else {
-        // RISE and SPACE
-        buyFiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
-        sellFiveTickRange = [
+      } else if (buyTick[index] !== 0 && sellTick[index] === 0) {
+        // RISE
+        fiveTickRange = [
           index - 5,
           index - 4,
           index - 3,
           index - 2,
           index - 1,
+          index,
+          index + 1,
+          index + 2,
+          index + 3,
+          index + 4,
         ];
+      } else {
+        if (displaySchema.trendFlag === TrendFlagEnum.FALL) {
+          fiveTickRange = [
+            index - 4,
+            index - 3,
+            index - 2,
+            index - 1,
+            index,
+            index + 1,
+            index + 2,
+            index + 3,
+            index + 4,
+            index + 5,
+          ];
+        } else {
+          // RISE and SPACE
+          fiveTickRange = [
+            index - 5,
+            index - 4,
+            index - 3,
+            index - 2,
+            index - 1,
+            index,
+            index + 1,
+            index + 2,
+            index + 3,
+            index + 4,
+          ];
+        }
       }
     }
 
@@ -73,20 +110,32 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
     ...data,
 
     tickRange: transferTickRange,
-    fiveTickRange: transferTickRange
-      .map(({ price, buyQuantity, sellQuantity }, index) => {
-        const transferFiveTickRange: Partial<ITickRange> = { price };
-        if (buyFiveTickRange.includes(index)) {
-          transferFiveTickRange.buyQuantity = buyQuantity;
-          return transferFiveTickRange;
-        }
-        if (sellFiveTickRange.includes(index)) {
-          transferFiveTickRange.sellQuantity = sellQuantity;
-          return transferFiveTickRange;
-        }
-        return undefined;
-      })
-      .filter((v) => !!v),
+
+    fiveTickRange: fiveTickRange.map((tickRangeIndex, index) => {
+      let tickRangeValue: Partial<ITickRange> = transferTickRange[
+        tickRangeIndex
+      ]
+        ? { ...transferTickRange[tickRangeIndex] }
+        : undefined;
+
+      if (!tickRangeValue) {
+        tickRangeValue = {
+          price: getTickAfterNTick(
+            data.matchPrice,
+            currentPriceIndex - tickRangeIndex,
+          ),
+          buyQuantity: 0,
+          sellQuantity: 0,
+        };
+      }
+
+      if (index < 5) {
+        delete tickRangeValue.buyQuantity;
+      } else {
+        delete tickRangeValue.sellQuantity;
+      }
+      return tickRangeValue;
+    }),
     firstOrderBuyPrice,
     firstOrderSellPrice,
   };

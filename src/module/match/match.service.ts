@@ -26,6 +26,20 @@ export const getNextTick = (currentPrice: number) => {
   else return 5;
 };
 
+export const getTickAfterNTick = (currentPrice: number, n: number) => {
+  let tempPrice = currentPrice;
+  if (n > 0) {
+    for (let i = 0; i < n; i++) {
+      tempPrice += getNextTick(tempPrice);
+    }
+  } else if (n < 0) {
+    for (let i = 0; i > n; i--) {
+      tempPrice -= getNextTick(tempPrice);
+    }
+  }
+  return tempPrice;
+};
+
 export const getTickRange = (closedPrice: number) => {
   const maxPrice = closedPrice * 1.1;
   const minPrice = closedPrice * 0.9;
