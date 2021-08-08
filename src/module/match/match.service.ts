@@ -117,6 +117,7 @@ export class MatchService {
       stockId: marketBook.stock.id,
       matchPrice: marketBook.stock.currentPrice,
       matchQuantity: marketBook.accumulatedQuantity,
+      trendFlag: marketBook.trendFlag,
       buyTick: JSON.stringify(buyTick),
       sellTick: JSON.stringify(sellTick),
       closedPrice: marketBook.stock.closedPrice,

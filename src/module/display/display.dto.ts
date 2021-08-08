@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Display } from 'src/common/entity/display.entity';
-import { QueryStrategyEnum } from 'src/common/enum';
+import { QueryStrategyEnum, TrendFlagEnum } from 'src/common/enum';
 import {
   getRangeDescription,
   getResponseProperties,
@@ -275,6 +275,7 @@ export class IDisplayQueryResponse {
             ],
           },
         },
+        { key: 'trendFlag', type: 'number' },
       ]),
     },
   })
@@ -300,9 +301,6 @@ export class IDisplayInsert {
   sellTick: string;
 
   closedPrice: number;
-}
 
-export class IMarketBookInsert {
-  marketBook: string;
-  displayId: number;
+  trendFlag: TrendFlagEnum;
 }

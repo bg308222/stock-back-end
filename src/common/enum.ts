@@ -41,3 +41,9 @@ export enum QueryStrategyEnum {
   range = 2,
   fuzzy = 3,
 }
+
+export enum TrendFlagEnum {
+  FALL = 0,
+  RISE = 1,
+  SPACE = 2,
+}

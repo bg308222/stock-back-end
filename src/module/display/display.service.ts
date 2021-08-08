@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
+import { TrendFlagEnum } from 'src/common/enum';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
 import { getTickRange } from '../match/match.service';
@@ -35,7 +36,8 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
       marketBuyAdder = data.marketBuyQuantity;
       marketSellAdder = data.marketSellQuantity;
 
-      if (buyTick[index] === 0 && sellTick[index] !== 0) {
+      // FALL
+      if (displaySchema.trendFlag === TrendFlagEnum.FALL) {
         buyFiveTickRange = [
           index + 1,
           index + 2,
@@ -44,8 +46,8 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
           index + 5,
         ];
         sellFiveTickRange = [index - 4, index - 3, index - 2, index - 1, index];
-      }
-      if (buyTick[index] !== 0 && sellTick[index] === 0) {
+      } else {
+        // RISE and SPACE
         buyFiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
         sellFiveTickRange = [
           index - 5,
@@ -54,10 +56,6 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
           index - 2,
           index - 1,
         ];
-      }
-      if (buyTick[index] === 0 && sellTick[index] === 0) {
-        buyFiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
-        sellFiveTickRange = [index - 4, index - 3, index - 2, index - 1];
       }
     }
 

@@ -4,6 +4,7 @@ import {
   SubMethodEnum,
   TimeRestrictiomEnum,
   TransactionStatusEnum,
+  TrendFlagEnum,
 } from 'src/common/enum';
 import { IOrderSchema } from '../order/order.dto';
 import { IStockSchema } from '../stock/stock.dto';
@@ -16,6 +17,7 @@ export interface IMarketBook {
   limitSell: LimitBook;
   stock: IStockSchema;
   accumulatedQuantity: number;
+  trendFlag: TrendFlagEnum;
 }
 
 interface IDoCallAuctionResponse {
@@ -100,6 +102,7 @@ export class StockMarket {
         limitBuy: new LimitBook(),
         limitSell: new LimitBook(),
         accumulatedQuantity: 0,
+        trendFlag: TrendFlagEnum.SPACE,
         stock,
       };
     }
@@ -129,6 +132,15 @@ export class StockMarket {
     price: number,
   ): ITransactionInsert {
     return { ...order, orderId: id, status, quantity, price };
+  }
+
+  private updateTrendFlag(method: 'Sell' | 'Buy') {
+    if (method === 'Sell') {
+      this.marketBook.trendFlag = TrendFlagEnum.FALL;
+    }
+    if (method === 'Buy') {
+      this.marketBook.trendFlag = TrendFlagEnum.RISE;
+    }
   }
 
   public doCallAuction(order: IOrderSchema): IDoCallAuctionResponse {
@@ -273,6 +285,7 @@ export class StockMarket {
 
           this.marketBook.stock.currentPrice = inverseSideOrder.price;
           this.marketBook.accumulatedQuantity += inverseSideOrder.quantity;
+          this.updateTrendFlag(currentSideMethod);
           isNeverTransaction = false;
           order.quantity -= inverseSideOrder.quantity;
           this.popFirstOrder(inverseSideOrder, inverseSideMethod);
@@ -301,6 +314,7 @@ export class StockMarket {
 
             this.marketBook.stock.currentPrice = inverseSideOrder.price;
             this.marketBook.accumulatedQuantity += order.quantity;
+            this.updateTrendFlag(inverseSideMethod);
             isNeverTransaction = false;
             inverseSideOrder.quantity -= order.quantity;
             order.quantity = 0;
@@ -328,6 +342,7 @@ export class StockMarket {
 
           this.marketBook.stock.currentPrice = inverseSideOrder.price;
           this.marketBook.accumulatedQuantity += order.quantity;
+          this.updateTrendFlag(currentSideMethod);
           isNeverTransaction = false;
           order.quantity = 0;
           this.popFirstOrder(order, currentSideMethod);

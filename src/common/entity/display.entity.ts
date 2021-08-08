@@ -40,4 +40,7 @@ export class Display {
 
   @Column({ type: 'float' })
   closedPrice: number;
+
+  @Column({ type: 'int' })
+  trendFlag: number;
 }
