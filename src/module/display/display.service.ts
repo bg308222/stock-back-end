@@ -26,7 +26,8 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
   let firstOrderBuyPrice = null;
   let firstOrderSellPrice = null;
 
-  let fiveTickRange: number[] = [];
+  let buyFiveTickRange: number[] = [];
+  let sellFiveTickRange: number[] = [];
   const transferTickRange: ITickRange[] = tickRange.map((price, index) => {
     let marketBuyAdder = 0;
     let marketSellAdder = 0;
@@ -35,24 +36,28 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
       marketSellAdder = data.marketSellQuantity;
 
       if (buyTick[index] === 0 && sellTick[index] !== 0) {
-        fiveTickRange = [
-          index - 4,
-          index - 3,
-          index - 2,
-          index - 1,
-          index,
+        buyFiveTickRange = [
           index + 1,
           index + 2,
           index + 3,
           index + 4,
           index + 5,
         ];
+        sellFiveTickRange = [index - 4, index - 3, index - 2, index - 1, index];
       }
       if (buyTick[index] !== 0 && sellTick[index] === 0) {
-        fiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
+        buyFiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
+        sellFiveTickRange = [
+          index - 5,
+          index - 4,
+          index - 3,
+          index - 2,
+          index - 1,
+        ];
       }
       if (buyTick[index] === 0 && sellTick[index] === 0) {
-        fiveTickRange = [index - 4, index - 3, index - 2, index - 1, index];
+        buyFiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
+        sellFiveTickRange = [index - 4, index - 3, index - 2, index - 1];
       }
     }
 
@@ -70,9 +75,20 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
     ...data,
 
     tickRange: transferTickRange,
-    fiveTickRange: transferTickRange.filter((v, index) => {
-      return fiveTickRange.includes(index);
-    }),
+    fiveTickRange: transferTickRange
+      .map(({ price, buyQuantity, sellQuantity }, index) => {
+        const transferFiveTickRange: Partial<ITickRange> = { price };
+        if (buyFiveTickRange.includes(index)) {
+          transferFiveTickRange.buyQuantity = buyQuantity;
+          return transferFiveTickRange;
+        }
+        if (sellFiveTickRange.includes(index)) {
+          transferFiveTickRange.sellQuantity = sellQuantity;
+          return transferFiveTickRange;
+        }
+        return undefined;
+      })
+      .filter((v) => !!v),
     firstOrderBuyPrice,
     firstOrderSellPrice,
   };
