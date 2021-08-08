@@ -49,32 +49,10 @@ const transferResult = (displaySchema?: IDisplaySchema) => {
         ];
       }
       if (buyTick[index] !== 0 && sellTick[index] === 0) {
-        fiveTickRange = [
-          index - 5,
-          index - 4,
-          index - 3,
-          index - 2,
-          index - 1,
-          index,
-          index + 1,
-          index + 2,
-          index + 3,
-          index + 4,
-        ];
+        fiveTickRange = [index, index + 1, index + 2, index + 3, index + 4];
       }
       if (buyTick[index] === 0 && sellTick[index] === 0) {
-        fiveTickRange = [
-          index - 4,
-          index - 3,
-          index - 2,
-          index - 1,
-          index,
-          index + 1,
-          index + 2,
-          index + 3,
-          index + 4,
-          index + 5,
-        ];
+        fiveTickRange = [index - 4, index - 3, index - 2, index - 1, index];
       }
     }
 
