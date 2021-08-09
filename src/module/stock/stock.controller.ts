@@ -26,6 +26,6 @@ export class StockController {
       await this.matchService.getReplayOrdersAndMarketBook(id, createdTime);
 
     await this.matchService.setMarketBook(id, marketBook);
-    return orders;
+    return { orders };
   }
 }
