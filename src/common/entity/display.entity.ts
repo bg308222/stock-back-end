@@ -17,7 +17,7 @@ export class Display {
 
   @Column()
   stockId: number;
-  @ManyToOne(() => Stock, { nullable: false })
+  @ManyToOne(() => Stock, { nullable: false, onDelete: 'CASCADE' })
   stock: Stock;
 
   @Column({ type: 'float' })

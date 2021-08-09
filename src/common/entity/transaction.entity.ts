@@ -22,7 +22,7 @@ export class Transaction {
 
   @Column()
   investorId: number;
-  @ManyToOne(() => Investor, { nullable: false })
+  @ManyToOne(() => Investor, { nullable: false, onDelete: 'CASCADE' })
   investor: Investor;
 
   @CreateDateColumn()
@@ -30,7 +30,7 @@ export class Transaction {
 
   @Column()
   stockId: number;
-  @ManyToOne(() => Stock, { nullable: false })
+  @ManyToOne(() => Stock, { nullable: false, onDelete: 'CASCADE' })
   stock: Stock;
 
   @Column({ type: 'enum', enum: MethodEnum })
@@ -50,7 +50,7 @@ export class Transaction {
 
   @Column()
   orderId: number;
-  @ManyToOne(() => Order)
+  @ManyToOne(() => Order, { onDelete: 'CASCADE' })
   order: Order;
 
   @Column({ type: 'enum', enum: TransactionStatusEnum })
