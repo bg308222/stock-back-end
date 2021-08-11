@@ -53,8 +53,8 @@ export class IVirtualOrderContainerQueryResponse {
           option: {
             example: [
               {
-                id: 1,
-                createdTime: '2021-08-11T11:45:08.727Z',
+                investorId: 0,
+                stockId: 1,
                 method: 0,
                 subMethod: null,
                 price: 99,
@@ -62,7 +62,6 @@ export class IVirtualOrderContainerQueryResponse {
                 priceType: 0,
                 timeRestriction: 1,
                 orderId: null,
-                virtualOrderContainerId: 2,
               },
             ],
           },

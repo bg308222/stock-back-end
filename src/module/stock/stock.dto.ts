@@ -30,9 +30,7 @@ export class IStockResetResponse {
     items: {
       type: 'object',
       properties: getResponseProperties<IOrderSchema>([
-        { key: 'id', type: 'number' },
         { key: 'investorId', type: 'number' },
-        { key: 'createdTime', type: 'date' },
         { key: 'stockId', type: 'number' },
         { key: 'method', type: 'number' },
         { key: 'subMethod', type: 'number' },

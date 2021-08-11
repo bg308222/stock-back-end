@@ -27,7 +27,7 @@ export class VirtualOrderController {
     type: IVirtualOrderContainerQueryResponse,
   })
   public async getContainer(@Query() query: IVirtualOrderContainerQuery) {
-    return this.virtualOrderService.getContainer(query);
+    return await this.virtualOrderService.getContainer(query);
   }
 
   @ApiOperation({

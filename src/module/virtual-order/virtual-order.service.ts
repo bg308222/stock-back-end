@@ -39,15 +39,23 @@ export class VirtualOrderService {
       (
         await fullQueryBuilder.getMany()
       ).map(async (container) => {
-        console.log(container);
-
         return {
           ...container,
-          orders: await this.virtualOrderRepository
-            .createQueryBuilder('order')
-            .where('order.virtualOrderContainerId = :id', { id: container.id })
-            .orderBy('createdTime', 'ASC')
-            .getMany(),
+          orders: (
+            await this.virtualOrderRepository
+              .createQueryBuilder('order')
+              .where('order.virtualOrderContainerId = :id', {
+                id: container.id,
+              })
+              .orderBy('createdTime', 'ASC')
+              .getMany()
+          ).map(({ id, createdTime, virtualOrderContainerId, ...order }) => {
+            return {
+              investorId: 0,
+              stockId: container.stockId,
+              ...order,
+            };
+          }),
         };
       }),
     );
