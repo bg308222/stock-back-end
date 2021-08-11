@@ -114,16 +114,17 @@ export class MatchService {
     this.stockMarketList = {};
   }
 
-  private async createMarket(id: number, marketId?: number) {
+  private async createMarket(id: number, marketName?: string) {
     const {
       content: [stock],
     } = await this.stockService.get({ id });
-    this.stockMarketList[marketId || stock.id] = new StockMarket(stock);
+    this.stockMarketList[marketName || stock.id] = new StockMarket(stock);
   }
 
   private stockMarketList: Record<string, StockMarket>;
 
-  private getDisplayBody(marketBook: IMarketBook): IDisplayInsert {
+  private getDisplayBody(marketName: string): IDisplayInsert {
+    const marketBook = this.stockMarketList[marketName].dumpMarketBook();
     const { buyTick, sellTick, marketBuyQuantity, marketSellQuantity } =
       getTickList(marketBook);
 
@@ -174,28 +175,38 @@ export class MatchService {
       },
     );
 
-    return sortedArray;
-  }
-
-  private async insertDisplay(stockId: number) {
-    const marketBook = this.stockMarketList[stockId].dumpMarketBook();
-    await this.displayService.insert({
-      ...this.getDisplayBody(marketBook),
+    return sortedArray.filter((v) => {
+      return v.investorId !== 0;
     });
   }
 
-  public async dispatchOrder(order: IOrderSchema, isWriteDb = true) {
-    if (!this.stockMarketList[order.stockId])
-      await this.createMarket(order.stockId);
+  private async insertDisplay(marketName: string) {
+    await this.displayService.insert({
+      ...this.getDisplayBody(marketName),
+    });
+  }
+
+  public async dispatchOrder(
+    order: IOrderSchema,
+    virtualOrder?: { id: number },
+  ) {
+    let marketName: string = order.stockId.toString();
+    if (virtualOrder) {
+      marketName = `virtual${virtualOrder.id}`;
+    }
+
+    if (!this.stockMarketList[marketName])
+      await this.createMarket(order.stockId, marketName);
 
     //TODO Recognize when to doCallAuction or doContinuousTrading
     if (true) {
       const { transactions, isCancelSuccessfully, isUpdateSuccessfully } =
-        this.stockMarketList[order.stockId].doCallAuction(order);
+        this.stockMarketList[marketName].doCallAuction(order);
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          if (isWriteDb) await this.insertDisplay(order.stockId);
+          if (virtualOrder) return this.getDisplayBody(marketName);
+          await this.insertDisplay(marketName);
           return true;
         }
         return false;
@@ -206,44 +217,52 @@ export class MatchService {
         return false;
       } else {
         // Match successfully
-        if (isWriteDb) await this.insertDisplay(order.stockId);
-
-        if (transactions.length !== 0) {
-          if (isWriteDb)
-            await this.transactionService.insert(
-              this.getTransactionBody(transactions),
-            );
+        if (virtualOrder) {
+          return this.getDisplayBody(marketName);
         }
+
+        await this.insertDisplay(marketName);
+        if (transactions.length !== 0) {
+          await this.transactionService.insert(
+            this.getTransactionBody(transactions),
+          );
+        }
+        return true;
       }
     } else {
-      // this.stockMarketList[order.stockId].doContinuousTrading();
+      // this.stockMarketList[marketName].doContinuousTrading();
     }
-    return true;
+  }
+
+  public runOrders(orders: IOrderSchema[], marketName: string) {
+    for (const order of orders) {
+      this.stockMarketList[marketName].doCallAuction(order);
+    }
+    return this.stockMarketList[marketName].dumpMarketBook();
   }
 
   public async getReplayOrdersAndMarketBook(
     stockId: number,
     createdTime?: string,
   ) {
-    const marketId = new Date().getTime();
-    await this.createMarket(stockId, marketId);
+    const marketName = new Date().getTime().toString();
+    await this.createMarket(stockId, marketName);
 
     if (createdTime) {
       const { content: beforeOrders } = await this.orderService.get({
         createdTime: { max: createdTime },
       });
-      for (const order of beforeOrders) {
-        this.stockMarketList[marketId].doCallAuction(order);
-      }
+      this.runOrders(beforeOrders, marketName);
     }
 
     const { content: orders } = await this.orderService.get({
       createdTime: createdTime ? { min: createdTime } : undefined,
       order: { orderBy: 'createdTime', order: 'ASC' },
     });
-    const marketBook = this.stockMarketList[marketId].dumpMarketBook();
 
-    delete this.stockMarketList[marketId];
+    const marketBook = this.stockMarketList[marketName].dumpMarketBook();
+
+    delete this.stockMarketList[marketName];
 
     return {
       orders,
@@ -256,7 +275,7 @@ export class MatchService {
       content: [stock],
     } = await this.stockService.get({ id: stockId });
     this.stockMarketList[stockId].setMarketBook(stock, marketBook);
-    await this.insertDisplay(stock.id);
+    await this.insertDisplay(stock.id.toString());
     return true;
   }
 }

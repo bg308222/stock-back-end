@@ -13,7 +13,7 @@ import {
   queryStrategy,
 } from './display.dto';
 
-const transferResult = (displaySchema?: IDisplaySchema) => {
+export const transferDisplayToReturnType = (displaySchema?: IDisplaySchema) => {
   if (!displaySchema) return null;
   const {
     buyTick: buyTickJson,
@@ -157,11 +157,15 @@ export class DisplayService {
       );
 
     if (query.isGetLatest) {
-      const result = transferResult(await fullQueryBuilder.getOne());
+      const result = transferDisplayToReturnType(
+        await fullQueryBuilder.getOne(),
+      );
       return result;
     }
     const result = {
-      content: (await fullQueryBuilder.getMany()).map(transferResult),
+      content: (await fullQueryBuilder.getMany()).map(
+        transferDisplayToReturnType,
+      ),
       totalSize,
     };
     return result;

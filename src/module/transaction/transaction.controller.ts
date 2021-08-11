@@ -17,6 +17,6 @@ export class TransactionController {
   })
   @Get()
   public async get(@Query() query: ITransactionQuery) {
-    return this.transactionService.get(query);
+    return await this.transactionService.get(query);
   }
 }

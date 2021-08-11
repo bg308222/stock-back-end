@@ -16,6 +16,7 @@ const runSwagger = (
     .addTag('Investor')
     .addTag('Stock')
     .addTag('Order')
+    .addTag('VirtualOrder')
     .addTag('Transaction')
     .addTag('Display')
     .addServer(`http://${host}:${port}`)

@@ -23,7 +23,7 @@ export class OrderController {
   })
   @Get()
   public async get(@Query() query: IOrderQuery) {
-    return this.orderService.get(query);
+    return await this.orderService.get(query);
   }
 
   @ApiResponse({ type: Number, status: 200 })

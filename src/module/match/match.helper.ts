@@ -10,6 +10,9 @@ import { IOrderSchema } from '../order/order.dto';
 import { IStockSchema } from '../stock/stock.dto';
 import { ITransactionInsert } from '../transaction/transaction.dto';
 
+const debug = (message: string) => {
+  if (0) console.log(message);
+};
 export interface IMarketBook {
   marketBuy: IOrderSchema[];
   marketSell: IOrderSchema[];
@@ -156,6 +159,7 @@ export class StockMarket {
 
     this.marketBook.accumulatedQuantity = 0;
 
+    debug('Cancel and Update');
     if (order.subMethod === SubMethodEnum.CANCEL) {
       returnResponse.isCancelSuccessfully = false;
 
@@ -188,14 +192,17 @@ export class StockMarket {
     }
 
     // 2 Classification
+    debug('Classification start');
     if (order.priceType === PriceTypeEnum.MARKET) {
-      //Market buy
+      //Market
+      debug('Market ');
       if (this.marketBook[`market${currentSideMethod}`].push(order) !== 1)
         return returnResponse;
     }
 
     if (order.priceType === PriceTypeEnum.LIMIT) {
-      //Limit buy
+      //Limit
+      debug('Limit ');
       if (!this.marketBook[`limit${currentSideMethod}`].orders[order.price])
         this.marketBook[`limit${currentSideMethod}`].orders[order.price] = [];
       if (
@@ -214,6 +221,7 @@ export class StockMarket {
     );
 
     // 3 Match and transaction
+    debug('Match start');
     while (order.quantity !== 0) {
       //Choose inverse side order
       let inverseSideOrder: IOrderSchema =
@@ -362,6 +370,7 @@ export class StockMarket {
     }
 
     // 4 Check is current side order finished
+    debug('Check start');
     if (order.quantity !== 0) {
       if (!isNeverTransaction) {
         if (order.timeRestriction === TimeRestrictiomEnum.FOK) {

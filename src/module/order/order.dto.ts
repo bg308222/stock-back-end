@@ -118,8 +118,6 @@ export class IOrderInsert {
 
   @ApiProperty(getEnumDescription('timeRestriction', false))
   timeRestriction: TimeRestrictiomEnum;
-
-  orderId?: number;
 }
 
 export class IOrderDelete {

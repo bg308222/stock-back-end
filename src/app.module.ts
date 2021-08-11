@@ -11,6 +11,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerMiddleware } from './middleware/api.middleware';
 import { MatchModule } from './module/match/match.module';
 import { DisplayModule } from './module/display/display.module';
+import { VirtualOrderModule } from './module/virtual-order/virtual-order.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { DisplayModule } from './module/display/display.module';
     ConfigModule,
     MatchModule,
     DisplayModule,
+    VirtualOrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
