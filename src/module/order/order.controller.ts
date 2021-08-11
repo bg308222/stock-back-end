@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { OrderStatusEnum } from 'src/common/enum';
 import { MatchService } from '../match/match.service';
 import {
   IOrderDelete,
@@ -34,8 +35,19 @@ export class OrderController {
   })
   @Post()
   public async insert(@Body() body: IOrderInsert) {
-    const order = await this.orderService.insert(body);
-    await this.matchService.dispatchOrder(order);
+    if (body.investorId === 0) {
+      await this.matchService.dispatchOrder({
+        ...body,
+        id: 0,
+        createdTime: new Date(),
+        subMethod: null,
+        orderId: null,
+        status: OrderStatusEnum.SUCCESS,
+      });
+    } else {
+      const order = await this.orderService.insert(body);
+      await this.matchService.dispatchOrder(order);
+    }
     return true;
   }
 

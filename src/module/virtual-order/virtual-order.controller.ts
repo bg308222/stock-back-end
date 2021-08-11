@@ -76,8 +76,7 @@ export class VirtualOrderController {
         id: body.virtualOrderContainerId,
       },
     );
-    // return transferDisplayToReturnType(display as any);
-    return display;
+    return transferDisplayToReturnType(display as any);
   }
 
   @ApiOperation({
