@@ -132,6 +132,12 @@ export const getEnumDescription = (
           example: 0,
         };
       }
+      case 'orderStatus': {
+        return {
+          description: 'FAIL = 0, SUCCESS = 1',
+          example: 0,
+        };
+      }
     }
   }
 };

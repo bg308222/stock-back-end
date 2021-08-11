@@ -101,11 +101,17 @@ export class IOrderInsert {
   @ApiProperty({ example: 1 })
   investorId: number;
 
+  @ApiProperty({ example: new Date().toString() })
+  createdTime: Date;
+
   @ApiProperty({ example: 1 })
   stockId: number;
 
   @ApiProperty(getEnumDescription('method', false))
   method: MethodEnum;
+
+  @ApiProperty(getEnumDescription('subMethod', false))
+  subMethod: SubMethodEnum;
 
   @ApiProperty()
   price: number;
@@ -118,6 +124,12 @@ export class IOrderInsert {
 
   @ApiProperty(getEnumDescription('timeRestriction', false))
   timeRestriction: TimeRestrictiomEnum;
+
+  @ApiProperty()
+  orderId: number;
+
+  @ApiProperty(getEnumDescription('orderStatus', false))
+  status: OrderStatusEnum;
 }
 
 export class IOrderDelete {

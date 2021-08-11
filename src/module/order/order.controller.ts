@@ -39,10 +39,6 @@ export class OrderController {
       await this.matchService.dispatchOrder({
         ...body,
         id: 0,
-        createdTime: new Date(),
-        subMethod: null,
-        orderId: null,
-        status: OrderStatusEnum.SUCCESS,
       });
     } else {
       const order = await this.orderService.insert(body);

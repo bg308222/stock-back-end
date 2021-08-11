@@ -265,8 +265,8 @@ export class MatchService {
     delete this.stockMarketList[marketName];
 
     return {
-      orders: orders.map(({ createdTime, id, investorId, ...order }) => {
-        return { investorId: 0, ...order };
+      orders: orders.map(({ id, ...order }) => {
+        return order;
       }),
       marketBook,
     };
