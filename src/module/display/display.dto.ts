@@ -304,7 +304,6 @@ export const IDisplayChartQueryResponse = {
     type: 'object',
     properties: getResponseProperties([
       { key: 'createdTime', type: 'date' },
-      { key: 'price', type: 'number' },
       { key: 'quantity', type: 'number' },
       { key: 'open', type: 'number' },
       { key: 'highest', type: 'number' },
