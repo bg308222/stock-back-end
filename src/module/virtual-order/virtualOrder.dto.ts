@@ -106,11 +106,3 @@ export class IVirtualOrderInsert {
   @ApiProperty()
   virtualOrderContainerId: number;
 }
-
-export class IVirtualOrderDelete {
-  @ApiProperty()
-  id: number;
-
-  @ApiProperty()
-  quantity: number;
-}

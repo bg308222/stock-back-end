@@ -1,23 +1,11 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { OrderStatusEnum } from 'src/common/enum';
-import { IDisplayObjectResponse } from '../display/display.dto';
-import { transferDisplayToReturnType } from '../display/display.service';
 import { MatchService } from '../match/match.service';
 import {
   IOrderDelete,
   IOrderInsert,
   IOrderQuery,
   IOrderQueryResponse,
-  IReplayOrderInsert,
 } from './order.dto';
 import { OrderService } from './order.service';
 
@@ -30,9 +18,6 @@ export class OrderController {
   ) {}
 
   @ApiResponse({ type: IOrderQueryResponse, status: 200 })
-  @ApiOperation({
-    summary: '目前好像沒地方要顯示這個',
-  })
   @Get()
   public async get(@Query() query: IOrderQuery) {
     return await this.orderService.get(query);
@@ -46,34 +31,25 @@ export class OrderController {
   })
   @Post()
   public async insert(@Body() body: IOrderInsert) {
-    //virtual order
     if (body.investorId === 0) {
+      //virtual order
       return await this.matchService.dispatchOrder({
         ...body,
         id: 0,
       });
+    } else if (body.marketName) {
+      //replay order
+      const { marketName, ...order } = body;
+      const display = await this.matchService.dispatchOrder(
+        { ...order, id: 0 },
+        marketName,
+      );
+      return display;
     } else {
+      //normal order
       const order = await this.orderService.insert(body);
       return await this.matchService.dispatchOrder(order);
     }
-  }
-
-  @ApiResponse({
-    status: 200,
-    schema: IDisplayObjectResponse,
-  })
-  @ApiOperation({
-    summary: '發出重播委託',
-    description: '先打/api/stock/reset取得marketName',
-  })
-  @Post('replay')
-  public async insertReplayOrder(@Body() body: IReplayOrderInsert) {
-    if (!body.marketName) throw new BadRequestException('Missing marketName');
-    const display = await this.matchService.dispatchOrder(
-      { ...body, id: 0 },
-      body.marketName,
-    );
-    return transferDisplayToReturnType(display as any);
   }
 
   @ApiOperation({

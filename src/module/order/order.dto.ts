@@ -120,6 +120,9 @@ export class IOrderInsert {
 
   @ApiProperty(getEnumDescription('orderStatus', false))
   status: OrderStatusEnum;
+
+  @ApiProperty()
+  marketName?: string;
 }
 
 export class IOrderDelete {
@@ -128,36 +131,4 @@ export class IOrderDelete {
 
   @ApiProperty()
   quantity: number;
-}
-
-export class IReplayOrderInsert {
-  @ApiProperty({ example: 1 })
-  investorId: number;
-
-  @ApiProperty({ example: 1 })
-  stockId: number;
-
-  @ApiProperty(getEnumDescription('method', false))
-  method: MethodEnum;
-
-  @ApiProperty(getEnumDescription('subMethod', false))
-  subMethod: SubMethodEnum;
-
-  @ApiProperty()
-  price: number;
-
-  @ApiProperty()
-  quantity: number;
-
-  @ApiProperty(getEnumDescription('priceType', false))
-  priceType: PriceTypeEnum;
-
-  @ApiProperty(getEnumDescription('timeRestriction', false))
-  timeRestriction: TimeRestrictiomEnum;
-
-  @ApiProperty(getEnumDescription('orderStatus', false))
-  status: OrderStatusEnum;
-
-  @ApiProperty()
-  marketName: string;
 }

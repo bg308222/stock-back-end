@@ -20,6 +20,9 @@ export class IStockReset {
   @ApiProperty({ example: 1 })
   id: number;
 
+  @ApiProperty({ example: false })
+  isReset?: boolean;
+
   @ApiPropertyOptional({ example: '2021-08-07 16:43:43.763532' })
   createdTime?: string;
 }

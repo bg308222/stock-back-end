@@ -2,14 +2,12 @@ import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrderStatusEnum } from 'src/common/enum';
 import { IDisplayObjectResponse } from '../display/display.dto';
-import { transferDisplayToReturnType } from '../display/display.service';
 import { MatchService } from '../match/match.service';
 import { VirtualOrderService } from './virtual-order.service';
 import {
   IVirtualOrderContainerInsert,
   IVirtualOrderContainerQuery,
   IVirtualOrderContainerQueryResponse,
-  IVirtualOrderDelete,
   IVirtualOrderInsert,
 } from './virtualOrder.dto';
 
@@ -74,33 +72,6 @@ export class VirtualOrderController {
       },
       `VIRTUAL_${body.virtualOrderContainerId}`,
     );
-    return transferDisplayToReturnType(display as any);
-  }
-
-  @ApiOperation({
-    summary: '刪除委託腳本內的委託單',
-  })
-  @ApiResponse({
-    status: 200,
-    schema: IDisplayObjectResponse,
-  })
-  @Delete()
-  public async deleteOrder(@Body() body: IVirtualOrderDelete) {
-    const { virtualOrderContainerId, id } =
-      await this.virtualOrderService.deleteOrder(body);
-    const { stockId, order } = await this.virtualOrderService.getContainerById(
-      virtualOrderContainerId,
-      id,
-    );
-    const display = await this.matchService.dispatchOrder(
-      {
-        ...order,
-        stockId,
-        investorId: 0,
-        status: OrderStatusEnum.SUCCESS,
-      },
-      `VIRTUAL_${virtualOrderContainerId}`,
-    );
-    return transferDisplayToReturnType(display as any);
+    return display;
   }
 }

@@ -1,7 +1,7 @@
 import { Body, Controller, Put } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { transferDisplayToReturnType } from '../display/display.service';
 import { MatchService } from '../match/match.service';
+import { OrderService } from '../order/order.service';
 import { IStockReset, IStockResetResponse } from './stock.dto';
 import { StockService } from './stock.service';
 
@@ -11,6 +11,7 @@ export class StockController {
   constructor(
     private readonly stockService: StockService,
     private readonly matchService: MatchService,
+    private readonly orderService: OrderService,
   ) {}
 
   @ApiOperation({
@@ -22,16 +23,29 @@ export class StockController {
     status: 200,
   })
   @Put('reset')
-  public async reset(@Body() { id, createdTime }: IStockReset) {
+  public async reset(@Body() { id, createdTime, isReset }: IStockReset) {
     const { orders, marketBook, marketName } =
-      await this.matchService.getReplayOrdersAndMarketBook(id, createdTime);
+      await this.matchService.getReplayOrdersAndMarketBook(
+        id,
+        createdTime,
+        isReset,
+      );
 
-    //TODO 將marketName傳進setMarketBook
-    // await this.matchService.setMarketBook(id, marketBook, marketName);
-    const display = await this.matchService.setMarketBook(id, marketBook);
-    return {
-      orders,
-      display: transferDisplayToReturnType(display as any),
-    };
+    if (isReset === true) {
+      const display = await this.matchService.setMarketBook(id, marketBook);
+      return {
+        display,
+      };
+    } else {
+      const display = await this.matchService.setMarketBook(
+        id,
+        marketBook,
+        marketName,
+      );
+      return {
+        orders,
+        display,
+      };
+    }
   }
 }

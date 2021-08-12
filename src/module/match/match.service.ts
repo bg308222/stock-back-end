@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionStatusEnum } from 'src/common/enum';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
-import { DisplayService } from '../display/display.service';
+import {
+  DisplayService,
+  transferDisplayToReturnType,
+} from '../display/display.service';
 import { IMatchOrder } from '../order/order.dto';
 import { OrderService } from '../order/order.service';
 import { StockService } from '../stock/stock.service';
@@ -198,7 +201,8 @@ export class MatchService {
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          if (_marketName) return this.getDisplayBody(marketName);
+          if (_marketName)
+            return transferDisplayToReturnType(this.getDisplayBody(marketName));
           await this.insertDisplay(marketName);
           return true;
         }
@@ -211,7 +215,7 @@ export class MatchService {
       } else {
         // Match successfully
         if (_marketName) {
-          return this.getDisplayBody(marketName);
+          return transferDisplayToReturnType(this.getDisplayBody(marketName));
         }
 
         await this.insertDisplay(marketName);
@@ -237,6 +241,7 @@ export class MatchService {
   public async getReplayOrdersAndMarketBook(
     stockId: number,
     createdTime?: string,
+    isReset = false,
   ) {
     const marketName = `REPLAY_${new Date()
       .getTime()
@@ -245,6 +250,7 @@ export class MatchService {
 
     if (createdTime) {
       const { content: beforeOrders } = await this.orderService.get({
+        stockId,
         createdTime: { max: createdTime },
       });
       this.runOrders(beforeOrders, marketName);
@@ -255,14 +261,22 @@ export class MatchService {
       order: { orderBy: 'createdTime', order: 'ASC' },
     });
 
+    if (isReset === true) {
+      await this.orderService.deleteOrderByIds(orders.map((order) => order.id));
+    }
+
     const marketBook = this.stockMarketList[marketName].dumpMarketBook();
 
     return {
       orders: orders.map(({ id, createdTime, ...order }) => {
+        if (isReset) {
+          return {
+            ...order,
+          };
+        }
         return {
           ...order,
-          //TODO 解除註解
-          // marketName,
+          marketName,
         };
       }),
       marketBook,
@@ -282,7 +296,10 @@ export class MatchService {
       stock,
       marketBook,
     );
-    if (!marketName) await this.insertDisplay(stockId.toString());
-    return this.getDisplayBody(stockId.toString());
+    if (!marketName) {
+      await this.insertDisplay(stockId.toString());
+      return true;
+    }
+    return transferDisplayToReturnType(this.getDisplayBody(marketName));
   }
 }

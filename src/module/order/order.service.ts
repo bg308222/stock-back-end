@@ -78,4 +78,9 @@ export class OrderService {
       quantity,
     };
   }
+
+  public async deleteOrderByIds(ids: number[]) {
+    if (ids.length !== 0) await this.orderRepository.delete(ids);
+    return true;
+  }
 }

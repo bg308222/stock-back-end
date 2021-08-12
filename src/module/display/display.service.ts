@@ -13,7 +13,9 @@ import {
   queryStrategy,
 } from './display.dto';
 
-export const transferDisplayToReturnType = (displaySchema?: IDisplaySchema) => {
+export const transferDisplayToReturnType = (
+  displaySchema?: Omit<IDisplaySchema, 'id' | 'createdTime'>,
+) => {
   if (!displaySchema) return null;
   const {
     buyTick: buyTickJson,
