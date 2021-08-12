@@ -47,3 +47,9 @@ export enum TrendFlagEnum {
   RISE = 1,
   SPACE = 2,
 }
+
+export enum DateFormatEnum {
+  MINUTE = 0,
+  HOUR = 1,
+  DAY = 2,
+}

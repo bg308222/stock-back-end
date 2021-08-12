@@ -1,5 +1,5 @@
 import { SelectQueryBuilder } from 'typeorm';
-import { QueryStrategyEnum } from '../enum';
+import { DateFormatEnum, QueryStrategyEnum } from '../enum';
 import { IQueryStategy } from '../type';
 
 export const getQueryBuilderContent = async <T = any>(
@@ -62,4 +62,18 @@ export const getQueryBuilderContent = async <T = any>(
     fullQueryBuilder.limit(query.page.pageSize);
   }
   return { fullQueryBuilder, totalSize };
+};
+
+export const getDateFormatString = (dateFormat: DateFormatEnum) => {
+  switch (dateFormat) {
+    case DateFormatEnum.MINUTE: {
+      return '%Y-%m-%d %H:%i';
+    }
+    case DateFormatEnum.HOUR: {
+      return '%Y-%m-%d %H';
+    }
+    case DateFormatEnum.DAY: {
+      return '%Y-%m-%d';
+    }
+  }
 };

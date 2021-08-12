@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
-import { TrendFlagEnum } from 'src/common/enum';
-import { getQueryBuilderContent } from 'src/common/helper/database.helper';
+import { DateFormatEnum, TrendFlagEnum } from 'src/common/enum';
+import {
+  getDateFormatString,
+  getQueryBuilderContent,
+} from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
 import { getTickAfterNTick, getTickRange } from '../match/match.service';
 import {
+  IDisplayChartQuery,
   IDisplayInsert,
   IDisplayQuery,
   IDisplaySchema,
@@ -177,6 +181,36 @@ export class DisplayService {
     return await this.displayRepository.insert({
       ...body,
       stock: { id: body.stockId },
+    });
+  }
+
+  public async getChart({
+    dateFormat: _dateFormat,
+    stockId,
+  }: IDisplayChartQuery) {
+    const dateFormat = getDateFormatString(_dateFormat);
+    const result = await this.displayRepository
+      .createQueryBuilder('display')
+      .select(`DATE_FORMAT(display.createdTime,'${dateFormat}')`, 'createdTime')
+      .addSelect(`SUM(display.matchQuantity)`, 'quantity')
+      .addSelect(
+        `FIRST_VALUE(display.matchPrice) OVER (ORDER BY display.createdTime ASC)`,
+        'open',
+      )
+      .addSelect(`MAX(display.matchPrice)`, 'highest')
+      .addSelect(
+        `LAST_VALUE(display.matchPrice) OVER (ORDER BY display.createdTime ASC)`,
+        'close',
+      )
+      .addSelect(`MIN(display.matchPrice)`, 'lowest')
+      .where('display.stockId = :stockId', { stockId })
+      .groupBy(`DATE_FORMAT(display.createdTime,'${dateFormat}')`)
+      .getRawMany();
+    return result.map((v) => {
+      return {
+        ...v,
+        quantity: +v.quantity,
+      };
     });
   }
 }

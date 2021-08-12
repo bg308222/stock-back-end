@@ -1,7 +1,12 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Display } from 'src/common/entity/display.entity';
-import { QueryStrategyEnum, TrendFlagEnum } from 'src/common/enum';
 import {
+  DateFormatEnum,
+  QueryStrategyEnum,
+  TrendFlagEnum,
+} from 'src/common/enum';
+import {
+  getEnumDescription,
   getRangeDescription,
   getResponseProperties,
 } from 'src/common/helper/document.helper';
@@ -284,6 +289,29 @@ export class IDisplayQueryResponse {
   @ApiProperty({ example: 10 })
   totalSize: number;
 }
+
+export class IDisplayChartQuery {
+  @ApiProperty({ example: 1 })
+  stockId: number;
+
+  @ApiProperty(getEnumDescription('dateFormat', false))
+  dateFormat: DateFormatEnum;
+}
+
+export const IDisplayChartQueryResponse = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: getResponseProperties([
+      { key: 'createdTime', type: 'date' },
+      { key: 'quantity', type: 'number' },
+      { key: 'open', type: 'number' },
+      { key: 'highest', type: 'number' },
+      { key: 'close', type: 'number' },
+      { key: 'lowest', type: 'number' },
+    ]),
+  },
+};
 
 export class IDisplayInsert {
   stockId: number;

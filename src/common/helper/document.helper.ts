@@ -1,5 +1,6 @@
 import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import {
+  DateFormatEnum,
   MethodEnum,
   OrderStatusEnum,
   PriceTypeEnum,
@@ -31,7 +32,8 @@ export const getEnumDescription = (
     | 'timeRestriction'
     | 'transactionStatus'
     | 'upperLowerLimit'
-    | 'orderStatus',
+    | 'orderStatus'
+    | 'dateFormat',
   isArray = true,
 ) => {
   if (isArray) {
@@ -93,6 +95,17 @@ export const getEnumDescription = (
           isArray: true,
         };
       }
+      case 'dateFormat': {
+        return {
+          enum: [
+            DateFormatEnum.MINUTE,
+            DateFormatEnum.HOUR,
+            DateFormatEnum.DAY,
+          ],
+          description: 'MINUTE = 0, HOUR = 1, DAY = 2',
+          isArray: true,
+        };
+      }
     }
   } else {
     switch (type) {
@@ -135,6 +148,12 @@ export const getEnumDescription = (
       case 'orderStatus': {
         return {
           description: 'FAIL = 0, SUCCESS = 1',
+          example: 0,
+        };
+      }
+      case 'dateFormat': {
+        return {
+          description: 'MINUTE = 0, HOUR = 1, DAY = 2',
           example: 0,
         };
       }
