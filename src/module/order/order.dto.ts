@@ -16,6 +16,7 @@ import {
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export type IOrderSchema = Omit<Order, 'investor' | 'stock' | 'order'>;
+export type IMatchOrder = Omit<IOrderSchema, 'createdTime' | 'orderId'>;
 
 export class IOrderQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional()
@@ -48,9 +49,6 @@ export class IOrderQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional(getEnumDescription('timeRestriction'))
   timeRestriction?: TimeRestrictiomEnum[];
 
-  @ApiPropertyOptional()
-  orderId?: number;
-
   @ApiPropertyOptional(getEnumDescription('orderStatus'))
   status?: OrderStatusEnum[];
 }
@@ -66,7 +64,6 @@ export const queryStrategy: IQueryStategy<IOrderQuery> = {
   quantity: QueryStrategyEnum.range,
   priceType: QueryStrategyEnum.inArray,
   timeRestriction: QueryStrategyEnum.inArray,
-  orderId: QueryStrategyEnum.value,
   status: QueryStrategyEnum.inArray,
 };
 
@@ -86,7 +83,6 @@ export class IOrderQueryResponse {
         { key: 'quantity', type: 'number' },
         { key: 'priceType', type: 'number' },
         { key: 'timeRestriction', type: 'number' },
-        { key: 'orderId', type: 'number' },
         { key: 'status', type: 'number' },
       ]),
     },
@@ -100,9 +96,6 @@ export class IOrderQueryResponse {
 export class IOrderInsert {
   @ApiProperty({ example: 1 })
   investorId: number;
-
-  @ApiProperty({ example: new Date().toString() })
-  createdTime: Date;
 
   @ApiProperty({ example: 1 })
   stockId: number;
@@ -125,9 +118,6 @@ export class IOrderInsert {
   @ApiProperty(getEnumDescription('timeRestriction', false))
   timeRestriction: TimeRestrictiomEnum;
 
-  @ApiProperty()
-  orderId: number;
-
   @ApiProperty(getEnumDescription('orderStatus', false))
   status: OrderStatusEnum;
 }
@@ -138,4 +128,36 @@ export class IOrderDelete {
 
   @ApiProperty()
   quantity: number;
+}
+
+export class IReplayOrderInsert {
+  @ApiProperty({ example: 1 })
+  investorId: number;
+
+  @ApiProperty({ example: 1 })
+  stockId: number;
+
+  @ApiProperty(getEnumDescription('method', false))
+  method: MethodEnum;
+
+  @ApiProperty(getEnumDescription('subMethod', false))
+  subMethod: SubMethodEnum;
+
+  @ApiProperty()
+  price: number;
+
+  @ApiProperty()
+  quantity: number;
+
+  @ApiProperty(getEnumDescription('priceType', false))
+  priceType: PriceTypeEnum;
+
+  @ApiProperty(getEnumDescription('timeRestriction', false))
+  timeRestriction: TimeRestrictiomEnum;
+
+  @ApiProperty(getEnumDescription('orderStatus', false))
+  status: OrderStatusEnum;
+
+  @ApiProperty()
+  marketName: string;
 }

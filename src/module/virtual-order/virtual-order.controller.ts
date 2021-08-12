@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrderStatusEnum } from 'src/common/enum';
+import { IDisplayObjectResponse } from '../display/display.dto';
 import { transferDisplayToReturnType } from '../display/display.service';
 import { MatchService } from '../match/match.service';
 import { VirtualOrderService } from './virtual-order.service';
@@ -10,7 +11,6 @@ import {
   IVirtualOrderContainerQueryResponse,
   IVirtualOrderDelete,
   IVirtualOrderInsert,
-  IVirtuaoOrderInsertAndDeleteResponse,
 } from './virtualOrder.dto';
 
 @ApiTags('VirtualOrder')
@@ -56,7 +56,7 @@ export class VirtualOrderController {
   })
   @ApiResponse({
     status: 200,
-    schema: IVirtuaoOrderInsertAndDeleteResponse,
+    schema: IDisplayObjectResponse,
   })
   @Post()
   public async insertOrder(@Body() body: IVirtualOrderInsert) {
@@ -72,9 +72,7 @@ export class VirtualOrderController {
         investorId: 0,
         status: OrderStatusEnum.SUCCESS,
       },
-      {
-        id: body.virtualOrderContainerId,
-      },
+      `VIRTUAL_${body.virtualOrderContainerId}`,
     );
     return transferDisplayToReturnType(display as any);
   }
@@ -84,7 +82,7 @@ export class VirtualOrderController {
   })
   @ApiResponse({
     status: 200,
-    schema: IVirtuaoOrderInsertAndDeleteResponse,
+    schema: IDisplayObjectResponse,
   })
   @Delete()
   public async deleteOrder(@Body() body: IVirtualOrderDelete) {
@@ -101,9 +99,7 @@ export class VirtualOrderController {
         investorId: 0,
         status: OrderStatusEnum.SUCCESS,
       },
-      {
-        id: virtualOrderContainerId,
-      },
+      `VIRTUAL_${virtualOrderContainerId}`,
     );
     return transferDisplayToReturnType(display as any);
   }

@@ -1,5 +1,6 @@
 import { Body, Controller, Put } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { transferDisplayToReturnType } from '../display/display.service';
 import { MatchService } from '../match/match.service';
 import { IStockReset, IStockResetResponse } from './stock.dto';
 import { StockService } from './stock.service';
@@ -22,12 +23,15 @@ export class StockController {
   })
   @Put('reset')
   public async reset(@Body() { id, createdTime }: IStockReset) {
-    const { orders, marketBook } =
+    const { orders, marketBook, marketName } =
       await this.matchService.getReplayOrdersAndMarketBook(id, createdTime);
 
-    await this.matchService.setMarketBook(id, marketBook);
+    //TODO 將marketName傳進setMarketBook
+    // await this.matchService.setMarketBook(id, marketBook, marketName);
+    const display = await this.matchService.setMarketBook(id, marketBook);
     return {
       orders,
+      display: transferDisplayToReturnType(display as any),
     };
   }
 }

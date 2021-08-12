@@ -1,12 +1,23 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrderStatusEnum } from 'src/common/enum';
+import { IDisplayObjectResponse } from '../display/display.dto';
+import { transferDisplayToReturnType } from '../display/display.service';
 import { MatchService } from '../match/match.service';
 import {
   IOrderDelete,
   IOrderInsert,
   IOrderQuery,
   IOrderQueryResponse,
+  IReplayOrderInsert,
 } from './order.dto';
 import { OrderService } from './order.service';
 
@@ -35,16 +46,34 @@ export class OrderController {
   })
   @Post()
   public async insert(@Body() body: IOrderInsert) {
+    //virtual order
     if (body.investorId === 0) {
-      await this.matchService.dispatchOrder({
+      return await this.matchService.dispatchOrder({
         ...body,
         id: 0,
       });
     } else {
       const order = await this.orderService.insert(body);
-      await this.matchService.dispatchOrder(order);
+      return await this.matchService.dispatchOrder(order);
     }
-    return true;
+  }
+
+  @ApiResponse({
+    status: 200,
+    schema: IDisplayObjectResponse,
+  })
+  @ApiOperation({
+    summary: '發出重播委託',
+    description: '先打/api/stock/reset取得marketName',
+  })
+  @Post('replay')
+  public async insertReplayOrder(@Body() body: IReplayOrderInsert) {
+    if (!body.marketName) throw new BadRequestException('Missing marketName');
+    const display = await this.matchService.dispatchOrder(
+      { ...body, id: 0 },
+      body.marketName,
+    );
+    return transferDisplayToReturnType(display as any);
   }
 
   @ApiOperation({

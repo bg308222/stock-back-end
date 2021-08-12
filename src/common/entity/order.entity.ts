@@ -9,9 +9,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Investor } from './investor.entity';
@@ -52,12 +50,6 @@ export class Order {
 
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
   timeRestriction: number;
-
-  @Column({ default: null, nullable: true })
-  orderId: number;
-  @ManyToOne(() => Order, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'orderId' })
-  order: Order;
 
   @Column({ default: OrderStatusEnum.SUCCESS })
   status: number;

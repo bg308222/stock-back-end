@@ -68,7 +68,6 @@ export class OrderService {
       ...order,
       subMethod: SubMethodEnum.CANCEL,
       quantity,
-      order: { id },
     });
 
     return {
@@ -77,7 +76,6 @@ export class OrderService {
       createdTime: generatedMaps[0].createdTime,
       subMethod: SubMethodEnum.CANCEL,
       quantity,
-      orderId: id,
     };
   }
 }

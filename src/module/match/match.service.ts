@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { TransactionStatusEnum } from 'src/common/enum';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
-import { IOrderSchema } from '../order/order.dto';
+import { IMatchOrder } from '../order/order.dto';
 import { OrderService } from '../order/order.service';
 import { StockService } from '../stock/stock.service';
 import { ITransactionInsert } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
 import { IMarketBook, StockMarket } from './match.helper';
 
-export const getOrderQuantity = (orders: IOrderSchema[]) => {
+export const getOrderQuantity = (orders: IMatchOrder[]) => {
   const quantity = orders.reduce<number>((p, order) => {
     p += order.quantity;
     return p;
@@ -186,26 +186,19 @@ export class MatchService {
     });
   }
 
-  public async dispatchOrder(
-    order: IOrderSchema,
-    virtualOrder?: { id: number },
-  ) {
-    let marketName: string = order.stockId.toString();
-    if (virtualOrder) {
-      marketName = `virtual${virtualOrder.id}`;
-    }
+  public async dispatchOrder(order: IMatchOrder, _marketName?: string) {
+    const marketName = _marketName || order.stockId.toString();
 
     if (!this.stockMarketList[marketName])
       await this.createMarket(order.stockId, marketName);
 
-    //TODO Recognize when to doCallAuction or doContinuousTrading
     if (true) {
       const { transactions, isCancelSuccessfully, isUpdateSuccessfully } =
         this.stockMarketList[marketName].doCallAuction(order);
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          if (virtualOrder) return this.getDisplayBody(marketName);
+          if (_marketName) return this.getDisplayBody(marketName);
           await this.insertDisplay(marketName);
           return true;
         }
@@ -217,7 +210,7 @@ export class MatchService {
         return false;
       } else {
         // Match successfully
-        if (virtualOrder) {
+        if (_marketName) {
           return this.getDisplayBody(marketName);
         }
 
@@ -234,7 +227,7 @@ export class MatchService {
     }
   }
 
-  public runOrders(orders: IOrderSchema[], marketName: string) {
+  public runOrders(orders: IMatchOrder[], marketName: string) {
     for (const order of orders) {
       this.stockMarketList[marketName].doCallAuction(order);
     }
@@ -245,7 +238,9 @@ export class MatchService {
     stockId: number,
     createdTime?: string,
   ) {
-    const marketName = new Date().getTime().toString();
+    const marketName = `REPLAY_${new Date()
+      .getTime()
+      .toString()}${Math.random().toFixed(2)}`;
     await this.createMarket(stockId, marketName);
 
     if (createdTime) {
@@ -262,22 +257,32 @@ export class MatchService {
 
     const marketBook = this.stockMarketList[marketName].dumpMarketBook();
 
-    delete this.stockMarketList[marketName];
-
     return {
-      orders: orders.map(({ id, ...order }) => {
-        return order;
+      orders: orders.map(({ id, createdTime, ...order }) => {
+        return {
+          ...order,
+          //TODO 解除註解
+          // marketName,
+        };
       }),
       marketBook,
+      marketName,
     };
   }
 
-  public async setMarketBook(stockId: number, marketBook: IMarketBook) {
+  public async setMarketBook(
+    stockId: number,
+    marketBook: IMarketBook,
+    marketName?: string,
+  ) {
     const {
       content: [stock],
     } = await this.stockService.get({ id: stockId });
-    this.stockMarketList[stockId].setMarketBook(stock, marketBook);
-    await this.insertDisplay(stock.id.toString());
-    return true;
+    this.stockMarketList[marketName || stockId].setMarketBook(
+      stock,
+      marketBook,
+    );
+    if (!marketName) await this.insertDisplay(stockId.toString());
+    return this.getDisplayBody(stockId.toString());
   }
 }

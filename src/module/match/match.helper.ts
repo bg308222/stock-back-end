@@ -6,16 +6,16 @@ import {
   TransactionStatusEnum,
   TrendFlagEnum,
 } from 'src/common/enum';
-import { IOrderSchema } from '../order/order.dto';
+import { IMatchOrder } from '../order/order.dto';
 import { IStockSchema } from '../stock/stock.dto';
 import { ITransactionInsert } from '../transaction/transaction.dto';
 
-const debug = (message: string) => {
+const debug = (message: any) => {
   if (0) console.log(message);
 };
 export interface IMarketBook {
-  marketBuy: IOrderSchema[];
-  marketSell: IOrderSchema[];
+  marketBuy: IMatchOrder[];
+  marketSell: IMatchOrder[];
   limitBuy: LimitBook;
   limitSell: LimitBook;
   stock: IStockSchema;
@@ -44,7 +44,7 @@ class LimitBook {
     }
   }
 
-  public orders: Record<string, IOrderSchema[]>;
+  public orders: Record<string, IMatchOrder[]>;
   public firstOrderPrice: number;
   public highestOrderPrice: number;
   public lowestOrderPrice: number;
@@ -118,7 +118,7 @@ export class StockMarket {
 
   private marketBook: IMarketBook;
 
-  private popFirstOrder(order: IOrderSchema, method: 'Sell' | 'Buy') {
+  private popFirstOrder(order: IMatchOrder, method: 'Sell' | 'Buy') {
     if (order.priceType === PriceTypeEnum.MARKET) {
       this.marketBook[`market${method}`] =
         this.marketBook[`market${method}`].slice(1);
@@ -129,7 +129,7 @@ export class StockMarket {
   }
 
   private transferOrderToTransaction(
-    { id, createdTime, orderId, quantity: q, price: p, ...order }: IOrderSchema,
+    { id, quantity: q, price: p, ...order }: IMatchOrder,
     status: TransactionStatusEnum,
     quantity: number,
     price: number,
@@ -146,7 +146,7 @@ export class StockMarket {
     }
   }
 
-  public doCallAuction(order: IOrderSchema): IDoCallAuctionResponse {
+  public doCallAuction(order: IMatchOrder): IDoCallAuctionResponse {
     const returnResponse: IDoCallAuctionResponse = {
       transactions: [],
       isCancelSuccessfully: undefined,
@@ -161,9 +161,10 @@ export class StockMarket {
 
     debug('Cancel and Update');
     if (order.subMethod === SubMethodEnum.CANCEL) {
+      debug('Cancel');
       returnResponse.isCancelSuccessfully = false;
 
-      let targetOrderList: IOrderSchema[];
+      let targetOrderList: IMatchOrder[];
       if (order.priceType === PriceTypeEnum.LIMIT) {
         targetOrderList =
           this.marketBook[`limit${currentSideMethod}`].orders[order.price];
@@ -171,10 +172,31 @@ export class StockMarket {
         targetOrderList = this.marketBook[`market${currentSideMethod}`];
       }
       if (targetOrderList) {
-        const orderIndex = targetOrderList.findIndex(({ id }) => {
-          return id === order.orderId;
-        });
+        const orderIndex = targetOrderList.findIndex(
+          ({
+            investorId,
+            stockId,
+            method,
+            price,
+            quantity,
+            priceType,
+            timeRestriction,
+          }) => {
+            if (
+              investorId === order.investorId &&
+              stockId === order.stockId &&
+              method === order.method &&
+              price === order.price &&
+              quantity >= order.quantity &&
+              priceType === order.priceType &&
+              timeRestriction === order.timeRestriction
+            )
+              return true;
+            return false;
+          },
+        );
         if (orderIndex !== -1) {
+          debug('Cancel find order');
           const { quantity } = targetOrderList[orderIndex];
           if (order.quantity === quantity) {
             targetOrderList.splice(orderIndex, 1);
@@ -224,7 +246,7 @@ export class StockMarket {
     debug('Match start');
     while (order.quantity !== 0) {
       //Choose inverse side order
-      let inverseSideOrder: IOrderSchema =
+      let inverseSideOrder: IMatchOrder =
         this.marketBook[`limit${inverseSideMethod}`].firstOrderPrice === null
           ? null
           : this.marketBook[`limit${inverseSideMethod}`].orders[
