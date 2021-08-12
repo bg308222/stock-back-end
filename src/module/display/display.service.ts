@@ -192,6 +192,7 @@ export class DisplayService {
     const result = await this.displayRepository
       .createQueryBuilder('display')
       .select(`DATE_FORMAT(display.createdTime,'${dateFormat}')`, 'createdTime')
+      .addSelect(`display.matchPrice`, 'price')
       .addSelect(`SUM(display.matchQuantity)`, 'quantity')
       .addSelect(
         `FIRST_VALUE(display.matchPrice) OVER (ORDER BY display.createdTime ASC)`,
