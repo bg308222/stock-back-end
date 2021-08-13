@@ -208,24 +208,53 @@ export class DisplayService {
     const result = await this.displayRepository
       .createQueryBuilder('display')
       .select(`DATE_FORMAT(display.createdTime,'${dateFormat}')`, 'createdTime')
-      .addSelect(`SUM(display.matchQuantity)`, 'quantity')
-      .addSelect(
-        `FIRST_VALUE(display.matchPrice) OVER (ORDER BY display.createdTime ASC)`,
-        'open',
-      )
-      .addSelect(`MAX(display.matchPrice)`, 'highest')
-      .addSelect(
-        `LAST_VALUE(display.matchPrice) OVER (ORDER BY display.createdTime ASC)`,
-        'close',
-      )
-      .addSelect(`MIN(display.matchPrice)`, 'lowest')
+      .addSelect('display.matchPrice', 'price')
+      .addSelect('display.matchQuantity', 'quantity')
       .where('display.stockId = :stockId', { stockId })
-      .groupBy(`DATE_FORMAT(display.createdTime,'${dateFormat}')`)
+      .orderBy('display.createdTime', 'ASC')
       .getRawMany();
-    return result.map((v) => {
+    const sortedResult = result.reduce<
+      Record<
+        string,
+        {
+          quantity: number;
+          lowest: number;
+          highest: number;
+          open: number;
+          close: number;
+        }
+      >
+    >(
+      (
+        p,
+        {
+          price,
+          quantity,
+          createdTime,
+        }: { price: number; quantity: number; createdTime: string },
+      ) => {
+        if (!p[createdTime]) {
+          p[createdTime] = {
+            quantity,
+            lowest: price,
+            highest: price,
+            open: price,
+            close: price,
+          };
+        } else {
+          p[createdTime].close = price;
+          if (price > p[createdTime].highest) p[createdTime].highest = price;
+          if (price < p[createdTime].lowest) p[createdTime].lowest = price;
+          p[createdTime].quantity += quantity;
+        }
+        return p;
+      },
+      {},
+    );
+    return Object.entries(sortedResult).map(([key, value]) => {
       return {
-        ...v,
-        quantity: +v.quantity,
+        createdTime: key,
+        ...value,
       };
     });
   }

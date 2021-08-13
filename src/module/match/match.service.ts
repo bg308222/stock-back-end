@@ -121,8 +121,15 @@ export class MatchService {
     const { content } = await this.stockService.get({});
     const stocks = content.map((stock) => stock.id);
     await Promise.all(
-      stocks.map((id) => {
-        return this.createMarket(id);
+      stocks.map(async (id) => {
+        return this.createMarket(id)
+          .then(async () => {
+            await this.displayService.findAndDelete({ stockId: id });
+            await this.orderService.findAndDelete({ stockId: id });
+          })
+          .then(() => {
+            this.insertDisplay(id.toString());
+          });
       }),
     );
   }

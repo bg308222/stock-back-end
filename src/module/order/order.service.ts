@@ -83,4 +83,20 @@ export class OrderService {
     if (ids.length !== 0) await this.orderRepository.delete(ids);
     return true;
   }
+
+  public async findAndDelete(query: IOrderQuery) {
+    const { fullQueryBuilder } = await getQueryBuilderContent<IOrderSchema>(
+      'order',
+      this.orderRepository.createQueryBuilder('order'),
+      queryStrategy,
+      query,
+    );
+
+    const ids = (await fullQueryBuilder.getMany()).map((order) => order.id);
+    if (ids.length !== 0) {
+      await this.orderRepository.delete(ids);
+      return true;
+    }
+    return false;
+  }
 }
