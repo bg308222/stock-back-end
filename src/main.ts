@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { MatchService } from './module/match/match.service';
 
 const runSwagger = (
   app: NestExpressApplication,
@@ -32,6 +33,8 @@ async function bootstrap() {
   app.enableCors();
 
   const configService = app.get(ConfigService);
+  const matchService = app.get(MatchService);
+  await matchService.init();
 
   runSwagger(app, configService.get('HOST'), configService.get('PORT'));
 

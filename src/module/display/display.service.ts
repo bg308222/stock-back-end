@@ -177,6 +177,22 @@ export class DisplayService {
     return result;
   }
 
+  public async findAndDelete(query: IDisplayQuery) {
+    const { fullQueryBuilder } = await getQueryBuilderContent<IDisplaySchema>(
+      'display',
+      this.displayRepository.createQueryBuilder('display'),
+      queryStrategy,
+      query,
+    );
+
+    const ids = (await fullQueryBuilder.getMany()).map((dispaly) => dispaly.id);
+    if (ids.length !== 0) {
+      await this.displayRepository.delete(ids);
+      return true;
+    }
+    return false;
+  }
+
   public async insert(body: IDisplayInsert) {
     return await this.displayRepository.insert({
       ...body,

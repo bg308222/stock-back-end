@@ -117,6 +117,16 @@ export class MatchService {
     this.stockMarketList = {};
   }
 
+  public async init() {
+    const { content } = await this.stockService.get({});
+    const stocks = content.map((stock) => stock.id);
+    await Promise.all(
+      stocks.map((id) => {
+        return this.createMarket(id);
+      }),
+    );
+  }
+
   private async createMarket(id: number, marketName?: string) {
     const {
       content: [stock],
@@ -262,7 +272,13 @@ export class MatchService {
     });
 
     if (isReset === true) {
-      await this.orderService.deleteOrderByIds(orders.map((order) => order.id));
+      await Promise.all([
+        this.orderService.deleteOrderByIds(orders.map((order) => order.id)),
+        this.displayService.findAndDelete({
+          stockId,
+          createdTime: createdTime ? { min: createdTime } : undefined,
+        }),
+      ]);
     }
 
     const marketBook = this.stockMarketList[marketName].dumpMarketBook();
