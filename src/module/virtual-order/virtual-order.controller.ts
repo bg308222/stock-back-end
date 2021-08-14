@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrderStatusEnum } from 'src/common/enum';
 import { IDisplayObjectResponse } from '../display/display.dto';
@@ -19,13 +29,60 @@ export class VirtualOrderController {
     private readonly matchService: MatchService,
   ) {}
 
+  private getMarketName(virtualOrderContainerId: number) {
+    return `VIRTUAL_${virtualOrderContainerId}`;
+  }
+
   @Get('container')
+  @ApiOperation({
+    summary: '獲取所有委託容器',
+  })
   @ApiResponse({
     status: 200,
     type: IVirtualOrderContainerQueryResponse,
   })
   public async getContainer(@Query() query: IVirtualOrderContainerQuery) {
     return await this.virtualOrderService.getContainer(query);
+  }
+
+  @Get('container/:virtualOrderContainerId')
+  @ApiOperation({
+    summary: '獲取該容器的display資訊',
+  })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      type: 'object',
+      properties: {
+        virtualOrderContainerId: {
+          type: 'number',
+          example: 1,
+        },
+        display: IDisplayObjectResponse,
+      },
+    },
+  })
+  public async getContainerDetail(
+    @Param('virtualOrderContainerId') virtualOrderContainerId: number,
+  ) {
+    if (!virtualOrderContainerId)
+      throw new BadRequestException('Missing virtualOrderContainerId');
+    const marketName = this.getMarketName(virtualOrderContainerId);
+    const container = await this.virtualOrderService.getContainerDetail(
+      virtualOrderContainerId,
+    );
+    const marketBook = container.marketBook
+      ? JSON.parse(container.marketBook)
+      : undefined;
+    await this.matchService.setMarketBook(
+      container.stockId,
+      marketBook,
+      marketName,
+    );
+    return {
+      virtualOrderContainerId,
+      display: this.matchService.getDisplayReturnType(marketName),
+    };
   }
 
   @ApiOperation({
@@ -36,16 +93,26 @@ export class VirtualOrderController {
   @ApiResponse({
     status: 200,
     schema: {
-      type: 'number',
-      example: 1,
+      type: 'object',
+      properties: {
+        virtualOrderContainerId: {
+          type: 'number',
+          example: 1,
+        },
+        display: IDisplayObjectResponse,
+      },
     },
   })
   @Post('container')
   public async insertContainer(@Body() body: IVirtualOrderContainerInsert) {
-    const {
-      generatedMaps: [generatedMap],
-    } = await this.virtualOrderService.insertContainer(body);
-    return generatedMap.id;
+    const virtualOrderContainerId =
+      await this.virtualOrderService.insertContainer(body);
+    const marketName = this.getMarketName(virtualOrderContainerId);
+    await this.matchService.createMarket(body.stockId, marketName);
+    return {
+      virtualOrderContainerId,
+      display: this.matchService.getDisplayReturnType(marketName),
+    };
   }
 
   @ApiOperation({
@@ -58,20 +125,70 @@ export class VirtualOrderController {
   })
   @Post()
   public async insertOrder(@Body() body: IVirtualOrderInsert) {
-    const id = await this.virtualOrderService.insertOrder(body);
-    const { stockId, order } = await this.virtualOrderService.getContainerById(
-      body.virtualOrderContainerId,
-      id,
-    );
+    const marketName = this.getMarketName(body.virtualOrderContainerId);
+    await this.virtualOrderService.insertOrder(body);
     const display = await this.matchService.dispatchOrder(
       {
-        ...order,
-        stockId,
+        ...body,
         investorId: 0,
-        status: OrderStatusEnum.SUCCESS,
       },
-      `VIRTUAL_${body.virtualOrderContainerId}`,
+      marketName,
     );
+    const marketBook = this.matchService.getMarketBook(marketName);
+    await this.virtualOrderService.updateContainer({
+      id: body.virtualOrderContainerId,
+      marketBook,
+    });
     return display;
+  }
+
+  @Put('container/:virtualOrderContainerId')
+  @ApiOperation({
+    summary: '重置該容器，並回傳display資訊',
+  })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      type: 'object',
+      properties: {
+        virtualOrderContainerId: {
+          type: 'number',
+          example: 1,
+        },
+        display: IDisplayObjectResponse,
+      },
+    },
+  })
+  public async resetContainer(
+    @Param('virtualOrderContainerId') virtualOrderContainerId: number,
+  ) {
+    if (!virtualOrderContainerId)
+      throw new BadRequestException('Missing virtualOrderContainerId');
+    const marketName = this.getMarketName(virtualOrderContainerId);
+    const container = await this.virtualOrderService.resetContainer(
+      virtualOrderContainerId,
+    );
+
+    await this.matchService.setMarketBook(
+      container.stockId,
+      undefined,
+      marketName,
+    );
+    return {
+      virtualOrderContainerId,
+      display: this.matchService.getDisplayReturnType(marketName),
+    };
+  }
+
+  @Delete('container/:virtualOrderContainerId')
+  @ApiOperation({
+    summary: '刪除該容器',
+  })
+  public async deleteContainer(
+    @Param('virtualOrderContainerId') virtualOrderContainerId: number,
+  ) {
+    return await this.virtualOrderService.deleteContainer(
+      virtualOrderContainerId,
+    );
   }
 }

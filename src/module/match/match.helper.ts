@@ -129,12 +129,19 @@ export class StockMarket {
   }
 
   private transferOrderToTransaction(
-    { id, quantity: q, price: p, ...order }: IMatchOrder,
+    { id, quantity: q, price: p, stockId, ...order }: IMatchOrder,
     status: TransactionStatusEnum,
     quantity: number,
     price: number,
   ): ITransactionInsert {
-    return { ...order, orderId: id, status, quantity, price };
+    return {
+      ...order,
+      orderId: id,
+      stockId: stockId as number,
+      status,
+      quantity,
+      price,
+    };
   }
 
   private updateTrendFlag(method: 'Sell' | 'Buy') {

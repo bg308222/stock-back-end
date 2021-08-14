@@ -5,6 +5,7 @@ import { VirtualOrderContainer } from 'src/common/entity/virtualOrderContainer.e
 import { SubMethodEnum } from 'src/common/enum';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
+import { IMarketBook } from '../match/match.helper';
 import { IOrderDelete } from '../order/order.dto';
 import {
   IVirtualOrderContainerInsert,
@@ -38,24 +39,24 @@ export class VirtualOrderService {
     const content = await Promise.all(
       (
         await fullQueryBuilder.getMany()
-      ).map(async (container) => {
+      ).map(async ({ marketBook, ...container }) => {
         return {
           ...container,
-          orders: (
-            await this.virtualOrderRepository
-              .createQueryBuilder('order')
-              .where('order.virtualOrderContainerId = :id', {
-                id: container.id,
-              })
-              .orderBy('createdTime', 'ASC')
-              .getMany()
-          ).map(({ id, createdTime, virtualOrderContainerId, ...order }) => {
-            return {
-              investorId: 0,
-              stockId: container.stockId,
-              ...order,
-            };
-          }),
+          // orders: (
+          //   await this.virtualOrderRepository
+          //     .createQueryBuilder('order')
+          //     .where('order.virtualOrderContainerId = :id', {
+          //       id: container.id,
+          //     })
+          //     .orderBy('createdTime', 'ASC')
+          //     .getMany()
+          // ).map(({ id, createdTime, virtualOrderContainerId, ...order }) => {
+          //   return {
+          //     investorId: 0,
+          //     stockId: container.stockId,
+          //     ...order,
+          //   };
+          // }),
         };
       }),
     );
@@ -65,22 +66,53 @@ export class VirtualOrderService {
     };
   }
 
-  public async getContainerById(id: number, orderId: number) {
-    const result = await this.virtualOrderContainerRepository.findOne({ id });
-    return {
-      stockId: result.stockId,
-      order: result.orders.find((order) => {
-        return order.id === orderId;
-      }),
-    };
+  public async getContainerDetail(id: number) {
+    const container = await this.virtualOrderContainerRepository.findOne({
+      id,
+    });
+    return container;
+  }
+
+  public async resetContainer(id: number) {
+    const container = await this.virtualOrderContainerRepository.findOne({
+      id,
+    });
+    container.marketBook = null;
+    await this.virtualOrderContainerRepository.save(container);
+    await this.virtualOrderRepository.delete({ virtualOrderContainerId: id });
+    return container;
   }
 
   public async insertContainer(body: IVirtualOrderContainerInsert) {
-    return await this.virtualOrderContainerRepository.insert(body);
+    const { generatedMaps } = await this.virtualOrderContainerRepository.insert(
+      body,
+    );
+    return generatedMaps[0].id as number;
+  }
+
+  public async updateContainer({
+    id,
+    marketBook,
+  }: {
+    id: number;
+    marketBook: IMarketBook | null;
+  }) {
+    const container = await this.virtualOrderContainerRepository.findOne({
+      id,
+    });
+
+    container.marketBook =
+      marketBook === null ? null : JSON.stringify(marketBook);
+    return await this.virtualOrderContainerRepository.save(container);
   }
 
   public async insertOrder(body: IVirtualOrderInsert) {
     const { generatedMaps } = await this.virtualOrderRepository.insert(body);
     return generatedMaps[0].id as number;
+  }
+
+  public async deleteContainer(id: number) {
+    await this.virtualOrderContainerRepository.delete(id);
+    return true;
   }
 }

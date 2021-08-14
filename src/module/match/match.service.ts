@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionStatusEnum } from 'src/common/enum';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import {
   DisplayService,
@@ -116,6 +115,7 @@ export class MatchService {
   ) {
     this.stockMarketList = {};
   }
+  private stockMarketList: Record<string, StockMarket>;
 
   public async init() {
     const { content } = await this.stockService.get({});
@@ -134,14 +134,29 @@ export class MatchService {
     );
   }
 
-  private async createMarket(id: number, marketName?: string) {
+  public async createMarket(id: number, marketName?: string) {
     const {
       content: [stock],
     } = await this.stockService.get({ id });
-    this.stockMarketList[marketName || stock.id] = new StockMarket(stock);
+
+    const target = marketName || stock.id;
+
+    if (this.stockMarketList[target]) delete this.stockMarketList[target];
+    this.stockMarketList[target] = new StockMarket(stock);
+    return target;
   }
 
-  private stockMarketList: Record<string, StockMarket>;
+  public getMarketBook(marketName: string) {
+    return this.stockMarketList[marketName].dumpMarketBook();
+  }
+
+  private getTransactionBody(
+    transactions: ITransactionInsert[],
+  ): ITransactionInsert[] {
+    return transactions.filter((v) => {
+      return v.investorId !== 0;
+    });
+  }
 
   private getDisplayBody(marketName: string): IDisplayInsert {
     const marketBook = this.stockMarketList[marketName].dumpMarketBook();
@@ -161,49 +176,14 @@ export class MatchService {
     };
   }
 
-  private getTransactionBody(
-    transactions: ITransactionInsert[],
-  ): ITransactionInsert[] {
-    const sortedObject = transactions.reduce<
-      Record<string, ITransactionInsert[]>
-    >((p, transaction) => {
-      if (!p[transaction.orderId]) p[transaction.orderId] = [];
-      p[transaction.orderId].push(transaction);
-      return p;
-    }, {});
-
-    const sortedArray = Object.values(sortedObject).map<ITransactionInsert>(
-      (transactionArray) => {
-        if (transactionArray.length === 1) return transactionArray[0];
-        const mergeTransaction = transactionArray.reduce<
-          Pick<ITransactionInsert, 'status' | 'quantity' | 'price'>
-        >(
-          (p, { status, quantity, price }) => {
-            if (status === TransactionStatusEnum.FULL)
-              p.status = TransactionStatusEnum.FULL;
-            p.quantity += quantity;
-            p.price += price * quantity;
-            return p;
-          },
-          { status: TransactionStatusEnum.PARTIAL, quantity: 0, price: 0 },
-        );
-        return {
-          ...transactionArray[0],
-          ...mergeTransaction,
-          price: mergeTransaction.price / mergeTransaction.quantity,
-        };
-      },
-    );
-
-    return sortedArray.filter((v) => {
-      return v.investorId !== 0;
-    });
-  }
-
   private async insertDisplay(marketName: string) {
     await this.displayService.insert({
       ...this.getDisplayBody(marketName),
     });
+  }
+
+  public getDisplayReturnType(marketName: string) {
+    return transferDisplayToReturnType(this.getDisplayBody(marketName));
   }
 
   public async dispatchOrder(order: IMatchOrder, _marketName?: string) {
@@ -218,8 +198,7 @@ export class MatchService {
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          if (_marketName)
-            return transferDisplayToReturnType(this.getDisplayBody(marketName));
+          if (_marketName) return this.getDisplayReturnType(marketName);
           await this.insertDisplay(marketName);
           return true;
         }
@@ -232,7 +211,7 @@ export class MatchService {
       } else {
         // Match successfully
         if (_marketName) {
-          return transferDisplayToReturnType(this.getDisplayBody(marketName));
+          return this.getDisplayReturnType(marketName);
         }
 
         await this.insertDisplay(marketName);
@@ -315,14 +294,15 @@ export class MatchService {
     const {
       content: [stock],
     } = await this.stockService.get({ id: stockId });
-    this.stockMarketList[marketName || stockId].setMarketBook(
-      stock,
-      marketBook,
-    );
+
+    const target = marketName || stockId;
+    if (!this.stockMarketList[target])
+      await this.createMarket(stockId, marketName);
+    this.stockMarketList[target].setMarketBook(stock, marketBook);
     if (!marketName) {
       await this.insertDisplay(stockId.toString());
       return true;
     }
-    return transferDisplayToReturnType(this.getDisplayBody(marketName));
+    return this.getDisplayReturnType(marketName);
   }
 }

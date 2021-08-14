@@ -24,15 +24,11 @@ export class IVirtualOrderContainerQuery extends PartialType(CommonQuery) {
   id?: number;
 
   @ApiPropertyOptional()
-  investorId?: number;
-
-  @ApiPropertyOptional()
   stockId?: number;
 }
 
 export const queryStrategy: IQueryStategy<IVirtualOrderContainerQuery> = {
   id: QueryStrategyEnum.value,
-  investorId: QueryStrategyEnum.value,
   stockId: QueryStrategyEnum.value,
 };
 
@@ -44,28 +40,27 @@ export class IVirtualOrderContainerQueryResponse {
       properties: getResponseProperties<IVirtualOrderContainerSchema>([
         { key: 'id', type: 'number' },
         { key: 'stockId', type: 'number' },
-        { key: 'investorId', type: 'number' },
         { key: 'createdTime', type: 'date' },
         { key: 'updatedTime', type: 'date' },
-        {
-          key: 'orders',
-          type: 'json',
-          option: {
-            example: [
-              {
-                investorId: 0,
-                stockId: 1,
-                method: 0,
-                subMethod: null,
-                price: 99,
-                quantity: 10,
-                priceType: 0,
-                timeRestriction: 1,
-                orderId: null,
-              },
-            ],
-          },
-        },
+        // {
+        //   key: 'orders',
+        //   type: 'json',
+        //   option: {
+        //     example: [
+        //       {
+        //         investorId: 0,
+        //         stockId: 1,
+        //         method: 0,
+        //         subMethod: null,
+        //         price: 99,
+        //         quantity: 10,
+        //         priceType: 0,
+        //         timeRestriction: 1,
+        //         orderId: null,
+        //       },
+        //     ],
+        //   },
+        // },
       ]),
     },
   })
@@ -76,11 +71,6 @@ export class IVirtualOrderContainerQueryResponse {
 }
 
 export class IVirtualOrderContainerInsert {
-  @ApiProperty({
-    example: 1,
-  })
-  investorId: number;
-
   @ApiProperty({
     example: 1,
   })

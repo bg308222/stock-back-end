@@ -37,7 +37,7 @@ export class Order {
   method: number;
 
   @Column({ type: 'enum', enum: SubMethodEnum, nullable: true, default: null })
-  subMethod: number;
+  subMethod?: number;
 
   @Column({ type: 'float' })
   price: number;

@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Investor } from './investor.entity';
 import { Stock } from './stock.entity';
 import { VirtualOrder } from './virtualOrder.entity';
 
@@ -16,18 +15,10 @@ export class VirtualOrderContainer {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // @Column({ type: 'varchar' })
-  // name: string;
-
   @Column()
   stockId: number;
   @ManyToOne(() => Stock, { nullable: false, onDelete: 'CASCADE' })
   stock: Stock;
-
-  @Column()
-  investorId: number;
-  @ManyToOne(() => Investor, { nullable: false, onDelete: 'CASCADE' })
-  investor: Investor;
 
   @OneToMany(
     () => VirtualOrder,
@@ -35,6 +26,9 @@ export class VirtualOrderContainer {
     { eager: true },
   )
   orders: VirtualOrder[];
+
+  @Column({ type: 'longtext', default: null, nullable: true })
+  marketBook: string;
 
   @CreateDateColumn()
   createdTime: Date;
