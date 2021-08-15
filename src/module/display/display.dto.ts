@@ -309,6 +309,8 @@ export const IDisplayChartQueryResponse = {
       { key: 'highest', type: 'number' },
       { key: 'close', type: 'number' },
       { key: 'lowest', type: 'number' },
+      { key: 'firstOrderBuy', type: 'number' },
+      { key: 'firstOrderSell', type: 'number' },
     ]),
   },
 };

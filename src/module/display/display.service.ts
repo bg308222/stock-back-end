@@ -208,8 +208,11 @@ export class DisplayService {
     const result = await this.displayRepository
       .createQueryBuilder('display')
       .select(`DATE_FORMAT(display.createdTime,'${dateFormat}')`, 'createdTime')
+      .addSelect('display.buyTick', 'buyTick')
+      .addSelect('display.sellTick', 'sellTick')
       .addSelect('display.matchPrice', 'price')
       .addSelect('display.matchQuantity', 'quantity')
+      .addSelect('display.closedPrice', 'closedPrice')
       .where('display.stockId = :stockId', { stockId })
       .orderBy('display.createdTime', 'ASC')
       .getRawMany();
@@ -222,6 +225,8 @@ export class DisplayService {
           highest: number;
           open: number;
           close: number;
+          firstOrderBuy: number;
+          firstOrderSell: number;
         }
       >
     >(
@@ -231,8 +236,28 @@ export class DisplayService {
           price,
           quantity,
           createdTime,
-        }: { price: number; quantity: number; createdTime: string },
+          buyTick: _buyTick,
+          sellTick: _sellTick,
+          closedPrice,
+        }: {
+          price: number;
+          quantity: number;
+          createdTime: string;
+          buyTick: string;
+          sellTick: string;
+          closedPrice: number;
+        },
       ) => {
+        const { numTickRange } = getTickRange(closedPrice);
+        const buyTick: number[] = JSON.parse(_buyTick);
+        const sellTick: number[] = JSON.parse(_sellTick);
+        let firstOrderBuy = null;
+        let firstOrderSell = null;
+        numTickRange.forEach((innerPrice, index) => {
+          if (firstOrderBuy === null && buyTick[index] !== 0)
+            firstOrderBuy = innerPrice;
+          if (sellTick[index] !== 0) firstOrderSell = innerPrice;
+        });
         if (!p[createdTime]) {
           p[createdTime] = {
             quantity,
@@ -240,21 +265,37 @@ export class DisplayService {
             highest: price,
             open: price,
             close: price,
+            firstOrderBuy,
+            firstOrderSell,
           };
         } else {
           p[createdTime].close = price;
           if (price > p[createdTime].highest) p[createdTime].highest = price;
           if (price < p[createdTime].lowest) p[createdTime].lowest = price;
           p[createdTime].quantity += quantity;
+          if (
+            firstOrderBuy !== null &&
+            firstOrderBuy > p[createdTime].firstOrderBuy
+          )
+            p[createdTime].firstOrderBuy = firstOrderBuy;
+          if (
+            firstOrderSell !== null &&
+            firstOrderSell < p[createdTime].firstOrderSell
+          )
+            p[createdTime].firstOrderSell = firstOrderSell;
         }
+
         return p;
       },
       {},
     );
     return Object.entries(sortedResult).map(([key, value]) => {
       return {
-        createdTime: key,
         ...value,
+        createdTime: key,
+        firstOrderBuy: value.firstOrderBuy === null ? 0 : value.firstOrderBuy,
+        firstOrderSell:
+          value.firstOrderSell === null ? 0 : value.firstOrderSell,
       };
     });
   }
