@@ -173,9 +173,9 @@ export class DisplayService {
     });
   }
 
-  public async transferDisplayToReturnType(
+  public transferDisplayToReturnType = async (
     displaySchema?: Omit<IDisplaySchema, 'id' | 'createdTime'>,
-  ) {
+  ) => {
     if (!displaySchema) return null;
     const stock = await this.stockRepository.findOne({
       id: displaySchema.stockId,
@@ -307,5 +307,5 @@ export class DisplayService {
       firstOrderBuyPrice,
       firstOrderSellPrice,
     };
-  }
+  };
 }
