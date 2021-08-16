@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stock } from 'src/common/entity/stock.entity';
 import { VirtualOrder } from 'src/common/entity/virtualOrder.entity';
@@ -11,6 +11,7 @@ import {
   IVirtualOrderContainerInsert,
   IVirtualOrderContainerQuery,
   IVirtualOrderContainerSchema,
+  IVirtualOrderContainerUpdate,
   IVirtualOrderInsert,
   IVirtualOrderQuery,
   IVirtualOrderSchema,
@@ -99,7 +100,16 @@ export class VirtualOrderService {
     return generatedMaps[0].id as number;
   }
 
-  public async updateContainer({
+  public async updateContainer({ id, ...body }: IVirtualOrderContainerUpdate) {
+    const container = await this.virtualOrderContainerRepository.findOne({
+      id,
+    });
+    if (!container) throw new BadRequestException("Container doesn't exist");
+    await this.virtualOrderContainerRepository.save({ ...container, ...body });
+    return true;
+  }
+
+  public async updateMarketBook({
     id,
     marketBook,
   }: {

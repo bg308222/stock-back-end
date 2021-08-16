@@ -115,3 +115,16 @@ export class IVirtualOrderInsert {
   @ApiProperty()
   virtualOrderContainerId: number;
 }
+
+export class IVirtualOrderContainerUpdate {
+  @ApiProperty({ required: true, example: 1, description: '要修改情境id' })
+  id: number;
+
+  @ApiProperty({ required: false })
+  name?: string;
+}
+
+export class IVirtualOrderContainerDelete {
+  @ApiProperty({ required: true, example: 1, description: '要修改情境id' })
+  id: number;
+}

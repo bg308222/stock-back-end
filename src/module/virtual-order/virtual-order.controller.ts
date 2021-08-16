@@ -15,9 +15,11 @@ import { MatchService } from '../match/match.service';
 import { IOrderQueryResponse } from '../order/order.dto';
 import { VirtualOrderService } from './virtual-order.service';
 import {
+  IVirtualOrderContainerDelete,
   IVirtualOrderContainerInsert,
   IVirtualOrderContainerQuery,
   IVirtualOrderContainerQueryResponse,
+  IVirtualOrderContainerUpdate,
   IVirtualOrderInsert,
   IVirtualOrderQuery,
 } from './virtualOrder.dto';
@@ -59,7 +61,7 @@ export class VirtualOrderController {
     return await this.virtualOrderService.getContainer(query);
   }
 
-  @Get('container/:virtualOrderContainerId')
+  @Get('/:virtualOrderContainerId')
   @ApiOperation({
     summary: '獲取該情境的display資訊',
   })
@@ -134,6 +136,16 @@ export class VirtualOrderController {
   }
 
   @ApiOperation({
+    summary: '更新情境資訊',
+    description: 'id必傳，為需要更改的情境',
+  })
+  @Put('container')
+  public async update(@Body() body: IVirtualOrderContainerUpdate) {
+    await this.virtualOrderService.updateContainer(body);
+    return true;
+  }
+
+  @ApiOperation({
     summary: '新增情境的委託單',
     description: 'virtualOrderContainerId的值為創建情境時的id',
   })
@@ -153,14 +165,14 @@ export class VirtualOrderController {
       marketName,
     );
     const marketBook = this.matchService.getMarketBook(marketName);
-    await this.virtualOrderService.updateContainer({
+    await this.virtualOrderService.updateMarketBook({
       id: body.virtualOrderContainerId,
       marketBook,
     });
     return display;
   }
 
-  @Put('container/:virtualOrderContainerId')
+  @Put('/:virtualOrderContainerId')
   @ApiOperation({
     summary: '重置該情境，並回傳display資訊',
   })
@@ -198,15 +210,14 @@ export class VirtualOrderController {
     };
   }
 
-  @Delete('container/:virtualOrderContainerId')
+  @Delete('container')
   @ApiOperation({
     summary: '刪除該情境',
   })
   public async deleteContainer(
-    @Param('virtualOrderContainerId') virtualOrderContainerId: number,
+    @Body()
+    body: IVirtualOrderContainerDelete,
   ) {
-    return await this.virtualOrderService.deleteContainer(
-      virtualOrderContainerId,
-    );
+    return await this.virtualOrderService.deleteContainer(body.id);
   }
 }

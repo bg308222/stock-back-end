@@ -63,7 +63,7 @@ export class IStockQueryResponse {
 
 export class IStockUpdate {
   @ApiProperty({ required: true, example: 1, description: '要修改的股票id' })
-  id?: number;
+  id: number;
 
   @ApiProperty({ required: false, example: 1 })
   virtualOrderContainerId?: number;
