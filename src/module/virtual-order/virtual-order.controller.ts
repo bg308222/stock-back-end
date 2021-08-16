@@ -85,6 +85,9 @@ export class VirtualOrderController {
     const container = await this.virtualOrderService.getContainerDetail(
       virtualOrderContainerId,
     );
+    if (!container) {
+      throw new BadRequestException("Container doesn't exist");
+    }
     const marketBook = container.marketBook
       ? JSON.parse(container.marketBook)
       : undefined;
@@ -95,7 +98,7 @@ export class VirtualOrderController {
     );
     return {
       virtualOrderContainerId,
-      display: this.matchService.getDisplayReturnType(marketName),
+      display: await this.matchService.getDisplayReturnType(marketName),
     };
   }
 
@@ -123,9 +126,10 @@ export class VirtualOrderController {
       await this.virtualOrderService.insertContainer(body);
     const marketName = this.getMarketName(virtualOrderContainerId);
     await this.matchService.createMarket(body.stockId, marketName);
+    await this.matchService.setMarketBook(body.stockId, undefined, marketName);
     return {
       virtualOrderContainerId,
-      display: this.matchService.getDisplayReturnType(marketName),
+      display: await this.matchService.getDisplayReturnType(marketName),
     };
   }
 
@@ -190,7 +194,7 @@ export class VirtualOrderController {
     );
     return {
       virtualOrderContainerId,
-      display: this.matchService.getDisplayReturnType(marketName),
+      display: await this.matchService.getDisplayReturnType(marketName),
     };
   }
 

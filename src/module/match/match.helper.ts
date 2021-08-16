@@ -86,8 +86,8 @@ class LimitBook {
 }
 
 export class StockMarket {
-  constructor(stock: IStockSchema) {
-    this.setMarketBook(stock);
+  constructor(stock: IStockSchema, marketBook?: IMarketBook) {
+    this.setMarketBook(stock, marketBook);
   }
 
   public setMarketBook(stock: IStockSchema, marketBook?: IMarketBook) {

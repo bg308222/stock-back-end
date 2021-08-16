@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Stock } from 'src/common/entity/stock.entity';
 import { VirtualOrder } from 'src/common/entity/virtualOrder.entity';
 import { VirtualOrderContainer } from 'src/common/entity/virtualOrderContainer.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
@@ -24,6 +25,9 @@ export class VirtualOrderService {
 
     @InjectRepository(VirtualOrderContainer)
     private readonly virtualOrderContainerRepository: Repository<VirtualOrderContainer>,
+
+    @InjectRepository(Stock)
+    private readonly stockRepository: Repository<Stock>,
   ) {}
 
   public async getVirtualOrder(query: IVirtualOrderQuery) {
@@ -118,6 +122,17 @@ export class VirtualOrderService {
 
   public async deleteContainer(id: number) {
     await this.virtualOrderContainerRepository.delete(id);
+    const stocks = (
+      await this.stockRepository.find({
+        virtualOrderContainerId: id,
+      })
+    ).map((stock) => {
+      return {
+        ...stock,
+        virtualOrderContainerId: null,
+      };
+    });
+    this.stockRepository.save(stocks);
     return true;
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IMatchOrder } from '../order/order.dto';
@@ -136,11 +136,16 @@ export class MatchService {
     const {
       content: [stock],
     } = await this.stockService.get({ id });
-
+    if (!stock) throw new BadRequestException("Stock doesn't exist");
     const target = marketName || stock.id;
+    let marketBook: IMarketBook = undefined;
+    console.log(marketBook);
+    if (stock.virtualOrderContainer && stock.virtualOrderContainer.marketBook) {
+      marketBook = JSON.parse(stock.virtualOrderContainer.marketBook);
+    }
 
     if (this.stockMarketList[target]) delete this.stockMarketList[target];
-    this.stockMarketList[target] = new StockMarket(stock);
+    this.stockMarketList[target] = new StockMarket(stock, marketBook);
     return target;
   }
 
@@ -180,8 +185,8 @@ export class MatchService {
     });
   }
 
-  public getDisplayReturnType(marketName: string) {
-    return this.displayService.transferDisplayToReturnType(
+  public async getDisplayReturnType(marketName: string) {
+    return await this.displayService.transferDisplayToReturnType(
       this.getDisplayBody(marketName),
     );
   }
@@ -198,7 +203,7 @@ export class MatchService {
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          if (_marketName) return this.getDisplayReturnType(marketName);
+          if (_marketName) return await this.getDisplayReturnType(marketName);
           await this.insertDisplay(marketName);
           return true;
         }
@@ -211,7 +216,7 @@ export class MatchService {
       } else {
         // Match successfully
         if (_marketName) {
-          return this.getDisplayReturnType(marketName);
+          return await this.getDisplayReturnType(marketName);
         }
 
         await this.insertDisplay(marketName);
@@ -303,6 +308,6 @@ export class MatchService {
       await this.insertDisplay(stockId.toString());
       return true;
     }
-    return this.getDisplayReturnType(marketName);
+    return await await this.getDisplayReturnType(marketName);
   }
 }

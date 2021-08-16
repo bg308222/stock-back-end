@@ -36,15 +36,14 @@ export class DisplayService {
       );
 
     if (query.isGetLatest) {
-      const result = this.transferDisplayToReturnType(
+      const result = await this.transferDisplayToReturnType(
         await fullQueryBuilder.getOne(),
       );
       return result;
     }
+    const content = await fullQueryBuilder.getMany();
     const result = {
-      content: (await fullQueryBuilder.getMany()).map(
-        this.transferDisplayToReturnType,
-      ),
+      content: await Promise.all(content.map(this.transferDisplayToReturnType)),
       totalSize,
     };
     return result;

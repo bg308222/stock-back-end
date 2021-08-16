@@ -2,6 +2,9 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -25,4 +28,8 @@ export class Stock {
 
   @UpdateDateColumn()
   updatedTime: Date;
+
+  //TODO relation
+  @Column({ nullable: true })
+  virtualOrderContainerId: number;
 }
