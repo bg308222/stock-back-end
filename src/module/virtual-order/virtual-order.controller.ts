@@ -218,6 +218,6 @@ export class VirtualOrderController {
     @Body()
     body: IVirtualOrderContainerDelete,
   ) {
-    return await this.virtualOrderService.deleteContainer(body.id);
+    return await this.virtualOrderService.deleteContainer(body);
   }
 }

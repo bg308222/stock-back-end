@@ -125,6 +125,10 @@ export class IVirtualOrderContainerUpdate {
 }
 
 export class IVirtualOrderContainerDelete {
-  @ApiProperty({ required: true, example: 1, description: '要修改情境id' })
-  id: number;
+  @ApiProperty({
+    required: true,
+    example: [1],
+    isArray: true,
+  })
+  id: number[];
 }

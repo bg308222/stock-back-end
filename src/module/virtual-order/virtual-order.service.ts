@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { IMarketBook } from '../match/match.helper';
 import {
   containerQueryStrategy,
+  IVirtualOrderContainerDelete,
   IVirtualOrderContainerInsert,
   IVirtualOrderContainerQuery,
   IVirtualOrderContainerSchema,
@@ -130,19 +131,24 @@ export class VirtualOrderService {
     return generatedMaps[0].id as number;
   }
 
-  public async deleteContainer(id: number) {
-    await this.virtualOrderContainerRepository.delete(id);
-    const stocks = (
-      await this.stockRepository.find({
-        virtualOrderContainerId: id,
-      })
-    ).map((stock) => {
-      return {
-        ...stock,
-        virtualOrderContainerId: null,
-      };
-    });
-    this.stockRepository.save(stocks);
+  public async deleteContainer(body: IVirtualOrderContainerDelete) {
+    await this.virtualOrderContainerRepository.delete(body.id);
+    await Promise.all(
+      body.id.map(async (id) => {
+        const stocks = (
+          await this.stockRepository.find({
+            virtualOrderContainerId: id,
+          })
+        ).map((stock) => {
+          return {
+            ...stock,
+            virtualOrderContainerId: null,
+          };
+        });
+        await this.stockRepository.save(stocks);
+      }),
+    );
+
     return true;
   }
 }
