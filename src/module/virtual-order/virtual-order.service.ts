@@ -1,18 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { VirtualOrder } from 'src/common/entity/virtualOrder.entity';
 import { VirtualOrderContainer } from 'src/common/entity/virtualOrderContainer.entity';
-import { SubMethodEnum } from 'src/common/enum';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
 import { IMarketBook } from '../match/match.helper';
-import { IOrderDelete } from '../order/order.dto';
 import {
+  containerQueryStrategy,
   IVirtualOrderContainerInsert,
   IVirtualOrderContainerQuery,
   IVirtualOrderContainerSchema,
   IVirtualOrderInsert,
-  queryStrategy,
+  IVirtualOrderQuery,
+  IVirtualOrderSchema,
+  orderQueryStrategy,
 } from './virtualOrder.dto';
 
 @Injectable()
@@ -25,6 +26,25 @@ export class VirtualOrderService {
     private readonly virtualOrderContainerRepository: Repository<VirtualOrderContainer>,
   ) {}
 
+  public async getVirtualOrder(query: IVirtualOrderQuery) {
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<IVirtualOrderSchema>(
+        'virtualOrder',
+        this.virtualOrderRepository.createQueryBuilder('virtualOrder'),
+        orderQueryStrategy,
+        { ...query, order: { orderBy: 'createdTime', order: 'ASC' } },
+      );
+
+    return {
+      content: (await fullQueryBuilder.getMany()).map(
+        ({ virtualOrderContainerId, ...order }) => {
+          return order;
+        },
+      ),
+      totalSize,
+    };
+  }
+
   public async getContainer(query: IVirtualOrderContainerQuery) {
     const { fullQueryBuilder, totalSize } =
       await getQueryBuilderContent<IVirtualOrderContainerSchema>(
@@ -32,7 +52,7 @@ export class VirtualOrderService {
         this.virtualOrderContainerRepository.createQueryBuilder(
           'virtualOrderContainer',
         ),
-        queryStrategy,
+        containerQueryStrategy,
         query,
       );
 
@@ -42,21 +62,6 @@ export class VirtualOrderService {
       ).map(async ({ marketBook, ...container }) => {
         return {
           ...container,
-          // orders: (
-          //   await this.virtualOrderRepository
-          //     .createQueryBuilder('order')
-          //     .where('order.virtualOrderContainerId = :id', {
-          //       id: container.id,
-          //     })
-          //     .orderBy('createdTime', 'ASC')
-          //     .getMany()
-          // ).map(({ id, createdTime, virtualOrderContainerId, ...order }) => {
-          //   return {
-          //     investorId: 0,
-          //     stockId: container.stockId,
-          //     ...order,
-          //   };
-          // }),
         };
       }),
     );

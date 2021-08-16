@@ -40,12 +40,6 @@ export class VirtualOrder {
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
   timeRestriction: number;
 
-  @Column({ default: null, nullable: true })
-  orderId: number;
-  @ManyToOne(() => VirtualOrder, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'orderId' })
-  order: VirtualOrder;
-
   @Column()
   virtualOrderContainerId: number;
   @ManyToOne(

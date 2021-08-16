@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
-import {
-  DisplayService,
-  transferDisplayToReturnType,
-} from '../display/display.service';
+import { DisplayService } from '../display/display.service';
 import { IMatchOrder } from '../order/order.dto';
 import { OrderService } from '../order/order.service';
 import { StockService } from '../stock/stock.service';
@@ -42,9 +39,9 @@ export const getTickAfterNTick = (currentPrice: number, n: number) => {
   return tempPrice;
 };
 
-export const getTickRange = (closedPrice: number) => {
-  const maxPrice = closedPrice * 1.1;
-  const minPrice = closedPrice * 0.9;
+export const getTickRange = (closedPrice: number, priceLimit: number) => {
+  const maxPrice = closedPrice * (1 + 0.01 * priceLimit);
+  const minPrice = closedPrice * (1 - 0.01 * priceLimit);
 
   let minTick = closedPrice;
   while (minTick - getNextTick(minTick) > minPrice)
@@ -82,6 +79,7 @@ export const getTickList = ({
 }: IMarketBook) => {
   const { numTickRange: tickRange } = getTickRange(
     marketBook.stock.closedPrice,
+    marketBook.stock.priceLimit,
   );
 
   const buyTick: number[] = [];
@@ -183,7 +181,9 @@ export class MatchService {
   }
 
   public getDisplayReturnType(marketName: string) {
-    return transferDisplayToReturnType(this.getDisplayBody(marketName));
+    return this.displayService.transferDisplayToReturnType(
+      this.getDisplayBody(marketName),
+    );
   }
 
   public async dispatchOrder(order: IMatchOrder, _marketName?: string) {

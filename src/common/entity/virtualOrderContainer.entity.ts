@@ -20,6 +20,9 @@ export class VirtualOrderContainer {
   @ManyToOne(() => Stock, { nullable: false, onDelete: 'CASCADE' })
   stock: Stock;
 
+  @Column({ type: 'varchar' })
+  name: string;
+
   @OneToMany(
     () => VirtualOrder,
     (virtualOrder) => virtualOrder.virtualOrderContainer,

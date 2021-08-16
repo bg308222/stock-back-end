@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
-import { DateFormatEnum, TrendFlagEnum } from 'src/common/enum';
+import { Stock } from 'src/common/entity/stock.entity';
+import { TrendFlagEnum } from 'src/common/enum';
 import {
   getDateFormatString,
   getQueryBuilderContent,
@@ -16,141 +17,13 @@ import {
   ITickRange,
   queryStrategy,
 } from './display.dto';
-
-export const transferDisplayToReturnType = (
-  displaySchema?: Omit<IDisplaySchema, 'id' | 'createdTime'>,
-) => {
-  if (!displaySchema) return null;
-  const {
-    buyTick: buyTickJson,
-    sellTick: sellTickJson,
-    closedPrice,
-    ...data
-  } = displaySchema;
-  const buyTick = JSON.parse(buyTickJson) as number[];
-  const sellTick = JSON.parse(sellTickJson) as number[];
-  const { numTickRange: tickRange } = getTickRange(closedPrice);
-  let firstOrderBuyPrice = null;
-  let firstOrderSellPrice = null;
-
-  let currentPriceIndex: number;
-  let fiveTickRange: number[] = [];
-  const transferTickRange: ITickRange[] = tickRange.map((price, index) => {
-    let marketBuyAdder = 0;
-    let marketSellAdder = 0;
-    if (price === data.matchPrice) {
-      marketBuyAdder = data.marketBuyQuantity;
-      marketSellAdder = data.marketSellQuantity;
-      currentPriceIndex = index;
-      // FALL
-      if (buyTick[index] === 0 && sellTick[index] !== 0) {
-        fiveTickRange = [
-          index - 4,
-          index - 3,
-          index - 2,
-          index - 1,
-          index,
-          index + 1,
-          index + 2,
-          index + 3,
-          index + 4,
-          index + 5,
-        ];
-      } else if (buyTick[index] !== 0 && sellTick[index] === 0) {
-        // RISE
-        fiveTickRange = [
-          index - 5,
-          index - 4,
-          index - 3,
-          index - 2,
-          index - 1,
-          index,
-          index + 1,
-          index + 2,
-          index + 3,
-          index + 4,
-        ];
-      } else {
-        if (displaySchema.trendFlag === TrendFlagEnum.FALL) {
-          fiveTickRange = [
-            index - 4,
-            index - 3,
-            index - 2,
-            index - 1,
-            index,
-            index + 1,
-            index + 2,
-            index + 3,
-            index + 4,
-            index + 5,
-          ];
-        } else {
-          // RISE and SPACE
-          fiveTickRange = [
-            index - 5,
-            index - 4,
-            index - 3,
-            index - 2,
-            index - 1,
-            index,
-            index + 1,
-            index + 2,
-            index + 3,
-            index + 4,
-          ];
-        }
-      }
-    }
-
-    if (firstOrderBuyPrice === null && buyTick[index] !== 0)
-      firstOrderBuyPrice = price;
-    if (sellTick[index] !== 0) firstOrderSellPrice = price;
-    return {
-      price,
-      buyQuantity: buyTick[index] + marketBuyAdder || 0,
-      sellQuantity: sellTick[index] + marketSellAdder || 0,
-    };
-  });
-
-  return {
-    ...data,
-
-    tickRange: transferTickRange,
-
-    fiveTickRange: fiveTickRange.map((tickRangeIndex, index) => {
-      let tickRangeValue: Partial<ITickRange> = transferTickRange[
-        tickRangeIndex
-      ]
-        ? { ...transferTickRange[tickRangeIndex] }
-        : undefined;
-
-      if (!tickRangeValue) {
-        tickRangeValue = {
-          price: getTickAfterNTick(
-            data.matchPrice,
-            currentPriceIndex - tickRangeIndex,
-          ),
-          buyQuantity: 0,
-          sellQuantity: 0,
-        };
-      }
-
-      if (index < 5) {
-        delete tickRangeValue.buyQuantity;
-      } else {
-        delete tickRangeValue.sellQuantity;
-      }
-      return tickRangeValue;
-    }),
-    firstOrderBuyPrice,
-    firstOrderSellPrice,
-  };
-};
 @Injectable()
 export class DisplayService {
   constructor(
     @InjectRepository(Display)
     private readonly displayRepository: Repository<Display>,
+    @InjectRepository(Stock)
+    private readonly stockRepository: Repository<Stock>,
   ) {}
 
   public async get(query: IDisplayQuery) {
@@ -163,14 +36,14 @@ export class DisplayService {
       );
 
     if (query.isGetLatest) {
-      const result = transferDisplayToReturnType(
+      const result = this.transferDisplayToReturnType(
         await fullQueryBuilder.getOne(),
       );
       return result;
     }
     const result = {
       content: (await fullQueryBuilder.getMany()).map(
-        transferDisplayToReturnType,
+        this.transferDisplayToReturnType,
       ),
       totalSize,
     };
@@ -204,6 +77,7 @@ export class DisplayService {
     dateFormat: _dateFormat,
     stockId,
   }: IDisplayChartQuery) {
+    const stock = await this.stockRepository.findOne({ id: stockId });
     const dateFormat = getDateFormatString(_dateFormat);
     const result = await this.displayRepository
       .createQueryBuilder('display')
@@ -248,7 +122,7 @@ export class DisplayService {
           closedPrice: number;
         },
       ) => {
-        const { numTickRange } = getTickRange(closedPrice);
+        const { numTickRange } = getTickRange(closedPrice, stock.priceLimit);
         const buyTick: number[] = JSON.parse(_buyTick);
         const sellTick: number[] = JSON.parse(_sellTick);
         let firstOrderBuy = null;
@@ -298,5 +172,141 @@ export class DisplayService {
           value.firstOrderSell === null ? 0 : value.firstOrderSell,
       };
     });
+  }
+
+  public async transferDisplayToReturnType(
+    displaySchema?: Omit<IDisplaySchema, 'id' | 'createdTime'>,
+  ) {
+    if (!displaySchema) return null;
+    const stock = await this.stockRepository.findOne({
+      id: displaySchema.stockId,
+    });
+    const {
+      buyTick: buyTickJson,
+      sellTick: sellTickJson,
+      closedPrice,
+      ...data
+    } = displaySchema;
+    const buyTick = JSON.parse(buyTickJson) as number[];
+    const sellTick = JSON.parse(sellTickJson) as number[];
+    const { numTickRange: tickRange } = getTickRange(
+      closedPrice,
+      stock.priceLimit,
+    );
+    let firstOrderBuyPrice = null;
+    let firstOrderSellPrice = null;
+
+    let currentPriceIndex: number;
+    let fiveTickRange: number[] = [];
+    const transferTickRange: ITickRange[] = tickRange.map((price, index) => {
+      let marketBuyAdder = 0;
+      let marketSellAdder = 0;
+      if (price === data.matchPrice) {
+        marketBuyAdder = data.marketBuyQuantity;
+        marketSellAdder = data.marketSellQuantity;
+        currentPriceIndex = index;
+        // FALL
+        if (buyTick[index] === 0 && sellTick[index] !== 0) {
+          fiveTickRange = [
+            index - 4,
+            index - 3,
+            index - 2,
+            index - 1,
+            index,
+            index + 1,
+            index + 2,
+            index + 3,
+            index + 4,
+            index + 5,
+          ];
+        } else if (buyTick[index] !== 0 && sellTick[index] === 0) {
+          // RISE
+          fiveTickRange = [
+            index - 5,
+            index - 4,
+            index - 3,
+            index - 2,
+            index - 1,
+            index,
+            index + 1,
+            index + 2,
+            index + 3,
+            index + 4,
+          ];
+        } else {
+          if (displaySchema.trendFlag === TrendFlagEnum.FALL) {
+            fiveTickRange = [
+              index - 4,
+              index - 3,
+              index - 2,
+              index - 1,
+              index,
+              index + 1,
+              index + 2,
+              index + 3,
+              index + 4,
+              index + 5,
+            ];
+          } else {
+            // RISE and SPACE
+            fiveTickRange = [
+              index - 5,
+              index - 4,
+              index - 3,
+              index - 2,
+              index - 1,
+              index,
+              index + 1,
+              index + 2,
+              index + 3,
+              index + 4,
+            ];
+          }
+        }
+      }
+
+      if (firstOrderBuyPrice === null && buyTick[index] !== 0)
+        firstOrderBuyPrice = price;
+      if (sellTick[index] !== 0) firstOrderSellPrice = price;
+      return {
+        price,
+        buyQuantity: buyTick[index] + marketBuyAdder || 0,
+        sellQuantity: sellTick[index] + marketSellAdder || 0,
+      };
+    });
+
+    return {
+      ...data,
+
+      tickRange: transferTickRange,
+
+      fiveTickRange: fiveTickRange.map((tickRangeIndex, index) => {
+        let tickRangeValue: Partial<ITickRange> = transferTickRange[
+          tickRangeIndex
+        ]
+          ? { ...transferTickRange[tickRangeIndex] }
+          : undefined;
+
+        if (!tickRangeValue) {
+          tickRangeValue = {
+            price: getTickAfterNTick(
+              data.matchPrice,
+              currentPriceIndex - tickRangeIndex,
+            ),
+            buyQuantity: 0,
+            sellQuantity: 0,
+          };
+        }
+
+        if (index < 5) {
+          delete tickRangeValue.buyQuantity;
+        } else {
+          delete tickRangeValue.sellQuantity;
+        }
+        return tickRangeValue;
+      }),
+      firstOrderBuyPrice,
+      firstOrderSellPrice,
+    };
   }
 }

@@ -1,8 +1,11 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Stock } from 'src/common/entity/stock.entity';
 import { QueryStrategyEnum } from 'src/common/enum';
-import { getResponseProperties } from 'src/common/helper/document.helper';
-import { CommonQuery, IQueryStategy } from 'src/common/type';
+import {
+  getRangeDescription,
+  getResponseProperties,
+} from 'src/common/helper/document.helper';
+import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 import { IOrderSchema } from '../order/order.dto';
 
 export type IStockSchema = Stock;
@@ -10,11 +13,62 @@ export type IStockSchema = Stock;
 export class IStockQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional()
   id?: number;
+
+  @ApiPropertyOptional(getRangeDescription())
+  closedPrice?: IRange<number>;
+
+  @ApiPropertyOptional(getRangeDescription())
+  priceLimit?: IRange<number>;
+
+  @ApiPropertyOptional(getRangeDescription())
+  currentPrice?: IRange<number>;
+
+  @ApiPropertyOptional(getRangeDescription(false))
+  createdTime?: IRange<string>;
 }
 
 export const queryStrategy: IQueryStategy<IStockQuery> = {
   id: QueryStrategyEnum.value,
+  closedPrice: QueryStrategyEnum.range,
+  priceLimit: QueryStrategyEnum.range,
+  currentPrice: QueryStrategyEnum.range,
+  createdTime: QueryStrategyEnum.range,
 };
+
+export class IStockQueryResponse {
+  @ApiProperty({
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: getResponseProperties<IStockSchema>([
+        { key: 'id', type: 'number' },
+        { key: 'closedPrice', type: 'number' },
+        { key: 'priceLimit', type: 'number' },
+        { key: 'currentPrice', type: 'number' },
+        { key: 'createdTime', type: 'number' },
+        { key: 'updatedTime', type: 'number' },
+      ]),
+    },
+  })
+  content: Record<string, any>;
+
+  @ApiProperty({ example: 10 })
+  totalSize: number;
+}
+
+export class IStockUpdate {
+  @ApiProperty({ required: true, example: 1, description: '要修改的股票id' })
+  id?: number;
+
+  @ApiProperty({ required: false, example: 100 })
+  closedPrice?: number;
+
+  @ApiProperty({ required: false, example: 10 })
+  priceLimit?: number;
+
+  @ApiProperty({ required: false, example: 100 })
+  currentPrice?: number;
+}
 
 export class IStockReset {
   @ApiProperty({ example: 1 })
