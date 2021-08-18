@@ -120,6 +120,17 @@ const FIELDS = [
 export class ResearchService {
   constructor(private readonly displayService: DisplayService) {}
 
+  private async getDisplay(query: IResearchQuery) {
+    const { content: displays } = (await this.displayService.get({
+      ...query,
+      order: { order: 'ASC', orderBy: 'createdTime' },
+    })) as {
+      content: ITransferDisplay[];
+      totalSize: number;
+    };
+    return displays;
+  }
+
   private transferDisplayToResearch(displays: ITransferDisplay[]) {
     return displays.map(({ fiveTickRange, ...display }) => {
       const responseType: Partial<IResearch> = {
@@ -166,11 +177,7 @@ export class ResearchService {
   }
 
   public async getResearch(query: IResearchQuery) {
-    const { content: displays } = (await this.displayService.get(query)) as {
-      content: ITransferDisplay[];
-      totalSize: number;
-    };
-
+    const displays = await this.getDisplay(query);
     return this.transferDisplayToResearch(displays);
   }
 
@@ -190,10 +197,7 @@ export class ResearchService {
       query.stockId
     }_${min}-${max}_${new Date().getMilliseconds()}.csv`;
     const path = `${__dirname}/${fileName}`;
-    const { content: displays } = (await this.displayService.get(query)) as {
-      content: ITransferDisplay[];
-      totalSize: number;
-    };
+    const displays = await this.getDisplay(query);
     this.writeFile(this.transferDisplayToResearch(displays), path);
 
     return path;
