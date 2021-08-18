@@ -162,6 +162,7 @@ export class FrequentDataService {
 
   private writeFile(frequentDatas: IFrequentData[], path: string) {
     const headers = FIELDS.map((field) => field.key).join(',');
+    console.log(path, 12321321);
     fs.writeFileSync(path, headers + '\n');
     frequentDatas.forEach((frequentData, count) => {
       const content = FIELDS.map((field, index) => {
@@ -185,17 +186,17 @@ export class FrequentDataService {
     const min =
       query.createdTime && query.createdTime.min
         ? moment(query.createdTime.min).format('YYYYMMDD') +
-          moment(query.createdTime.min).format('HH:mm:ss')
+          moment(query.createdTime.min).format('HHmmss')
         : 't';
     const max =
       query.createdTime && query.createdTime.max
         ? moment(query.createdTime.max).format('YYYYMMDD') +
-          moment(query.createdTime.max).format('HH:mm:ss')
+          moment(query.createdTime.max).format('HHmmss')
         : 't';
 
     const fileName = `${
       query.stockId
-    }_${min}-${max}_${new Date().getMilliseconds()}.csv`;
+    }_${min}_${max}_${new Date().getMilliseconds()}.csv`;
     const path = `${__dirname}/${fileName}`;
     const displays = await this.getDisplay(query);
     this.writeFile(this.transferDisplayToFrequentData(displays), path);

@@ -35,6 +35,7 @@ export class FrequentDataController {
   ) {
     if (!query.stockId) throw new BadRequestException('Missing stockId');
     const path = await this.frequendDataService.downloadFrequentData(query);
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
     res.download(path, () => {
       this.frequendDataService.removeFile(path);
       res.end();
