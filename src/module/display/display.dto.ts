@@ -18,6 +18,20 @@ export interface ITickRange {
   buyQuantity: number;
   sellQuantity: number;
 }
+
+export interface ITransferDisplay {
+  tickRange: ITickRange[];
+  fiveTickRange: Partial<ITickRange>[];
+  firstOrderBuyPrice: any;
+  firstOrderSellPrice: any;
+  stockId: number;
+  matchPrice: number;
+  matchQuantity: number;
+  marketBuyQuantity: number;
+  marketSellQuantity: number;
+  trendFlag: number;
+  createdTime: string;
+}
 export class IDisplayQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional({ description: '設為true可只拿取最新一筆，預設為false' })
   isGetLatest?: boolean;

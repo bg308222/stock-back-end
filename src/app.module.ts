@@ -12,6 +12,7 @@ import { LoggerMiddleware } from './middleware/api.middleware';
 import { MatchModule } from './module/match/match.module';
 import { DisplayModule } from './module/display/display.module';
 import { VirtualOrderModule } from './module/virtual-order/virtual-order.module';
+import { ResearchModule } from './module/research/research.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { VirtualOrderModule } from './module/virtual-order/virtual-order.module'
     MatchModule,
     DisplayModule,
     VirtualOrderModule,
+    ResearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

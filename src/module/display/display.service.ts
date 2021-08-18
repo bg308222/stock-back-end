@@ -15,6 +15,7 @@ import {
   IDisplayQuery,
   IDisplaySchema,
   ITickRange,
+  ITransferDisplay,
   queryStrategy,
 } from './display.dto';
 @Injectable()
@@ -306,6 +307,6 @@ export class DisplayService {
       }),
       firstOrderBuyPrice,
       firstOrderSellPrice,
-    };
+    } as ITransferDisplay;
   };
 }

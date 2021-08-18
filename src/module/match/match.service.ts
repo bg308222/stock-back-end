@@ -139,7 +139,6 @@ export class MatchService {
     if (!stock) throw new BadRequestException("Stock doesn't exist");
     const target = marketName || stock.id;
     let marketBook: IMarketBook = undefined;
-    console.log(marketBook);
     if (stock.virtualOrderContainer && stock.virtualOrderContainer.marketBook) {
       marketBook = JSON.parse(stock.virtualOrderContainer.marketBook);
     }

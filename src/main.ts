@@ -20,6 +20,7 @@ const runSwagger = (
     .addTag('VirtualOrder')
     .addTag('Transaction')
     .addTag('Display')
+    .addTag('Research')
     .addServer(`http://${host}:${port}`)
     .build();
 
