@@ -12,7 +12,7 @@ import { LoggerMiddleware } from './middleware/api.middleware';
 import { MatchModule } from './module/match/match.module';
 import { DisplayModule } from './module/display/display.module';
 import { VirtualOrderModule } from './module/virtual-order/virtual-order.module';
-import { ResearchModule } from './module/research/research.module';
+import { FrequentDataModule } from './module/frequent-data/frequent-data.module';
 
 @Module({
   imports: [
@@ -42,7 +42,7 @@ import { ResearchModule } from './module/research/research.module';
     MatchModule,
     DisplayModule,
     VirtualOrderModule,
-    ResearchModule,
+    FrequentDataModule,
   ],
   controllers: [AppController],
   providers: [AppService],

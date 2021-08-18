@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import * as fs from 'fs';
 import { ITransferDisplay } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
-import { IResearchQuery, IResearch } from './research.dto';
+import { IFrequentDataQuery, IFrequentData } from './frequent-data.dto';
 
 const FIELDS = [
   {
@@ -117,10 +117,10 @@ const FIELDS = [
 ];
 
 @Injectable()
-export class ResearchService {
+export class FrequentDataService {
   constructor(private readonly displayService: DisplayService) {}
 
-  private async getDisplay(query: IResearchQuery) {
+  private async getDisplay(query: IFrequentDataQuery) {
     const { content: displays } = (await this.displayService.get({
       ...query,
       order: { order: 'ASC', orderBy: 'createdTime' },
@@ -131,9 +131,9 @@ export class ResearchService {
     return displays;
   }
 
-  private transferDisplayToResearch(displays: ITransferDisplay[]) {
+  private transferDisplayToFrequentData(displays: ITransferDisplay[]) {
     return displays.map(({ fiveTickRange, ...display }) => {
-      const responseType: Partial<IResearch> = {
+      const responseType: Partial<IFrequentData> = {
         sym: display.stockId,
         trdate: moment(display.createdTime).format('YYYYMMDD'),
         ts: moment(display.createdTime).format('HH:mm:ss'),
@@ -156,17 +156,17 @@ export class ResearchService {
           responseType.tickcnt += buyQuantity;
         }
       });
-      return responseType as IResearch;
+      return responseType as IFrequentData;
     });
   }
 
-  private writeFile(researches: IResearch[], path: string) {
+  private writeFile(frequentDatas: IFrequentData[], path: string) {
     const headers = FIELDS.map((field) => field.key).join(',');
     fs.writeFileSync(path, headers + '\n');
-    researches.forEach((research, count) => {
+    frequentDatas.forEach((frequentData, count) => {
       const content = FIELDS.map((field, index) => {
         if (index === 0) return count;
-        return research[field.key];
+        return frequentData[field.key];
       }).join(',');
       fs.appendFileSync(path, content + '\n');
     });
@@ -176,12 +176,12 @@ export class ResearchService {
     fs.rmSync(path);
   }
 
-  public async getResearch(query: IResearchQuery) {
+  public async getFrequentData(query: IFrequentDataQuery) {
     const displays = await this.getDisplay(query);
-    return this.transferDisplayToResearch(displays);
+    return this.transferDisplayToFrequentData(displays);
   }
 
-  public async downloadResearch(query: IResearchQuery) {
+  public async downloadFrequentData(query: IFrequentDataQuery) {
     const min =
       query.createdTime && query.createdTime.min
         ? moment(query.createdTime.min).format('YYYYMMDD') +
@@ -198,7 +198,7 @@ export class ResearchService {
     }_${min}-${max}_${new Date().getMilliseconds()}.csv`;
     const path = `${__dirname}/${fileName}`;
     const displays = await this.getDisplay(query);
-    this.writeFile(this.transferDisplayToResearch(displays), path);
+    this.writeFile(this.transferDisplayToFrequentData(displays), path);
 
     return path;
   }

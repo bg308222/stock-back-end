@@ -5,7 +5,7 @@ import {
 } from 'src/common/helper/document.helper';
 import { IRange } from 'src/common/type';
 
-export class IResearchQuery {
+export class IFrequentDataQuery {
   @ApiPropertyOptional(getRangeDescription(false))
   createdTime?: IRange<string>;
 
@@ -13,7 +13,7 @@ export class IResearchQuery {
   stockId: number;
 }
 
-export interface IResearch {
+export interface IFrequentData {
   sym: number;
   tickcnt: number;
   trdate: string;
@@ -42,7 +42,7 @@ export interface IResearch {
   bsz: number;
 }
 
-export const IResearchObjectResponse = {
+export const IFrequentDataObjectResponse = {
   type: 'object',
   properties: getResponseProperties([
     {
