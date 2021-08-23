@@ -1,4 +1,5 @@
 import { Display } from './display.entity';
+import { Group } from './group.entity';
 import { Investor } from './investor.entity';
 import { Order } from './order.entity';
 import { Stock } from './stock.entity';
@@ -14,4 +15,5 @@ export const entities = [
   Display,
   VirtualOrder,
   VirtualOrderContainer,
+  Group,
 ];

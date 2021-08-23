@@ -21,6 +21,7 @@ const runSwagger = (
     .addTag('Transaction')
     .addTag('Display')
     .addTag('FrequentData')
+    .addTag('Group')
     .addServer(`http://${host}:${port}`)
     .build();
 

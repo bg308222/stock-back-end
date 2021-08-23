@@ -1,8 +1,18 @@
-import { Body, Controller, Get, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MatchService } from '../match/match.service';
 import { OrderService } from '../order/order.service';
 import {
+  IStockDelete,
+  IStockInsert,
   IStockQuery,
   IStockQueryResponse,
   IStockReset,
@@ -27,13 +37,21 @@ export class StockController {
   }
 
   @ApiOperation({
+    summary: '新增股票',
+    description: 'id必傳，為需要更改的股票',
+  })
+  @Post()
+  public async insert(@Body() body: IStockInsert) {
+    return await this.stockService.insert(body);
+  }
+
+  @ApiOperation({
     summary: '更新股票資訊',
     description: 'id必傳，為需要更改的股票',
   })
   @Put()
   public async update(@Body() body: IStockUpdate) {
-    await this.stockService.update(body);
-    return true;
+    return await this.stockService.update(body);
   }
 
   @ApiOperation({
@@ -69,5 +87,10 @@ export class StockController {
         display,
       };
     }
+  }
+
+  @Delete()
+  public async delete(@Body() body: IStockDelete) {
+    return await this.stockService.delete(body);
   }
 }

@@ -3,11 +3,13 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Group } from './group.entity';
 
 @Entity()
 export class Stock {
@@ -29,7 +31,9 @@ export class Stock {
   @UpdateDateColumn()
   updatedTime: Date;
 
-  //TODO relation
   @Column({ nullable: true })
   virtualOrderContainerId: number;
+
+  @ManyToMany(() => Group, (group) => group.stocks)
+  groups: Group[];
 }

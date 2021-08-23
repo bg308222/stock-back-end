@@ -52,6 +52,18 @@ export class IStockQueryResponse {
         { key: 'currentPrice', type: 'number' },
         { key: 'createdTime', type: 'number' },
         { key: 'updatedTime', type: 'number' },
+        {
+          key: 'groups',
+          type: 'array',
+          option: {
+            example: [
+              {
+                id: 10,
+                name: 'test',
+              },
+            ],
+          },
+        },
       ]),
     },
   })
@@ -59,6 +71,23 @@ export class IStockQueryResponse {
 
   @ApiProperty({ example: 10 })
   totalSize: number;
+}
+
+export class IStockInsert {
+  @ApiProperty({ required: false, example: 1 })
+  virtualOrderContainerId?: number;
+
+  @ApiProperty({ required: true, example: 100 })
+  closedPrice: number;
+
+  @ApiProperty({ required: true, example: 10 })
+  priceLimit: number;
+
+  @ApiProperty({ required: true, example: 100 })
+  currentPrice: number;
+
+  @ApiPropertyOptional({ example: [1, 2], isArray: true })
+  groupId?: number[];
 }
 
 export class IStockUpdate {
@@ -76,6 +105,9 @@ export class IStockUpdate {
 
   @ApiProperty({ required: false, example: 100 })
   currentPrice?: number;
+
+  @ApiPropertyOptional({ example: [1, 2], isArray: true })
+  groupId?: number[];
 }
 
 export class IStockReset {
@@ -108,4 +140,13 @@ export class IStockResetResponse {
     },
   })
   orders: IOrderSchema[];
+}
+
+export class IStockDelete {
+  @ApiProperty({
+    required: true,
+    example: [1],
+    isArray: true,
+  })
+  id: number[];
 }

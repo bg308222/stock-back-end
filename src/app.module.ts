@@ -13,6 +13,7 @@ import { MatchModule } from './module/match/match.module';
 import { DisplayModule } from './module/display/display.module';
 import { VirtualOrderModule } from './module/virtual-order/virtual-order.module';
 import { FrequentDataModule } from './module/frequent-data/frequent-data.module';
+import { GroupModule } from './module/group/group.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { FrequentDataModule } from './module/frequent-data/frequent-data.module'
     DisplayModule,
     VirtualOrderModule,
     FrequentDataModule,
+    GroupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
