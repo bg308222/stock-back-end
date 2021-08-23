@@ -18,6 +18,25 @@ import {
   ITransferDisplay,
   queryStrategy,
 } from './display.dto';
+
+interface IChartReduceInput {
+  price: number;
+  quantity: number;
+  createdTime: string;
+  buyTick: string;
+  sellTick: string;
+  closedPrice: number;
+}
+
+interface IChartReduceOutput {
+  quantity: number;
+  lowest: number;
+  highest: number;
+  open: number;
+  close: number;
+  firstOrderBuy: number;
+  firstOrderSell: number;
+}
 @Injectable()
 export class DisplayService {
   constructor(
@@ -90,38 +109,20 @@ export class DisplayService {
       .where('display.stockId = :stockId', { stockId })
       .orderBy('display.createdTime', 'ASC')
       .getRawMany();
-    const sortedResult = result.reduce<
-      Record<
-        string,
-        {
-          quantity: number;
-          lowest: number;
-          highest: number;
-          open: number;
-          close: number;
-          firstOrderBuy: number;
-          firstOrderSell: number;
-        }
-      >
-    >(
-      (
-        p,
-        {
+
+    let defaultFirstOrderBuy = null;
+    let defaultFirstOrderSell = null;
+    const sortedResult = result.reduce<Record<string, IChartReduceOutput>>(
+      (p, chartReduce: IChartReduceInput) => {
+        const {
           price,
           quantity,
           createdTime,
           buyTick: _buyTick,
           sellTick: _sellTick,
           closedPrice,
-        }: {
-          price: number;
-          quantity: number;
-          createdTime: string;
-          buyTick: string;
-          sellTick: string;
-          closedPrice: number;
-        },
-      ) => {
+        } = chartReduce;
+
         const { numTickRange } = getTickRange(closedPrice, stock.priceLimit);
         const buyTick: number[] = JSON.parse(_buyTick);
         const sellTick: number[] = JSON.parse(_sellTick);
@@ -159,6 +160,13 @@ export class DisplayService {
             p[createdTime].firstOrderSell = firstOrderSell;
         }
 
+        if (p[createdTime].firstOrderBuy === null)
+          p[createdTime].firstOrderBuy = defaultFirstOrderBuy;
+        else defaultFirstOrderBuy = p[createdTime].firstOrderBuy;
+
+        if (p[createdTime].firstOrderSell === null)
+          p[createdTime].firstOrderSell = defaultFirstOrderSell;
+        else defaultFirstOrderSell = p[createdTime].firstOrderSell;
         return p;
       },
       {},
@@ -167,9 +175,8 @@ export class DisplayService {
       return {
         ...value,
         createdTime: key,
-        firstOrderBuy: value.firstOrderBuy === null ? 0 : value.firstOrderBuy,
-        firstOrderSell:
-          value.firstOrderSell === null ? 0 : value.firstOrderSell,
+        firstOrderBuy: value.firstOrderBuy,
+        firstOrderSell: value.firstOrderSell,
       };
     });
   }
