@@ -75,5 +75,8 @@ export const getDateFormatString = (dateFormat: DateFormatEnum) => {
     case DateFormatEnum.DAY: {
       return '%Y-%m-%d';
     }
+    case DateFormatEnum.SECOND: {
+      return '%Y-%m-%d %H:%i:%s';
+    }
   }
 };

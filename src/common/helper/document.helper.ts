@@ -4,6 +4,7 @@ import {
   MethodEnum,
   OrderStatusEnum,
   PriceTypeEnum,
+  SampleModeEnum,
   SubMethodEnum,
   TimeRestrictiomEnum,
   TransactionStatusEnum,
@@ -33,7 +34,8 @@ export const getEnumDescription = (
     | 'transactionStatus'
     | 'upperLowerLimit'
     | 'orderStatus'
-    | 'dateFormat',
+    | 'dateFormat'
+    | 'sampleMode',
   isArray = true,
 ) => {
   if (isArray) {
@@ -101,8 +103,21 @@ export const getEnumDescription = (
             DateFormatEnum.MINUTE,
             DateFormatEnum.HOUR,
             DateFormatEnum.DAY,
+            DateFormatEnum.SECOND,
           ],
-          description: 'MINUTE = 0, HOUR = 1, DAY = 2',
+          description: 'MINUTE = 0, HOUR = 1, DAY = 2, SECOND = 3',
+          isArray: true,
+        };
+      }
+      case 'sampleMode': {
+        return {
+          enum: [
+            SampleModeEnum.FIRST,
+            SampleModeEnum.MAX,
+            SampleModeEnum.MIN,
+            SampleModeEnum.AVERAGE,
+          ],
+          description: 'FIRST = 0, MAX = 1, MIN = 2, AVERAGE  = 3',
           isArray: true,
         };
       }
@@ -153,8 +168,19 @@ export const getEnumDescription = (
       }
       case 'dateFormat': {
         return {
-          description: 'MINUTE = 0, HOUR = 1, DAY = 2',
+          description: 'MINUTE = 0, HOUR = 1, DAY = 2, SECOND = 3',
           example: 0,
+        };
+      }
+      case 'sampleMode': {
+        return {
+          enum: [
+            SampleModeEnum.FIRST,
+            SampleModeEnum.MAX,
+            SampleModeEnum.MIN,
+            SampleModeEnum.AVERAGE,
+          ],
+          description: 'FIRST = 0, MAX = 1, MIN = 2, AVERAGE  = 3',
         };
       }
     }
@@ -175,7 +201,7 @@ export const getResponseProperties = <T = any>(
     option?: SchemaObject;
   }[],
 ) => {
-  return input.reduce((p, { key, type, option }) => {
+  const result = input.reduce((p, { key, type, option }) => {
     switch (type) {
       case 'number': {
         p[key] = {
@@ -196,18 +222,21 @@ export const getResponseProperties = <T = any>(
           type: 'string',
           example: 'any string',
         };
+        break;
       }
       case 'json': {
         p[key] = {
           type: 'object',
           description: 'object',
         };
+        break;
       }
       case 'array': {
         p[key] = {
           type: 'array',
           example: [],
         };
+        break;
       }
     }
     if (option) {
@@ -218,4 +247,6 @@ export const getResponseProperties = <T = any>(
     }
     return p;
   }, {} as Record<keyof T, SchemaObject>);
+  console.log(result);
+  return result;
 };

@@ -4,139 +4,137 @@ import * as fs from 'fs';
 import { ITransferDisplay } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IFrequentDataQuery, IFrequentData } from './frequent-data.dto';
+import { SampleModeEnum } from 'src/common/enum';
 
 const FIELDS = [
-  {
-    header: '計數',
-    key: 'count',
-  },
-  {
-    header: '第一賣價',
-    key: 'a1px',
-  },
-  {
-    header: '第一賣價量',
-    key: 'a1sz',
-  },
-  {
-    header: '第二賣價',
-    key: 'a2px',
-  },
-  {
-    header: '第二賣價量',
-    key: 'a2sz',
-  },
-  {
-    header: '第三賣價',
-    key: 'a3px',
-  },
-  {
-    header: '第三賣價量',
-    key: 'a3sz',
-  },
-  {
-    header: '第四賣價',
-    key: 'a4px',
-  },
-  {
-    header: '第四賣價量',
-    key: 'a4sz',
-  },
-  {
-    header: '第五賣價',
-    key: 'a5px',
-  },
-  {
-    header: '第五賣價量',
-    key: 'a5sz',
-  },
-  {
-    header: '第一買價',
-    key: 'b1px',
-  },
-  {
-    header: '第一買價量',
-    key: 'b1sz',
-  },
-  {
-    header: '第二買價',
-    key: 'b2px',
-  },
-  {
-    header: '第二買價量',
-    key: 'b2sz',
-  },
-  {
-    header: '第三買價',
-    key: 'b3px',
-  },
-  {
-    header: '第三買價量',
-    key: 'b3sz',
-  },
-  {
-    header: '第四買價',
-    key: 'b4px',
-  },
-  {
-    header: '第四買價量',
-    key: 'b4sz',
-  },
-  {
-    header: '第五買價',
-    key: 'b5px',
-  },
-  {
-    header: '第五買價量',
-    key: 'b5sz',
-  },
-  {
-    header: '賣tick量',
-    key: 'asz',
-  },
-  {
-    header: '買tick量',
-    key: 'bsz',
-  },
-  {
-    header: '股票代碼',
-    key: 'sym',
-  },
-  {
-    header: '總比數',
-    key: 'tickcnt',
-  },
-  {
-    header: '交易日期',
-    key: 'trdate',
-  },
-  {
-    header: '交易時間',
-    key: 'ts',
-  },
+  'count',
+  'mthpx',
+  'mthsz',
+  'a1px',
+  'a1sz',
+  'a2px',
+  'a2sz',
+  'a3px',
+  'a3sz',
+  'a4px',
+  'a4sz',
+  'a5px',
+  'a5sz',
+  'b1px',
+  'b1sz',
+  'b2px',
+  'b2sz',
+  'b3px',
+  'b3sz',
+  'b4px',
+  'b4sz',
+  'b5px',
+  'b5sz',
+  'asz',
+  'bsz',
+  'sym',
+  'tickcnt',
+  'trdate',
+  'ts',
 ];
 
 @Injectable()
 export class FrequentDataService {
   constructor(private readonly displayService: DisplayService) {}
 
-  private async getDisplay(query: IFrequentDataQuery) {
-    const { content: displays } = (await this.displayService.get({
-      ...query,
-      order: { order: 'ASC', orderBy: 'createdTime' },
-    })) as {
-      content: ITransferDisplay[];
-      totalSize: number;
-    };
-    return displays;
+  private async getDisplay(
+    query: IFrequentDataQuery,
+  ): Promise<ITransferDisplay[]> {
+    const displays = await this.displayService.getFrequentData(query);
+    const { dateFormat, sampleMode } = query;
+    if (isNaN(dateFormat)) return displays;
+
+    let reduceTransferDisplay: Record<
+      string,
+      ITransferDisplay & { isAverage?: boolean }
+    >;
+    switch (sampleMode) {
+      case SampleModeEnum.FIRST: {
+        reduceTransferDisplay = displays.reduce<
+          Record<string, ITransferDisplay>
+        >((p, display) => {
+          const { createdTime } = display;
+          if (!p[createdTime]) p[createdTime] = { ...display };
+          return p;
+        }, {});
+        break;
+      }
+      case SampleModeEnum.MAX: {
+        reduceTransferDisplay = displays.reduce<
+          Record<string, ITransferDisplay>
+        >((p, display) => {
+          const { createdTime } = display;
+          if (!p[createdTime]) p[createdTime] = { ...display };
+          else if (display.matchPrice > p[createdTime].matchPrice)
+            p[createdTime] = { ...display };
+          return p;
+        }, {});
+        break;
+      }
+      case SampleModeEnum.MIN: {
+        reduceTransferDisplay = displays.reduce<
+          Record<string, ITransferDisplay>
+        >((p, display) => {
+          const { createdTime } = display;
+          if (!p[createdTime]) p[createdTime] = { ...display };
+          else if (display.matchPrice < p[createdTime].matchPrice)
+            p[createdTime] = { ...display };
+          return p;
+        }, {});
+        break;
+      }
+      default: {
+        reduceTransferDisplay = displays.reduce<
+          Record<string, ITransferDisplay & { isAverage?: boolean }>
+        >((p, display) => {
+          if (display.matchQuantity === 0) return p;
+          const { createdTime } = display;
+          if (!p[createdTime]) {
+            p[createdTime] = { ...display };
+            p[createdTime].isAverage = true;
+          } else {
+            p[createdTime].matchPrice +=
+              display.matchPrice * display.matchQuantity;
+            p[createdTime].matchQuantity += display.matchQuantity;
+          }
+          return p;
+        }, {});
+        break;
+      }
+    }
+
+    return Object.values(reduceTransferDisplay).map(
+      ({ isAverage, ...display }) => {
+        if (isAverage && display.matchQuantity !== 0)
+          display.matchPrice = display.matchPrice / display.matchQuantity;
+        return display;
+      },
+    );
   }
 
-  private transferDisplayToFrequentData(displays: ITransferDisplay[]) {
+  private getFields(fields?: string[]) {
+    if (!fields) return FIELDS;
+    return FIELDS.filter((field) => {
+      return fields.includes(field);
+    });
+  }
+
+  private transferDisplayToFrequentData(
+    displays: ITransferDisplay[],
+    fields?: string[], // TODO field hidden
+  ) {
     return displays.map(({ fiveTickRange, ...display }) => {
       const responseType: Partial<IFrequentData> = {
         sym: display.stockId,
         trdate: moment(display.createdTime).format('YYYYMMDD'),
         ts: moment(display.createdTime).format('HH:mm:ss'),
+        mthpx: display.matchPrice,
+        mthsz: display.matchQuantity,
         asz: 0,
         bsz: 0,
         tickcnt: 0,
@@ -156,19 +154,27 @@ export class FrequentDataService {
           responseType.tickcnt += buyQuantity;
         }
       });
-      return responseType as IFrequentData;
+      return responseType;
     });
   }
 
-  private writeFile(frequentDatas: IFrequentData[], path: string) {
-    const headers = FIELDS.map((field) => field.key).join(',');
-    console.log(path, 12321321);
+  private writeFile(
+    displays: ITransferDisplay[],
+    path: string,
+    fields?: string[],
+  ) {
+    const frequentDatas = this.transferDisplayToFrequentData(displays);
+    const displayFields = this.getFields(fields);
+
+    const headers = displayFields.join(',');
     fs.writeFileSync(path, headers + '\n');
     frequentDatas.forEach((frequentData, count) => {
-      const content = FIELDS.map((field, index) => {
-        if (index === 0) return count;
-        return frequentData[field.key];
-      }).join(',');
+      const content = displayFields
+        .map((displayField, index) => {
+          if (index === 0) return count;
+          return frequentData[displayField];
+        })
+        .join(',');
       fs.appendFileSync(path, content + '\n');
     });
   }
@@ -179,7 +185,7 @@ export class FrequentDataService {
 
   public async getFrequentData(query: IFrequentDataQuery) {
     const displays = await this.getDisplay(query);
-    return this.transferDisplayToFrequentData(displays);
+    return this.transferDisplayToFrequentData(displays, query.fields);
   }
 
   public async downloadFrequentData(query: IFrequentDataQuery) {
@@ -199,7 +205,7 @@ export class FrequentDataService {
     }_${min}_${max}_${new Date().getMilliseconds()}.csv`;
     const path = `${__dirname}/${fileName}`;
     const displays = await this.getDisplay(query);
-    this.writeFile(this.transferDisplayToFrequentData(displays), path);
+    this.writeFile(displays, path, query.fields);
 
     return path;
   }

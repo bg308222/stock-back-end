@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DateFormatEnum, SampleModeEnum } from 'src/common/enum';
 import {
+  getEnumDescription,
   getRangeDescription,
   getResponseProperties,
 } from 'src/common/helper/document.helper';
@@ -8,6 +10,15 @@ import { IRange } from 'src/common/type';
 export class IFrequentDataQuery {
   @ApiPropertyOptional(getRangeDescription(false))
   createdTime?: IRange<string>;
+
+  @ApiPropertyOptional(getEnumDescription('dateFormat', false))
+  dateFormat?: DateFormatEnum;
+
+  @ApiPropertyOptional(getEnumDescription('sampleMode', false))
+  sampleMode?: SampleModeEnum;
+
+  @ApiPropertyOptional()
+  fields?: string[];
 
   @ApiProperty({ required: true })
   stockId: number;
@@ -18,6 +29,8 @@ export interface IFrequentData {
   tickcnt: number;
   trdate: string;
   ts: string;
+  mthpx: number;
+  mthsz: number;
   a1px: number;
   a1sz: number;
   a2px: number;
@@ -60,6 +73,14 @@ export const IFrequentDataObjectResponse = {
     {
       key: 'ts',
       type: 'string',
+    },
+    {
+      key: 'mthpx',
+      type: 'number',
+    },
+    {
+      key: 'mthsz',
+      type: 'number',
     },
     {
       key: 'a1px',

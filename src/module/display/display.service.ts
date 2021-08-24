@@ -8,6 +8,7 @@ import {
   getQueryBuilderContent,
 } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
+import { IFrequentDataQuery } from '../frequent-data/frequent-data.dto';
 import { getTickAfterNTick, getTickRange } from '../match/match.service';
 import {
   IDisplayChartQuery,
@@ -148,15 +149,9 @@ export class DisplayService {
           if (price > p[createdTime].highest) p[createdTime].highest = price;
           if (price < p[createdTime].lowest) p[createdTime].lowest = price;
           p[createdTime].quantity += quantity;
-          if (
-            firstOrderBuy !== null &&
-            firstOrderBuy > p[createdTime].firstOrderBuy
-          )
+          if (firstOrderBuy !== null)
             p[createdTime].firstOrderBuy = firstOrderBuy;
-          if (
-            firstOrderSell !== null &&
-            firstOrderSell < p[createdTime].firstOrderSell
-          )
+          if (firstOrderSell !== null)
             p[createdTime].firstOrderSell = firstOrderSell;
         }
 
@@ -179,6 +174,47 @@ export class DisplayService {
         firstOrderSell: value.firstOrderSell,
       };
     });
+  }
+
+  public async getFrequentData({
+    createdTime,
+    stockId,
+    dateFormat,
+  }: IFrequentDataQuery) {
+    const queryBuilder = this.displayRepository.createQueryBuilder('display');
+    // select
+    if (!isNaN(dateFormat)) {
+      queryBuilder.select(
+        `DATE_FORMAT(display.createdTime,'${getDateFormatString(dateFormat)}')`,
+        'createdTime',
+      );
+    } else {
+      queryBuilder.select('display.createdTime', 'createdTime');
+    }
+    queryBuilder.addSelect('display.id', 'id');
+    queryBuilder.addSelect('display.buyTick', 'buyTick');
+    queryBuilder.addSelect('display.closedPrice', 'closedPrice');
+    queryBuilder.addSelect('display.marketBuyQuantity', 'marketBuyQuantity');
+    queryBuilder.addSelect('display.marketSellQuantity', 'marketSellQuantity');
+    queryBuilder.addSelect('display.matchPrice', 'matchPrice');
+    queryBuilder.addSelect('display.matchQuantity', 'matchQuantity');
+    queryBuilder.addSelect('display.sellTick', 'sellTick');
+    queryBuilder.addSelect('display.stockId', 'stockId');
+    queryBuilder.addSelect('display.trendFlag', 'trendFlag');
+
+    // where
+    queryBuilder.where('display.stockId = :stockId', { stockId });
+    if (createdTime) {
+      const { max, min } = createdTime;
+      if (max) queryBuilder.andWhere('display.createdTime < :max', { max });
+      if (min) queryBuilder.andWhere('display.createdTime >= :min', { min });
+    }
+    queryBuilder.orderBy('createdTime', 'ASC');
+
+    const displays = await queryBuilder.getRawMany<IDisplaySchema>();
+    return await Promise.all(
+      displays.map((display) => this.transferDisplayToReturnType(display)),
+    );
   }
 
   public transferDisplayToReturnType = async (

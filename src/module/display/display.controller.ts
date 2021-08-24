@@ -1,6 +1,5 @@
 import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DateFormatEnum } from 'src/common/enum';
 import {
   IDisplayChartQuery,
   IDisplayChartQueryResponse,

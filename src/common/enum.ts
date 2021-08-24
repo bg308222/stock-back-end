@@ -52,4 +52,12 @@ export enum DateFormatEnum {
   MINUTE = 0,
   HOUR = 1,
   DAY = 2,
+  SECOND = 3,
+}
+
+export enum SampleModeEnum {
+  FIRST = 0,
+  MAX = 1,
+  MIN = 2,
+  AVERAGE = 3,
 }

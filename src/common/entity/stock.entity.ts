@@ -34,6 +34,6 @@ export class Stock {
   @Column({ nullable: true })
   virtualOrderContainerId: number;
 
-  @ManyToMany(() => Group, (group) => group.stocks)
+  @ManyToMany(() => Group, (group) => group.stocks, { onDelete: 'CASCADE' })
   groups: Group[];
 }
