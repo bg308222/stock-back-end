@@ -193,16 +193,23 @@ export class FrequentDataService {
       query.createdTime && query.createdTime.min
         ? moment(query.createdTime.min).format('YYYYMMDD') +
           moment(query.createdTime.min).format('HHmmss')
-        : 't';
+        : 'x';
     const max =
       query.createdTime && query.createdTime.max
         ? moment(query.createdTime.max).format('YYYYMMDD') +
           moment(query.createdTime.max).format('HHmmss')
-        : 't';
+        : 'x';
 
-    const fileName = `${
-      query.stockId
-    }_${min}_${max}_${new Date().getMilliseconds()}.csv`;
+    const mode =
+      query.dateFormat !== undefined
+        ? `${query.dateFormat}${
+            query.sampleMode !== undefined ? query.sampleMode : 'x'
+          }`
+        : 'xx';
+
+    const timeStamp = new Date().getTime();
+
+    const fileName = `${query.stockId}_${min}_${max}_${mode}_${timeStamp}.csv`;
     const path = `${__dirname}/${fileName}`;
     const displays = await this.getDisplay(query);
     this.writeFile(displays, path, query.fields);

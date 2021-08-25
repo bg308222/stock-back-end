@@ -247,6 +247,5 @@ export const getResponseProperties = <T = any>(
     }
     return p;
   }, {} as Record<keyof T, SchemaObject>);
-  console.log(result);
   return result;
 };
