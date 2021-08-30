@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Investor } from './entity/investor.entity';
 import { QueryStrategyEnum } from './enum';
 import { getPageDescription } from './helper/document.helper';
 
@@ -17,14 +18,18 @@ export interface IOrder {
   order: 'ASC' | 'DESC';
 }
 
+type InvestorSchema = Investor;
+
 export class CommonQuery {
   @ApiPropertyOptional(getPageDescription())
   page?: IPage;
 
   order?: IOrder;
+
+  investor?: InvestorSchema;
 }
 
 export type IQueryStategy<T = any> = Record<
-  Exclude<keyof T, 'page' | 'order'>,
+  Exclude<keyof T, 'page' | 'order' | 'investor'>,
   QueryStrategyEnum
 >;

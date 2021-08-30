@@ -8,5 +8,6 @@ import { InvestorService } from './investor.service';
   imports: [TypeOrmModule.forFeature([Investor])],
   controllers: [InvestorController],
   providers: [InvestorService],
+  exports: [InvestorService],
 })
 export class InvestorModule {}

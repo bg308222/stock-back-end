@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { InvestorService } from 'src/module/investor/investor.service';
 
 const checkRequest = (req, isCheck = true) => {
   if (isCheck) {
@@ -14,14 +15,26 @@ const checkRequest = (req, isCheck = true) => {
 };
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-  use(req: Request, res: Response, next: NextFunction) {
+  constructor(private readonly investorService: InvestorService) {}
+  async use(req: Request, res: Response, next: NextFunction) {
     Object.entries(req.query).forEach(([key, value]) => {
       try {
         req.query[key] = JSON.parse(value as any);
       } catch {}
     });
 
-    checkRequest(req, req.baseUrl !== '/api/display');
+    if (req.baseUrl !== '/api/display') {
+      checkRequest(req);
+    }
+
+    if (req.baseUrl !== '/api/investor/login') {
+      const token = req.headers.token as string;
+      const investor = await this.investorService.getByToken(
+        token,
+        req.baseUrl !== '/api/investor/logout',
+      );
+      req.query.investor = investor as any;
+    }
 
     next();
   }
