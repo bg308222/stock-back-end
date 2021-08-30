@@ -36,7 +36,7 @@ export class OrderService {
   public async insert(body: IOrderInsert): Promise<IOrderSchema> {
     const { generatedMaps } = (await this.orderRepository.insert({
       ...body,
-      investor: { id: body.investorId },
+      investor: body.investorId ? { id: body.investorId } : null,
       stock: { id: body.stockId },
     })) as any;
 

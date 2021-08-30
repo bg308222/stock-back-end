@@ -20,9 +20,9 @@ export class Order {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   investorId: number;
-  @ManyToOne(() => Investor, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Investor, { nullable: true, onDelete: 'CASCADE' })
   investor: Investor;
 
   @CreateDateColumn()

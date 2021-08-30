@@ -2,7 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { InvestorService } from 'src/module/investor/investor.service';
 
-const checkRequest = (req, isCheck = true) => {
+const checkRequest = (req: Request, isCheck = true) => {
   if (isCheck) {
     console.log('\n-------------');
     console.log('---REQUEST---');
@@ -13,6 +13,8 @@ const checkRequest = (req, isCheck = true) => {
     console.log('-------------\n');
   }
 };
+
+const disabledCheckedList = ['/api/display', '/api/order/realData'];
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   constructor(private readonly investorService: InvestorService) {}
@@ -23,7 +25,7 @@ export class LoggerMiddleware implements NestMiddleware {
       } catch {}
     });
 
-    if (req.baseUrl !== '/api/display') {
+    if (disabledCheckedList.includes(req.baseUrl)) {
       checkRequest(req);
     }
 

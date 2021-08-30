@@ -75,8 +75,7 @@ export class InvestorService {
     }
   }
 
-  public async logout(query: IInvestorQuery) {
-    const { investor } = query;
+  public async logout(investor: Investor) {
     if (investor) {
       investor.expiredTime = null;
       await this.investorRepository.save(investor);

@@ -219,10 +219,16 @@ export class MatchService {
         }
 
         await this.insertDisplay(marketName);
+
         if (transactions.length !== 0) {
-          await this.transactionService.insert(
-            this.getTransactionBody(transactions),
-          );
+          const inserTransactions = transactions.filter((transaction) => {
+            return transaction.investorId !== null;
+          });
+
+          if (inserTransactions.length !== 0)
+            await this.transactionService.insert(
+              this.getTransactionBody(transactions),
+            );
         }
         return true;
       }
