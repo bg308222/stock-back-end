@@ -5,6 +5,7 @@ import {
   MethodEnum,
   PriceTypeEnum,
   QueryStrategyEnum,
+  SubMethodEnum,
   TimeRestrictiomEnum,
 } from 'src/common/enum';
 import {
@@ -99,6 +100,9 @@ export class IVirtualOrderContainerInsert {
 export class IVirtualOrderInsert {
   @ApiProperty(getEnumDescription('method', false))
   method: MethodEnum;
+
+  @ApiProperty(getEnumDescription('subMethod', false))
+  subMethod: SubMethodEnum;
 
   @ApiProperty()
   price: number;
