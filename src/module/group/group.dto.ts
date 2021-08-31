@@ -56,8 +56,8 @@ export class IGroupInsert {
   @ApiProperty({ example: 1 })
   name: string;
 
-  @ApiPropertyOptional({ example: [1, 2], isArray: true })
-  stockId: number[];
+  @ApiPropertyOptional({ example: ['1', '2'], isArray: true })
+  stockId: string[];
 }
 
 export class IGroupUpdate {
@@ -72,7 +72,7 @@ export class IGroupUpdate {
   name?: string;
 
   @ApiPropertyOptional({ example: [1, 2], isArray: true })
-  stockId?: number[];
+  stockId?: string[];
 }
 
 export class IGroupDelete {

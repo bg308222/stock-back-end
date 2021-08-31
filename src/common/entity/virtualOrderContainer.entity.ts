@@ -16,7 +16,7 @@ export class VirtualOrderContainer {
   id: number;
 
   @Column()
-  stockId: number;
+  stockId: string;
   @ManyToOne(() => Stock, { nullable: false, onDelete: 'CASCADE' })
   stock: Stock;
 

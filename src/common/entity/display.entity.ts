@@ -16,7 +16,7 @@ export class Display {
   createdTime: Date;
 
   @Column()
-  stockId: number;
+  stockId: string;
   @ManyToOne(() => Stock, { nullable: false, onDelete: 'CASCADE' })
   stock: Stock;
 

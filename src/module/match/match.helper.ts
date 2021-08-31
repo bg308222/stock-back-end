@@ -137,7 +137,7 @@ export class StockMarket {
     return {
       ...order,
       orderId: id,
-      stockId: stockId as number,
+      stockId,
       status,
       quantity,
       price,

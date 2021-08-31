@@ -25,7 +25,7 @@ export class LoggerMiddleware implements NestMiddleware {
       } catch {}
     });
 
-    if (disabledCheckedList.includes(req.baseUrl)) {
+    if (!disabledCheckedList.includes(req.baseUrl)) {
       checkRequest(req);
     }
 

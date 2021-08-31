@@ -122,7 +122,7 @@ export class OrderController {
       //TODO stock
       const insertOrder: IOrderInsert = {
         investorId,
-        stockId: 1,
+        stockId: '1',
         method,
         subMethod,
         price,

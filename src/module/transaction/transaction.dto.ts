@@ -29,7 +29,7 @@ export class ITransactionQuery extends PartialType(CommonQuery) {
   createdTime?: IRange<string>;
 
   @ApiPropertyOptional()
-  stockId?: number;
+  stockId?: string;
 
   @ApiPropertyOptional(getEnumDescription('method'))
   method?: MethodEnum[];
@@ -100,9 +100,9 @@ export class ITransactionInsert {
   investorId: number;
 
   @ApiProperty({
-    example: 1,
+    example: '1',
   })
-  stockId: number;
+  stockId: string;
 
   @ApiProperty(getEnumDescription('method', false))
   method: MethodEnum;

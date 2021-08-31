@@ -24,7 +24,7 @@ export interface ITransferDisplay {
   fiveTickRange: Partial<ITickRange>[];
   firstOrderBuyPrice: any;
   firstOrderSellPrice: any;
-  stockId: number;
+  stockId: string;
   matchPrice: number;
   matchQuantity: number;
   marketBuyQuantity: number;
@@ -43,7 +43,7 @@ export class IDisplayQuery extends PartialType(CommonQuery) {
   createdTime?: IRange<string>;
 
   @ApiPropertyOptional()
-  stockId?: number;
+  stockId?: string;
 
   @ApiPropertyOptional(getRangeDescription())
   matchPrice?: IRange<number>;
@@ -305,8 +305,8 @@ export class IDisplayQueryResponse {
 }
 
 export class IDisplayChartQuery {
-  @ApiProperty({ example: 1 })
-  stockId: number;
+  @ApiProperty({ example: '1' })
+  stockId: string;
 
   @ApiProperty(getEnumDescription('dateFormat', false))
   dateFormat: DateFormatEnum;
@@ -330,7 +330,7 @@ export const IDisplayChartQueryResponse = {
 };
 
 export class IDisplayInsert {
-  stockId: number;
+  stockId: string;
 
   matchPrice: number;
 

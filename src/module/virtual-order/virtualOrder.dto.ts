@@ -53,7 +53,7 @@ export class IVirtualOrderContainerQuery extends PartialType(CommonQuery) {
   id?: number;
 
   @ApiPropertyOptional()
-  stockId?: number;
+  stockId?: string;
 
   @ApiPropertyOptional()
   name?: string;
@@ -88,9 +88,9 @@ export class IVirtualOrderContainerQueryResponse {
 
 export class IVirtualOrderContainerInsert {
   @ApiProperty({
-    example: 1,
+    example: '1',
   })
-  stockId: number;
+  stockId: string;
 
   @ApiProperty()
   name: string;

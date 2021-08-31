@@ -21,11 +21,11 @@ export class IFrequentDataQuery {
   fields?: string[];
 
   @ApiProperty({ required: true })
-  stockId: number;
+  stockId: string;
 }
 
 export interface IFrequentData {
-  sym: number;
+  sym: string;
   tickcnt: number;
   trdate: string;
   ts: string;
@@ -60,7 +60,7 @@ export const IFrequentDataObjectResponse = {
   properties: getResponseProperties([
     {
       key: 'sym',
-      type: 'number',
+      type: 'string',
     },
     {
       key: 'tickcnt',

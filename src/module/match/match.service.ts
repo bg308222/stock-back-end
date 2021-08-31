@@ -132,7 +132,7 @@ export class MatchService {
     );
   }
 
-  public async createMarket(id: number, marketName?: string) {
+  public async createMarket(id: string, marketName?: string) {
     const {
       content: [stock],
     } = await this.stockService.get({ id });
@@ -245,7 +245,7 @@ export class MatchService {
   }
 
   public async getReplayOrdersAndMarketBook(
-    stockId: number,
+    stockId: string,
     createdTime?: string,
     isReset = false,
   ) {
@@ -297,7 +297,7 @@ export class MatchService {
   }
 
   public async setMarketBook(
-    stockId: number,
+    stockId: string,
     marketBook: IMarketBook,
     marketName?: string,
   ) {

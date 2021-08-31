@@ -54,12 +54,10 @@ export class StockService {
   }
 
   public async insert({ groupId, ...body }: IStockInsert) {
-    const {
-      generatedMaps: [generatedMap],
-    } = await this.stockRepository.insert(body);
+    await this.stockRepository.insert(body);
 
     if (groupId) {
-      await this.update({ id: generatedMap.id, groupId });
+      await this.update({ id: body.id, groupId });
     }
     return true;
   }

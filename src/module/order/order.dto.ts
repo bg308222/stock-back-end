@@ -22,7 +22,7 @@ export interface IMatchOrder
     'createdTime' | 'orderId' | 'stockId' | 'status' | 'id'
   > {
   id?: number;
-  stockId?: number;
+  stockId?: string;
   status?: number;
 }
 
@@ -37,7 +37,7 @@ export class IOrderQuery extends PartialType(CommonQuery) {
   createdTime?: IRange<string>;
 
   @ApiPropertyOptional({ example: 1 })
-  stockId?: number;
+  stockId?: string;
 
   @ApiPropertyOptional(getEnumDescription('method'))
   method?: MethodEnum[];
@@ -105,8 +105,8 @@ export class IOrderInsert {
   @ApiProperty({ example: 1 })
   investorId: number;
 
-  @ApiProperty({ example: 1 })
-  stockId: number;
+  @ApiProperty({ example: '1' })
+  stockId: string;
 
   @ApiProperty(getEnumDescription('method', false))
   method: MethodEnum;
