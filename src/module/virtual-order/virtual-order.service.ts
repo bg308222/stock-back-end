@@ -89,8 +89,8 @@ export class VirtualOrderService {
       id,
     });
     container.marketBook = null;
+    container.orders = [];
     await this.virtualOrderContainerRepository.save(container);
-    await this.virtualOrderRepository.delete({ virtualOrderContainerId: id });
     return container;
   }
 
@@ -120,7 +120,7 @@ export class VirtualOrderService {
     const container = await this.virtualOrderContainerRepository.findOne({
       id,
     });
-
+    delete container.orders;
     container.marketBook =
       marketBook === null ? null : JSON.stringify(marketBook);
     return await this.virtualOrderContainerRepository.save(container);
