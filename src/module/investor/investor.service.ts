@@ -67,6 +67,7 @@ export class InvestorService {
       throw new BadRequestException('Missing account or password');
 
     const investor = await this.investorRepository.findOne({ account });
+    if (!investor) throw new BadRequestException("Investor doesn't exist");
     if (compareSync(password, investor.password)) {
       const token = sign({ account }, privateKey);
       investor.expiredTime = this.getExpiredTime();

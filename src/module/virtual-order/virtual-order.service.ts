@@ -89,8 +89,8 @@ export class VirtualOrderService {
       id,
     });
     container.marketBook = null;
-    container.orders = [];
     await this.virtualOrderContainerRepository.save(container);
+    await this.virtualOrderRepository.delete({ virtualOrderContainerId: id });
     return container;
   }
 
