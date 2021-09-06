@@ -33,17 +33,16 @@ export class OrderService {
     };
   }
 
-  public async insert(body: IOrderInsert): Promise<IOrderSchema> {
-    const { generatedMaps } = (await this.orderRepository.insert({
+  public async insert(body: IOrderInsert): Promise<number> {
+    const {
+      generatedMaps: [{ id }],
+    } = await this.orderRepository.insert({
       ...body,
       investor: body.investorId ? { id: body.investorId } : null,
       stock: { id: body.stockId },
-    })) as any;
+    });
 
-    return {
-      ...body,
-      ...generatedMaps[0],
-    };
+    return id;
   }
 
   public async updateStatusToFail(id: number) {

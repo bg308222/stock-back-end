@@ -30,7 +30,7 @@ export interface ITransferDisplay {
   marketBuyQuantity: number;
   marketSellQuantity: number;
   trendFlag: number;
-  createdTime: string;
+  createdTime?: string;
 }
 export class IDisplayQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional({ description: '設為true可只拿取最新一筆，預設為false' })
@@ -347,6 +347,10 @@ export class IDisplayInsert {
   closedPrice: number;
 
   trendFlag: TrendFlagEnum;
+
+  priceLimit: number;
+
+  createdTime?: Date;
 }
 
 export const IDisplayObjectResponse = {

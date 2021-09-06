@@ -48,19 +48,9 @@ export class OrderController {
   public async insert(@Body() body: IOrderInsert) {
     if (body.investorId === undefined)
       throw new BadRequestException('Invalid investorId');
-    if (body.marketName) {
-      //replay order
-      const { marketName, ...order } = body;
-      const display = await this.matchService.dispatchOrder(
-        { ...order, id: 0 },
-        marketName,
-      );
-      return display;
-    } else {
-      //normal order
-      const order = await this.orderService.insert(body);
-      return await this.matchService.dispatchOrder(order);
-    }
+    //normal order
+    const id = await this.orderService.insert(body);
+    return await this.matchService.dispatchOrder({ ...body, id });
   }
 
   @Post('realData')
@@ -74,6 +64,7 @@ export class OrderController {
     },
   })
   public async insertByRealData(@Body() body: string[]) {
+    //TODO createdTime
     for (let i = 0; i < body.length; i++) {
       const rowData = body[i];
       const investorId = null;
@@ -131,8 +122,8 @@ export class OrderController {
         timeRestriction,
         status: OrderStatusEnum.SUCCESS,
       };
-      const order = await this.orderService.insert(insertOrder);
-      await this.matchService.dispatchOrder(order);
+      await this.orderService.insert(insertOrder);
+      await this.matchService.dispatchOrder(insertOrder);
     }
     return true;
   }

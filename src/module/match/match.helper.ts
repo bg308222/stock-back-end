@@ -96,7 +96,6 @@ export class StockMarket {
         ...marketBook,
         limitBuy: new LimitBook(marketBook.limitBuy),
         limitSell: new LimitBook(marketBook.limitSell),
-        stock,
       };
     } else {
       this.marketBook = {

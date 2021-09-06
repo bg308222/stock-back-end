@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -64,6 +65,7 @@ export class StockController {
   })
   @Put('reset')
   public async reset(@Body() { id, createdTime, isReset }: IStockReset) {
+    if (id === undefined) throw new BadRequestException('Missing id');
     const { orders, marketBook, marketName } =
       await this.matchService.getReplayOrdersAndMarketBook(
         id,

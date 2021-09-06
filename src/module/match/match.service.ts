@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { OrderStatusEnum } from 'src/common/enum';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IMatchOrder } from '../order/order.dto';
@@ -166,21 +167,23 @@ export class MatchService {
       getTickList(marketBook);
 
     return {
-      stockId: marketBook.stock.id,
+      stockId: marketName,
       matchPrice: marketBook.stock.currentPrice,
       matchQuantity: marketBook.accumulatedQuantity,
       trendFlag: marketBook.trendFlag,
       buyTick: JSON.stringify(buyTick),
       sellTick: JSON.stringify(sellTick),
       closedPrice: marketBook.stock.closedPrice,
+      priceLimit: marketBook.stock.priceLimit,
       marketBuyQuantity,
       marketSellQuantity,
     };
   }
 
-  private async insertDisplay(marketName: string) {
+  private async insertDisplay(marketName: string, createdTime?: Date) {
     await this.displayService.insert({
       ...this.getDisplayBody(marketName),
+      createdTime,
     });
   }
 
@@ -202,9 +205,9 @@ export class MatchService {
 
       if (isCancelSuccessfully !== undefined) {
         if (isCancelSuccessfully === true) {
-          if (_marketName) return await this.getDisplayReturnType(marketName);
-          await this.insertDisplay(marketName);
-          return true;
+          if (_marketName === undefined)
+            await this.insertDisplay(marketName, order.createdTime);
+          return await this.getDisplayReturnType(marketName);
         }
         return false;
       } else if (isUpdateSuccessfully !== undefined) {
@@ -214,32 +217,44 @@ export class MatchService {
         return false;
       } else {
         // Match successfully
-        if (_marketName) {
-          return await this.getDisplayReturnType(marketName);
+        if (_marketName === undefined) {
+          await this.insertDisplay(marketName, order.createdTime);
+
+          if (order.createdTime === undefined && transactions.length !== 0) {
+            const inserTransactions = transactions.filter((transaction) => {
+              return transaction.investorId !== null;
+            });
+
+            if (inserTransactions.length !== 0)
+              await this.transactionService.insert(
+                this.getTransactionBody(transactions),
+              );
+          }
         }
-
-        await this.insertDisplay(marketName);
-
-        if (transactions.length !== 0) {
-          const inserTransactions = transactions.filter((transaction) => {
-            return transaction.investorId !== null;
-          });
-
-          if (inserTransactions.length !== 0)
-            await this.transactionService.insert(
-              this.getTransactionBody(transactions),
-            );
-        }
-        return true;
+        return await this.getDisplayReturnType(marketName);
       }
     } else {
       // this.stockMarketList[marketName].doContinuousTrading();
     }
   }
 
-  public runOrders(orders: IMatchOrder[], marketName: string) {
-    for (const order of orders) {
-      this.stockMarketList[marketName].doCallAuction(order);
+  public async runOrders(
+    orders: IMatchOrder[],
+    marketName: string,
+    isReset: boolean,
+  ) {
+    for (const { id, ...order } of orders) {
+      if (!isReset) {
+        order.stockId = marketName;
+        await this.orderService.insert({
+          ...order,
+          stockId: marketName,
+          status: OrderStatusEnum.SUCCESS,
+        });
+        await this.dispatchOrder(order);
+      } else {
+        this.stockMarketList[marketName].doCallAuction(order);
+      }
     }
     return this.stockMarketList[marketName].dumpMarketBook();
   }
@@ -254,12 +269,20 @@ export class MatchService {
       .toString()}${Math.random().toFixed(2)}`;
     await this.createMarket(stockId, marketName);
 
+    if (!isReset) {
+      const {
+        content: [{ createdTime: skip1, updatedTime: skip2, ...stock }],
+      } = await this.stockService.get({ id: stockId });
+      await this.stockService.insert({ ...stock, id: marketName });
+    }
     if (createdTime) {
       const { content: beforeOrders } = await this.orderService.get({
         stockId,
         createdTime: { max: createdTime },
+        order: { orderBy: 'createdTime', order: 'ASC' },
       });
-      this.runOrders(beforeOrders, marketName);
+
+      await this.runOrders(beforeOrders, marketName, isReset);
     }
 
     const { content: orders } = await this.orderService.get({
@@ -280,15 +303,10 @@ export class MatchService {
     const marketBook = this.stockMarketList[marketName].dumpMarketBook();
 
     return {
-      orders: orders.map(({ id, createdTime, ...order }) => {
-        if (isReset) {
-          return {
-            ...order,
-          };
-        }
+      orders: orders.map(({ id, ...order }) => {
         return {
           ...order,
-          marketName,
+          stockId: isReset ? order.stockId : marketName,
         };
       }),
       marketBook,
@@ -310,9 +328,9 @@ export class MatchService {
       await this.createMarket(stockId, marketName);
     this.stockMarketList[target].setMarketBook(stock, marketBook);
     if (!marketName) {
-      await this.insertDisplay(stockId.toString());
-      return true;
+      await this.insertDisplay(stockId);
+      return await this.getDisplayReturnType(stockId);
     }
-    return await await this.getDisplayReturnType(marketName);
+    return await this.getDisplayReturnType(marketName);
   }
 }

@@ -221,21 +221,16 @@ export class DisplayService {
     displaySchema?: Omit<IDisplaySchema, 'id' | 'createdTime'>,
   ) => {
     if (!displaySchema) return null;
-    const stock = await this.stockRepository.findOne({
-      id: displaySchema.stockId,
-    });
     const {
       buyTick: buyTickJson,
       sellTick: sellTickJson,
       closedPrice,
+      priceLimit,
       ...data
     } = displaySchema;
     const buyTick = JSON.parse(buyTickJson) as number[];
     const sellTick = JSON.parse(sellTickJson) as number[];
-    const { numTickRange: tickRange } = getTickRange(
-      closedPrice,
-      stock.priceLimit,
-    );
+    const { numTickRange: tickRange } = getTickRange(closedPrice, priceLimit);
     let firstOrderBuyPrice = null;
     let firstOrderSellPrice = null;
 
@@ -322,7 +317,6 @@ export class DisplayService {
       ...data,
 
       tickRange: transferTickRange,
-
       fiveTickRange: fiveTickRange.map((tickRangeIndex, index) => {
         let tickRangeValue: Partial<ITickRange> = transferTickRange[
           tickRangeIndex

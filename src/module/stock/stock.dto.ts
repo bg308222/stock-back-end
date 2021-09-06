@@ -139,6 +139,7 @@ export class IStockResetResponse {
         { key: 'priceType', type: 'number' },
         { key: 'timeRestriction', type: 'number' },
         { key: 'status', type: 'number' },
+        { key: 'createdTime', type: 'date' },
       ]),
     },
   })

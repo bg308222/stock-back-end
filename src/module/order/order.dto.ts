@@ -17,13 +17,11 @@ import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export type IOrderSchema = Omit<Order, 'investor' | 'stock' | 'order'>;
 export interface IMatchOrder
-  extends Omit<
-    IOrderSchema,
-    'createdTime' | 'orderId' | 'stockId' | 'status' | 'id'
-  > {
+  extends Omit<IOrderSchema, 'createdTime' | 'stockId' | 'status' | 'id'> {
   id?: number;
   stockId?: string;
   status?: number;
+  createdTime?: Date;
 }
 
 export class IOrderQuery extends PartialType(CommonQuery) {

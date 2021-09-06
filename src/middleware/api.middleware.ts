@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, query } from 'express';
+import { IRange } from 'src/common/type';
 import { InvestorService } from 'src/module/investor/investor.service';
 
 const checkRequest = (req: Request, isCheck = true) => {
@@ -14,6 +15,10 @@ const checkRequest = (req: Request, isCheck = true) => {
   }
 };
 
+const transferDateToISODate = (date: string) => {
+  return new Date(new Date(date).getTime() + 8 * 3600000).toISOString();
+};
+
 const disabledCheckedList = ['/api/display', '/api/order/realData'];
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -24,6 +29,22 @@ export class LoggerMiddleware implements NestMiddleware {
         req.query[key] = JSON.parse(value as any);
       } catch {}
     });
+
+    if (req.query.createdTime) {
+      const { createdTime } = req.query as any as {
+        createdTime: IRange<string>;
+      };
+      if (createdTime.max) {
+        createdTime.max = transferDateToISODate(createdTime.max);
+      }
+      if (createdTime.min) {
+        createdTime.min = transferDateToISODate(createdTime.min);
+      }
+    }
+
+    if (req.body.createdTime && req.method === 'PUT') {
+      req.body.createdTime = transferDateToISODate(req.body.createdTime);
+    }
 
     if (!disabledCheckedList.includes(req.baseUrl)) {
       checkRequest(req);
