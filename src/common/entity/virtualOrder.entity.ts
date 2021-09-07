@@ -48,4 +48,7 @@ export class VirtualOrder {
     { onDelete: 'CASCADE' },
   )
   virtualOrderContainer: VirtualOrderContainer;
+
+  @Column({ type: 'float', default: 0 })
+  delay: number;
 }
