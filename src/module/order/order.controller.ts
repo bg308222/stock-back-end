@@ -64,10 +64,23 @@ export class OrderController {
     },
   })
   public async insertByRealData(@Body() body: string[]) {
-    //TODO createdTime
     for (let i = 0; i < body.length; i++) {
       const rowData = body[i];
       const investorId = null;
+
+      const year = rowData.slice(0, 4);
+      const month = rowData.slice(4, 6);
+      const day = rowData.slice(6, 8);
+
+      const hour = rowData.slice(16, 18);
+      const min = rowData.slice(18, 20);
+      const sec = rowData.slice(20, 22);
+      const mis = rowData.slice(22, 24);
+
+      const createdTime = new Date(
+        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+      );
+
       const stockId = rowData.slice(8, 14);
 
       const method =
@@ -113,13 +126,14 @@ export class OrderController {
       //TODO stock
       const insertOrder: IOrderInsert = {
         investorId,
-        stockId: '1',
+        stockId,
         method,
         subMethod,
         price,
         quantity,
         priceType,
         timeRestriction,
+        createdTime,
         status: OrderStatusEnum.SUCCESS,
       };
       await this.orderService.insert(insertOrder);

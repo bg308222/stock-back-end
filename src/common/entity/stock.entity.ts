@@ -28,9 +28,6 @@ export class Stock {
   @UpdateDateColumn()
   updatedTime: Date;
 
-  @Column({ nullable: true })
-  virtualOrderContainerId: number;
-
   @ManyToMany(() => Group, (group) => group.stocks, { onDelete: 'CASCADE' })
   groups: Group[];
 }

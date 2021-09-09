@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Stock } from 'src/common/entity/stock.entity';
 import { OrderStatusEnum } from 'src/common/enum';
+import { Repository } from 'typeorm';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IMatchOrder } from '../order/order.dto';
@@ -109,16 +112,19 @@ export class MatchService {
   constructor(
     private readonly transactionService: TransactionService,
     private readonly displayService: DisplayService,
-    private readonly stockService: StockService,
     private readonly orderService: OrderService,
+
+    @InjectRepository(Stock)
+    private readonly stockRepository: Repository<Stock>,
   ) {
     this.stockMarketList = {};
   }
   private stockMarketList: Record<string, StockMarket>;
 
   public async init() {
-    const { content } = await this.stockService.get({});
-    const stocks = content.map((stock) => stock.id);
+    const stocks = (await this.stockRepository.find({})).map(
+      (stock) => stock.id,
+    );
     await Promise.all(
       stocks.map(async (id) => {
         return this.createMarket(id)
@@ -134,18 +140,13 @@ export class MatchService {
   }
 
   public async createMarket(id: string, marketName?: string) {
-    const {
-      content: [stock],
-    } = await this.stockService.get({ id });
+    const stock = await this.stockRepository.findOne({ id });
+
     if (!stock) throw new BadRequestException("Stock doesn't exist");
     const target = marketName || stock.id;
-    let marketBook: IMarketBook = undefined;
-    if (stock.virtualOrderContainer && stock.virtualOrderContainer.marketBook) {
-      marketBook = JSON.parse(stock.virtualOrderContainer.marketBook);
-    }
 
     if (this.stockMarketList[target]) delete this.stockMarketList[target];
-    this.stockMarketList[target] = new StockMarket(stock, marketBook);
+    this.stockMarketList[target] = new StockMarket(stock);
     return target;
   }
 
@@ -157,7 +158,7 @@ export class MatchService {
     transactions: ITransactionInsert[],
   ): ITransactionInsert[] {
     return transactions.filter((v) => {
-      return v.investorId !== 0;
+      return v.investorId !== null;
     });
   }
 
@@ -271,9 +272,11 @@ export class MatchService {
 
     if (!isReset) {
       const {
-        content: [{ createdTime: skip1, updatedTime: skip2, ...stock }],
-      } = await this.stockService.get({ id: stockId });
-      await this.stockService.insert({ ...stock, id: marketName });
+        createdTime: skip1,
+        updatedTime: skip2,
+        ...stock
+      } = await this.stockRepository.findOne({ id: stockId });
+      await this.stockRepository.insert({ ...stock, id: marketName });
     }
     if (createdTime) {
       const { content: beforeOrders } = await this.orderService.get({
@@ -286,6 +289,7 @@ export class MatchService {
     }
 
     const { content: orders } = await this.orderService.get({
+      stockId,
       createdTime: createdTime ? { min: createdTime } : undefined,
       order: { orderBy: 'createdTime', order: 'ASC' },
     });
@@ -319,9 +323,7 @@ export class MatchService {
     marketBook: IMarketBook,
     marketName?: string,
   ) {
-    const {
-      content: [stock],
-    } = await this.stockService.get({ id: stockId });
+    const stock = await this.stockRepository.findOne({ id: stockId });
 
     const target = marketName || stockId;
     if (!this.stockMarketList[target])

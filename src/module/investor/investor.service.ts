@@ -9,11 +9,7 @@ import { Investor } from 'src/common/entity/investor.entity';
 import { Repository } from 'typeorm';
 import { hashSync, compareSync } from 'bcrypt';
 import { sign, verify } from 'jsonwebtoken';
-import {
-  IInvestorInsert,
-  IInvestorLogin,
-  IInvestorQuery,
-} from './investor.dto';
+import { IInvestorInsert, IInvestorLogin } from './investor.dto';
 const privateKey = 'STOCK_PRIVATE_KEY';
 
 @Injectable()

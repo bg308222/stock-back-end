@@ -9,6 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IMarketBook } from '../match/match.helper';
 import { MatchService } from '../match/match.service';
 import { OrderService } from '../order/order.service';
 import {
@@ -28,7 +29,6 @@ export class StockController {
   constructor(
     private readonly stockService: StockService,
     private readonly matchService: MatchService,
-    private readonly orderService: OrderService,
   ) {}
 
   @ApiResponse({ type: IStockQueryResponse, status: 200 })
@@ -64,7 +64,9 @@ export class StockController {
     status: 200,
   })
   @Put('reset')
-  public async reset(@Body() { id, createdTime, isReset }: IStockReset) {
+  public async reset(
+    @Body() { id, createdTime, isReset, virtualOrderContainerId }: IStockReset,
+  ) {
     if (id === undefined) throw new BadRequestException('Missing id');
     const { orders, marketBook, marketName } =
       await this.matchService.getReplayOrdersAndMarketBook(
@@ -74,7 +76,18 @@ export class StockController {
       );
 
     if (isReset === true) {
-      const display = await this.matchService.setMarketBook(id, marketBook);
+      let newMarketBook: IMarketBook = undefined;
+
+      if (virtualOrderContainerId !== undefined) {
+        newMarketBook = await this.stockService.getVirtualOrderContainer(
+          virtualOrderContainerId,
+        );
+      }
+
+      const display = await this.matchService.setMarketBook(
+        id,
+        newMarketBook || marketBook,
+      );
       return {
         display,
       };

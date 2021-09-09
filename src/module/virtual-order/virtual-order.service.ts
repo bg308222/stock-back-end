@@ -133,22 +133,6 @@ export class VirtualOrderService {
 
   public async deleteContainer(body: IVirtualOrderContainerDelete) {
     await this.virtualOrderContainerRepository.delete(body.id);
-    await Promise.all(
-      body.id.map(async (id) => {
-        const stocks = (
-          await this.stockRepository.find({
-            virtualOrderContainerId: id,
-          })
-        ).map((stock) => {
-          return {
-            ...stock,
-            virtualOrderContainerId: null,
-          };
-        });
-        await this.stockRepository.save(stocks);
-      }),
-    );
-
     return true;
   }
 }

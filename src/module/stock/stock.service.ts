@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from 'src/common/entity/group.entity';
 import { Stock } from 'src/common/entity/stock.entity';
 import { VirtualOrderContainer } from 'src/common/entity/virtualOrderContainer.entity';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
+import { IMarketBook } from '../match/match.helper';
 import {
   IStockDelete,
   IStockInsert,
@@ -35,20 +40,7 @@ export class StockService {
     fullQueryBuilder.leftJoinAndSelect('stock.groups', 'groups');
     const content = await fullQueryBuilder.getMany();
     return {
-      content: await Promise.all(
-        content.map(async (stock) => {
-          const virtualOrderContainer =
-            await this.virtualOrderContainerRepository.findOne({
-              id: stock.virtualOrderContainerId,
-            });
-          return {
-            ...stock,
-            virtualOrderContainer: virtualOrderContainer
-              ? virtualOrderContainer
-              : undefined,
-          };
-        }),
-      ),
+      content,
       totalSize,
     };
   }
@@ -65,14 +57,7 @@ export class StockService {
   public async update({ id, groupId, ...body }: IStockUpdate) {
     const stock = await this.stockRepository.findOne({ id });
     if (!stock) throw new BadRequestException('Stock doesn"t exist');
-    if (body.virtualOrderContainerId) {
-      if (
-        !(await this.virtualOrderContainerRepository.findOne({
-          id: body.virtualOrderContainerId,
-        }))
-      )
-        throw new BadRequestException("Virtual order container doesn't exist");
-    }
+
     if (groupId) {
       stock.groups = groupId.map((id) => {
         const group = new Group();
@@ -87,5 +72,14 @@ export class StockService {
   public async delete(body: IStockDelete) {
     await this.stockRepository.delete(body.id);
     return true;
+  }
+
+  public async getVirtualOrderContainer(id: number) {
+    const container = await this.virtualOrderContainerRepository.findOne({
+      id,
+    });
+    if (!container)
+      throw new ForbiddenException("Virtual order container doesn't exist");
+    return JSON.parse(container.marketBook) as IMarketBook;
   }
 }

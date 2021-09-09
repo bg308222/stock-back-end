@@ -1,5 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction, query } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { IRange } from 'src/common/type';
 import { InvestorService } from 'src/module/investor/investor.service';
 
@@ -19,7 +19,11 @@ const transferDateToISODate = (date: string) => {
   return new Date(new Date(date).getTime() + 8 * 3600000).toISOString();
 };
 
-const disabledCheckedList = ['/api/display', '/api/order/realData'];
+const disabledCheckedList = [
+  '/api/display',
+  '/api/order/realData',
+  '/api/display/chart',
+];
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   constructor(private readonly investorService: InvestorService) {}

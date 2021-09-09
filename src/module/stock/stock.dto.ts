@@ -20,9 +20,6 @@ export class IStockQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional(getRangeDescription())
   priceLimit?: IRange<number>;
 
-  @ApiPropertyOptional()
-  virtualOrderContainerId?: number;
-
   @ApiPropertyOptional(getRangeDescription())
   currentPrice?: IRange<number>;
 
@@ -34,7 +31,6 @@ export const queryStrategy: IQueryStategy<IStockQuery> = {
   id: QueryStrategyEnum.value,
   closedPrice: QueryStrategyEnum.range,
   priceLimit: QueryStrategyEnum.range,
-  virtualOrderContainerId: QueryStrategyEnum.value,
   currentPrice: QueryStrategyEnum.range,
   createdTime: QueryStrategyEnum.range,
 };
@@ -47,7 +43,6 @@ export class IStockQueryResponse {
       properties: getResponseProperties<IStockSchema>([
         { key: 'id', type: 'string' },
         { key: 'closedPrice', type: 'number' },
-        { key: 'virtualOrderContainerId', type: 'number' },
         { key: 'priceLimit', type: 'number' },
         { key: 'currentPrice', type: 'number' },
         { key: 'createdTime', type: 'number' },
@@ -77,9 +72,6 @@ export class IStockInsert {
   @ApiProperty({ required: true, example: '1' })
   id: string;
 
-  @ApiProperty({ required: false, example: 1 })
-  virtualOrderContainerId?: number;
-
   @ApiProperty({ required: true, example: 100 })
   closedPrice: number;
 
@@ -96,9 +88,6 @@ export class IStockInsert {
 export class IStockUpdate {
   @ApiProperty({ required: true, example: 1, description: '要修改的股票id' })
   id: string;
-
-  @ApiProperty({ required: false, example: 1 })
-  virtualOrderContainerId?: number;
 
   @ApiProperty({ required: false, example: 100 })
   closedPrice?: number;
@@ -119,6 +108,9 @@ export class IStockReset {
 
   @ApiProperty({ example: false })
   isReset?: boolean;
+
+  @ApiProperty({ example: 1 })
+  virtualOrderContainerId?: number;
 
   @ApiPropertyOptional({ example: '2021-08-07 16:43:43.763532' })
   createdTime?: string;

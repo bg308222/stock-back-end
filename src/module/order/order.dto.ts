@@ -128,7 +128,7 @@ export class IOrderInsert {
   status: OrderStatusEnum;
 
   @ApiProperty()
-  marketName?: string;
+  createdTime?: Date;
 }
 
 export class IOrderDelete {
