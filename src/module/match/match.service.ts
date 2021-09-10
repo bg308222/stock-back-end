@@ -294,7 +294,7 @@ export class MatchService {
     createdTime?: string,
     isReset = false,
   ) {
-    const marketName = `REPLAY_${new Date()
+    const marketName = `REPLAY_${stockId}_${new Date()
       .getTime()
       .toString()}${Math.random().toFixed(2)}`;
     await this.createMarket(stockId, marketName);

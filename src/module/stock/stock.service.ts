@@ -40,7 +40,7 @@ export class StockService {
     fullQueryBuilder.leftJoinAndSelect('stock.groups', 'groups');
     const content = await fullQueryBuilder.getMany();
     return {
-      content,
+      content: content.filter((stock) => !stock.id.startsWith('REPLAY')),
       totalSize,
     };
   }

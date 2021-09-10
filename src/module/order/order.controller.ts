@@ -6,6 +6,7 @@ import {
   Get,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -27,6 +28,7 @@ import * as fs from 'fs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Repository } from 'typeorm';
+import { Response } from 'express';
 @ApiTags('Order')
 @Controller('order')
 export class OrderController {
@@ -147,6 +149,7 @@ export class OrderController {
   @Post('realData')
   public async postRealData(
     @Body() body: { stockId: string; fileName: string },
+    @Res() res: Response,
   ) {
     const fileName = process.env.REAL_DATA + body.fileName;
     const _stockId = body.stockId.padEnd(6);
@@ -187,11 +190,16 @@ export class OrderController {
 
       readStream.on('end', async function () {
         console.time('RealData');
+        let cnt = 0;
         while (result.length !== 0) {
           const data = result.splice(0, 1000);
-          await handleRequest(data);
+          cnt += data.length;
+          await handleRequest(data).then(() => {
+            console.log(cnt);
+          });
         }
         console.timeEnd('RealData');
+        res.json(true);
       });
     }
   }
