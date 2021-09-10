@@ -23,13 +23,18 @@ import {
   IOrderQueryResponse,
 } from './order.dto';
 import { OrderService } from './order.service';
-
+import * as fs from 'fs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Display } from 'src/common/entity/display.entity';
+import { Repository } from 'typeorm';
 @ApiTags('Order')
 @Controller('order')
 export class OrderController {
   constructor(
     private readonly orderService: OrderService,
     private readonly matchService: MatchService,
+    @InjectRepository(Display)
+    private readonly displayRepository: Repository<Display>,
   ) {}
 
   @ApiResponse({ type: IOrderQueryResponse, status: 200 })
@@ -53,16 +58,6 @@ export class OrderController {
     return await this.matchService.dispatchOrder({ ...body, id });
   }
 
-  @Post('realData')
-  @ApiBody({
-    schema: {
-      type: 'string',
-      example: [
-        '201912020056  S009174642n58HF40027.71+0000450000010328J476M',
-        '201912020056  S009174642n58HE40027.69+0000450000010328J476M',
-      ],
-    },
-  })
   public async insertByRealData(@Body() body: string[]) {
     for (let i = 0; i < body.length; i++) {
       const rowData = body[i];
@@ -123,7 +118,6 @@ export class OrderController {
           break;
       }
 
-      //TODO stock
       const insertOrder: IOrderInsert = {
         investorId,
         stockId,
@@ -140,6 +134,66 @@ export class OrderController {
       await this.matchService.dispatchOrder(insertOrder);
     }
     return true;
+  }
+
+  @Get('realData')
+  public async getRealData() {
+    const files = fs.readdirSync(process.env.REAL_DATA).filter((file) => {
+      return file.startsWith('odr');
+    });
+    return files;
+  }
+
+  @Post('realData')
+  public async postRealData(
+    @Body() body: { stockId: string; fileName: string },
+  ) {
+    const fileName = process.env.REAL_DATA + body.fileName;
+    const _stockId = body.stockId.padEnd(6);
+    const handleRequest = async (body: string[]) => {
+      await this.insertByRealData(body);
+    };
+    await this.displayRepository.delete({ stockId: body.stockId });
+    if (true) {
+      let tempStr = '';
+      const result = [];
+
+      const readStream = fs.createReadStream(fileName);
+      let findFlag = false;
+
+      readStream.on('data', function (chunk) {
+        const chunkStr = tempStr + chunk.toString();
+        const strArr = chunkStr.split('\n');
+        for (const str of strArr) {
+          if (str.length !== 59) {
+            tempStr = str;
+          } else {
+            const stockId = str.slice(8, 14);
+            if (stockId === _stockId) {
+              findFlag = true;
+              result.push(str);
+            } else {
+              if (findFlag) {
+                console.log(result.length);
+                readStream.emit('end');
+                readStream.close();
+                break;
+              }
+            }
+            tempStr = '';
+          }
+        }
+      });
+
+      readStream.on('end', async function () {
+        console.time('RealData');
+        while (result.length !== 0) {
+          const data = result.splice(0, 1000);
+          await handleRequest(data);
+        }
+        console.timeEnd('RealData');
+      });
+    }
   }
 
   @ApiOperation({
