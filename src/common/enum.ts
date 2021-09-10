@@ -61,3 +61,9 @@ export enum SampleModeEnum {
   MIN = 2,
   AVERAGE = 3,
 }
+
+export enum StockTypeEnum {
+  STOCK = 0,
+  ETF = 1,
+  WARRANT = 2,
+}

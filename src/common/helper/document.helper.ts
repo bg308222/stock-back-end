@@ -5,6 +5,7 @@ import {
   OrderStatusEnum,
   PriceTypeEnum,
   SampleModeEnum,
+  StockTypeEnum,
   SubMethodEnum,
   TimeRestrictiomEnum,
   TransactionStatusEnum,
@@ -35,7 +36,8 @@ export const getEnumDescription = (
     | 'upperLowerLimit'
     | 'orderStatus'
     | 'dateFormat'
-    | 'sampleMode',
+    | 'sampleMode'
+    | 'stockType',
   isArray = true,
 ) => {
   if (isArray) {
@@ -121,6 +123,13 @@ export const getEnumDescription = (
           isArray: true,
         };
       }
+      case 'stockType': {
+        return {
+          enum: [StockTypeEnum.STOCK, StockTypeEnum.ETF, StockTypeEnum.WARRANT],
+          description: 'STOCK = 0, ETF = 1, WARRANT = 2',
+          isArray: true,
+        };
+      }
     }
   } else {
     switch (type) {
@@ -174,13 +183,12 @@ export const getEnumDescription = (
       }
       case 'sampleMode': {
         return {
-          enum: [
-            SampleModeEnum.FIRST,
-            SampleModeEnum.MAX,
-            SampleModeEnum.MIN,
-            SampleModeEnum.AVERAGE,
-          ],
           description: 'FIRST = 0, MAX = 1, MIN = 2, AVERAGE  = 3',
+        };
+      }
+      case 'stockType': {
+        return {
+          description: 'STOCK = 0, ETF = 1, WARRANT = 2',
         };
       }
     }

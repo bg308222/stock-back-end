@@ -3,6 +3,7 @@ import { Display } from 'src/common/entity/display.entity';
 import {
   DateFormatEnum,
   QueryStrategyEnum,
+  StockTypeEnum,
   TrendFlagEnum,
 } from 'src/common/enum';
 import {
@@ -30,6 +31,7 @@ export interface ITransferDisplay {
   marketBuyQuantity: number;
   marketSellQuantity: number;
   trendFlag: number;
+  stockType: number;
   createdTime?: string;
 }
 export class IDisplayQuery extends PartialType(CommonQuery) {
@@ -295,6 +297,7 @@ export class IDisplayQueryResponse {
           },
         },
         { key: 'trendFlag', type: 'number' },
+        { key: 'stockType', type: 'number' },
       ]),
     },
   })
@@ -347,6 +350,8 @@ export class IDisplayInsert {
   closedPrice: number;
 
   trendFlag: TrendFlagEnum;
+
+  stockType: StockTypeEnum;
 
   priceLimit: number;
 
@@ -575,5 +580,6 @@ export const IDisplayObjectResponse = {
       },
     },
     { key: 'trendFlag', type: 'number' },
+    { key: 'stockType', type: 'number' },
   ]),
 };

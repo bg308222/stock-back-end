@@ -1,13 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stock } from 'src/common/entity/stock.entity';
-import { OrderStatusEnum } from 'src/common/enum';
+import { OrderStatusEnum, StockTypeEnum } from 'src/common/enum';
 import { Repository } from 'typeorm';
 import { IDisplayInsert, ITickRange } from '../display/display.dto';
 import { DisplayService } from '../display/display.service';
 import { IMatchOrder } from '../order/order.dto';
 import { OrderService } from '../order/order.service';
-import { StockService } from '../stock/stock.service';
 import { ITransactionInsert } from '../transaction/transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
 import { IMarketBook, StockMarket } from './match.helper';
@@ -20,46 +19,74 @@ export const getOrderQuantity = (orders: IMatchOrder[]) => {
   return quantity;
 };
 
-export const getNextTick = (currentPrice: number) => {
-  if (currentPrice < 5) return 0.01;
-  else if (currentPrice < 10) return 0.05;
-  else if (currentPrice < 50) return 0.1;
-  else if (currentPrice < 100) return 0.5;
-  else if (currentPrice < 500) return 1;
-  else return 5;
+export const getNextTick = (currentPrice: number, stockType: StockTypeEnum) => {
+  switch (stockType) {
+    case StockTypeEnum.ETF: {
+      if (currentPrice < 50) return 0.01;
+      else return 0.05;
+    }
+    case StockTypeEnum.WARRANT: {
+      if (currentPrice < 5) return 0.01;
+      else if (currentPrice < 10) return 0.05;
+      else if (currentPrice < 50) return 0.1;
+      else if (currentPrice < 100) return 0.5;
+      else if (currentPrice < 500) return 1;
+      else return 5;
+    }
+    default: {
+      if (currentPrice < 10) return 0.01;
+      else if (currentPrice < 50) return 0.05;
+      else if (currentPrice < 100) return 0.1;
+      else if (currentPrice < 500) return 0.5;
+      else if (currentPrice < 1000) return 1;
+      else return 5;
+    }
+  }
 };
 
-export const getTickAfterNTick = (currentPrice: number, n: number) => {
+export const getTickAfterNTick = (
+  currentPrice: number,
+  n: number,
+  stockType: StockTypeEnum,
+) => {
   let tempPrice = currentPrice;
   if (n > 0) {
     for (let i = 0; i < n; i++) {
-      tempPrice += getNextTick(tempPrice);
+      tempPrice += getNextTick(tempPrice, stockType);
+      tempPrice.toFixed(2);
     }
   } else if (n < 0) {
     for (let i = 0; i > n; i--) {
-      tempPrice -= getNextTick(tempPrice);
+      tempPrice -= getNextTick(tempPrice, stockType);
+      tempPrice.toFixed(2);
     }
   }
-  return tempPrice;
+  return +tempPrice.toFixed(2);
 };
 
-export const getTickRange = (closedPrice: number, priceLimit: number) => {
+export const getTickRange = (
+  closedPrice: number,
+  priceLimit: number,
+  stockType: StockTypeEnum,
+) => {
   const maxPrice = closedPrice * (1 + 0.01 * priceLimit);
   const minPrice = closedPrice * (1 - 0.01 * priceLimit);
 
   let minTick = closedPrice;
-  while (minTick - getNextTick(minTick) > minPrice)
-    minTick -= getNextTick(minTick);
+  while (getTickAfterNTick(minTick, -1, stockType) > minPrice) {
+    minTick = getTickAfterNTick(minTick, -1, stockType);
+  }
   let maxTick = closedPrice;
-  while (maxTick + getNextTick(maxTick) < maxPrice)
-    maxTick += getNextTick(maxTick);
+  while (getTickAfterNTick(maxTick, 1, stockType) < maxPrice) {
+    maxTick = getTickAfterNTick(maxTick, 1, stockType);
+  }
 
   const numTickRange: number[] = [];
   const tickRange: ITickRange[] = [];
   for (
-    let currentTick = maxTick;
-    currentTick >= minTick;
-    currentTick -= getNextTick(currentTick)
+    let currentTick = minTick;
+    currentTick < maxTick;
+    currentTick = getTickAfterNTick(currentTick, 1, stockType)
   ) {
     numTickRange.push(currentTick);
     tickRange.push({
@@ -69,8 +96,8 @@ export const getTickRange = (closedPrice: number, priceLimit: number) => {
     });
   }
   return {
-    tickRange,
-    numTickRange,
+    tickRange: tickRange.reverse(),
+    numTickRange: numTickRange.reverse(),
   };
 };
 
@@ -84,6 +111,7 @@ export const getTickList = ({
   const { numTickRange: tickRange } = getTickRange(
     marketBook.stock.closedPrice,
     marketBook.stock.priceLimit,
+    marketBook.stock.type,
   );
 
   const buyTick: number[] = [];
@@ -176,6 +204,7 @@ export class MatchService {
       sellTick: JSON.stringify(sellTick),
       closedPrice: marketBook.stock.closedPrice,
       priceLimit: marketBook.stock.priceLimit,
+      stockType: marketBook.stock.type,
       marketBuyQuantity,
       marketSellQuantity,
     };

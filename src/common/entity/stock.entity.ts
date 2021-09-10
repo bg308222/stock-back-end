@@ -6,6 +6,7 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { StockTypeEnum } from '../enum';
 import { Group } from './group.entity';
 
 @Entity()
@@ -27,6 +28,9 @@ export class Stock {
 
   @UpdateDateColumn()
   updatedTime: Date;
+
+  @Column({ type: 'int', default: StockTypeEnum.STOCK })
+  type: number;
 
   @ManyToMany(() => Group, (group) => group.stocks, { onDelete: 'CASCADE' })
   groups: Group[];

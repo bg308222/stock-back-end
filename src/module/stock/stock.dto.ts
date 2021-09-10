@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Stock } from 'src/common/entity/stock.entity';
-import { QueryStrategyEnum } from 'src/common/enum';
+import { QueryStrategyEnum, StockTypeEnum } from 'src/common/enum';
 import {
+  getEnumDescription,
   getRangeDescription,
   getResponseProperties,
 } from 'src/common/helper/document.helper';
@@ -47,6 +48,7 @@ export class IStockQueryResponse {
         { key: 'currentPrice', type: 'number' },
         { key: 'createdTime', type: 'number' },
         { key: 'updatedTime', type: 'number' },
+        { key: 'type', type: 'number' },
         {
           key: 'groups',
           type: 'array',
@@ -81,6 +83,9 @@ export class IStockInsert {
   @ApiProperty({ required: true, example: 100 })
   currentPrice: number;
 
+  @ApiProperty(getEnumDescription('stockType'))
+  type: StockTypeEnum;
+
   @ApiPropertyOptional({ example: [1, 2], isArray: true })
   groupId?: number[];
 }
@@ -89,14 +94,17 @@ export class IStockUpdate {
   @ApiProperty({ required: true, example: 1, description: '要修改的股票id' })
   id: string;
 
-  @ApiProperty({ required: false, example: 100 })
+  @ApiPropertyOptional({ required: false, example: 100 })
   closedPrice?: number;
 
-  @ApiProperty({ required: false, example: 10 })
+  @ApiPropertyOptional({ required: false, example: 10 })
   priceLimit?: number;
 
-  @ApiProperty({ required: false, example: 100 })
+  @ApiPropertyOptional({ required: false, example: 100 })
   currentPrice?: number;
+
+  @ApiPropertyOptional(getEnumDescription('stockType'))
+  type?: StockTypeEnum;
 
   @ApiPropertyOptional({ example: [1, 2], isArray: true })
   groupId?: number[];

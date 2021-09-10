@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Stock } from 'src/common/entity/stock.entity';
-import { TrendFlagEnum } from 'src/common/enum';
+import { StockTypeEnum, TrendFlagEnum } from 'src/common/enum';
 import {
   getDateFormatString,
   getQueryBuilderContent,
@@ -26,6 +26,8 @@ interface IChartReduceInput {
   createdTime: string;
   buyTick: string;
   sellTick: string;
+  stockType: StockTypeEnum;
+  priceLimit: number;
   closedPrice: number;
 }
 
@@ -97,7 +99,6 @@ export class DisplayService {
     dateFormat: _dateFormat,
     stockId,
   }: IDisplayChartQuery) {
-    const stock = await this.stockRepository.findOne({ id: stockId });
     const dateFormat = getDateFormatString(_dateFormat);
     const result = await this.displayRepository
       .createQueryBuilder('display')
@@ -107,6 +108,8 @@ export class DisplayService {
       .addSelect('display.matchPrice', 'price')
       .addSelect('display.matchQuantity', 'quantity')
       .addSelect('display.closedPrice', 'closedPrice')
+      .addSelect('display.stockType', 'stockType')
+      .addSelect('display.priceLimit', 'priceLimit')
       .where('display.stockId = :stockId', { stockId })
       .orderBy('display.createdTime', 'ASC')
       .getRawMany();
@@ -122,9 +125,15 @@ export class DisplayService {
           buyTick: _buyTick,
           sellTick: _sellTick,
           closedPrice,
+          priceLimit,
+          stockType,
         } = chartReduce;
 
-        const { numTickRange } = getTickRange(closedPrice, stock.priceLimit);
+        const { numTickRange } = getTickRange(
+          closedPrice,
+          priceLimit,
+          stockType,
+        );
         const buyTick: number[] = JSON.parse(_buyTick);
         const sellTick: number[] = JSON.parse(_sellTick);
         let firstOrderBuy = null;
@@ -226,11 +235,16 @@ export class DisplayService {
       sellTick: sellTickJson,
       closedPrice,
       priceLimit,
+      stockType,
       ...data
     } = displaySchema;
     const buyTick = JSON.parse(buyTickJson) as number[];
     const sellTick = JSON.parse(sellTickJson) as number[];
-    const { numTickRange: tickRange } = getTickRange(closedPrice, priceLimit);
+    const { numTickRange: tickRange } = getTickRange(
+      closedPrice,
+      priceLimit,
+      stockType,
+    );
     let firstOrderBuyPrice = null;
     let firstOrderSellPrice = null;
 
@@ -329,6 +343,7 @@ export class DisplayService {
             price: getTickAfterNTick(
               data.matchPrice,
               currentPriceIndex - tickRangeIndex,
+              stockType,
             ),
             buyQuantity: 0,
             sellQuantity: 0,

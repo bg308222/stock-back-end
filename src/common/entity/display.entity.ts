@@ -45,5 +45,8 @@ export class Display {
   trendFlag: number;
 
   @Column({ type: 'int' })
+  stockType: number;
+
+  @Column({ type: 'int' })
   priceLimit: number;
 }
