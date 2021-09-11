@@ -32,19 +32,21 @@ export class LoggerMiddleware implements NestMiddleware {
       try {
         req.query[key] = JSON.parse(value as any);
       } catch {}
+      if (key.endsWith('Time')) {
+        const value = req.query[key] as any;
+        if (typeof value === 'string') {
+          req.query[key] = transferDateToISODate(value);
+        } else {
+          if (value.max) {
+            value.max = transferDateToISODate(value.max);
+          }
+          if (value.min) {
+            console.log(value);
+            value.min = transferDateToISODate(value.min);
+          }
+        }
+      }
     });
-
-    if (req.query.createdTime) {
-      const { createdTime } = req.query as any as {
-        createdTime: IRange<string>;
-      };
-      if (createdTime.max) {
-        createdTime.max = transferDateToISODate(createdTime.max);
-      }
-      if (createdTime.min) {
-        createdTime.min = transferDateToISODate(createdTime.min);
-      }
-    }
 
     if (req.body.createdTime && req.method === 'PUT') {
       req.body.createdTime = transferDateToISODate(req.body.createdTime);

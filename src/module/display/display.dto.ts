@@ -313,6 +313,9 @@ export class IDisplayChartQuery {
 
   @ApiProperty(getEnumDescription('dateFormat', false))
   dateFormat: DateFormatEnum;
+
+  @ApiPropertyOptional(getRangeDescription(false))
+  createdTime?: IRange<string>;
 }
 
 export const IDisplayChartQueryResponse = {

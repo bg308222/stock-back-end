@@ -78,5 +78,8 @@ export const getDateFormatString = (dateFormat: DateFormatEnum) => {
     case DateFormatEnum.SECOND: {
       return '%Y-%m-%d %H:%i:%s';
     }
+    case DateFormatEnum.MILLISECOND: {
+      return '%Y-%m-%d %H:%i:%s.%f';
+    }
   }
 };

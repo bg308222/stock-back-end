@@ -118,6 +118,9 @@ export class IVirtualOrderInsert {
 
   @ApiProperty()
   virtualOrderContainerId: number;
+
+  @ApiProperty()
+  delay: number;
 }
 
 export class IVirtualOrderContainerUpdate {

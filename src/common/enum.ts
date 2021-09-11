@@ -53,6 +53,7 @@ export enum DateFormatEnum {
   HOUR = 1,
   DAY = 2,
   SECOND = 3,
+  MILLISECOND = 4,
 }
 
 export enum SampleModeEnum {

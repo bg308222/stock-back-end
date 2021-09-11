@@ -155,6 +155,10 @@ export class MatchService {
     );
     await Promise.all(
       stocks.map(async (id) => {
+        if (id === '0050') return;
+        if (id.startsWith('REPLAY')) {
+          return this.stockRepository.delete(id);
+        }
         return this.createMarket(id)
           .then(async () => {
             await this.displayService.findAndDelete({ stockId: id });

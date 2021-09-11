@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Stock } from 'src/common/entity/stock.entity';
-import { StockTypeEnum, TrendFlagEnum } from 'src/common/enum';
+import { DateFormatEnum, StockTypeEnum, TrendFlagEnum } from 'src/common/enum';
 import {
   getDateFormatString,
   getQueryBuilderContent,
@@ -98,10 +98,12 @@ export class DisplayService {
   public async getChart({
     dateFormat: _dateFormat,
     stockId,
+    createdTime,
   }: IDisplayChartQuery) {
     const dateFormat = getDateFormatString(_dateFormat);
-    const result = await this.displayRepository
-      .createQueryBuilder('display')
+    const queryBuilder = this.displayRepository.createQueryBuilder('display');
+
+    queryBuilder
       .select(`DATE_FORMAT(display.createdTime,'${dateFormat}')`, 'createdTime')
       .addSelect('display.buyTick', 'buyTick')
       .addSelect('display.sellTick', 'sellTick')
@@ -111,11 +113,25 @@ export class DisplayService {
       .addSelect('display.stockType', 'stockType')
       .addSelect('display.priceLimit', 'priceLimit')
       .where('display.stockId = :stockId', { stockId })
-      .orderBy('display.createdTime', 'ASC')
-      .getRawMany();
+      .orderBy('display.createdTime', 'ASC');
+
+    if (createdTime) {
+      const { max, min } = createdTime;
+      if (max) {
+        queryBuilder.andWhere(`display.createdTime < :max`, { max });
+      }
+      if (min) {
+        queryBuilder.andWhere(`display.createdTime >= :min`, { min });
+      }
+    }
+
+    // console.time('db');
+    const result = await queryBuilder.getRawMany();
+    // console.timeEnd('db');
 
     let defaultFirstOrderBuy = null;
     let defaultFirstOrderSell = null;
+    // console.time('cal');
     const sortedResult = result.reduce<Record<string, IChartReduceOutput>>(
       (p, chartReduce: IChartReduceInput) => {
         const {
@@ -175,7 +191,7 @@ export class DisplayService {
       },
       {},
     );
-    return Object.entries(sortedResult).map(([key, value]) => {
+    const returnData = Object.entries(sortedResult).map(([key, value]) => {
       return {
         ...value,
         createdTime: key,
@@ -183,6 +199,8 @@ export class DisplayService {
         firstOrderSell: value.firstOrderSell,
       };
     });
+    // console.timeEnd('cal');
+    return returnData;
   }
 
   public async getFrequentData({
