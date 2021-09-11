@@ -57,7 +57,8 @@ export class OrderController {
       throw new BadRequestException('Invalid investorId');
     //normal order
     const id = await this.orderService.insert(body);
-    return await this.matchService.dispatchOrder({ ...body, id });
+    const result = await this.matchService.dispatchOrder({ ...body, id });
+    return result;
   }
 
   public async insertByRealData(@Body() body: string[]) {

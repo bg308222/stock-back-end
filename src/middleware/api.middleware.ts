@@ -1,6 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { IRange } from 'src/common/type';
 import { InvestorService } from 'src/module/investor/investor.service';
 
 const checkRequest = (req: Request, isCheck = true) => {
@@ -41,7 +40,6 @@ export class LoggerMiddleware implements NestMiddleware {
             value.max = transferDateToISODate(value.max);
           }
           if (value.min) {
-            console.log(value);
             value.min = transferDateToISODate(value.min);
           }
         }
