@@ -121,7 +121,13 @@ export class IStockReset {
   virtualOrderContainerId?: number;
 
   @ApiPropertyOptional({ example: '2021-08-07 16:43:43.763532' })
-  createdTime?: string;
+  startTime?: string;
+
+  @ApiPropertyOptional({ example: '2021-08-07 16:43:43.763532' })
+  replayTime?: string;
+
+  @ApiPropertyOptional({ example: '2021-08-07 16:43:43.763532' })
+  endTime?: string;
 }
 
 export class IStockResetResponse {

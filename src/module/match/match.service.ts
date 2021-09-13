@@ -153,22 +153,24 @@ export class MatchService {
     const stocks = (await this.stockRepository.find({})).map(
       (stock) => stock.id,
     );
-    await Promise.all(
-      stocks.map(async (id) => {
-        if (id === '0050') return;
-        if (id.startsWith('REPLAY')) {
-          return this.stockRepository.delete(id);
-        }
-        return this.createMarket(id)
-          .then(async () => {
-            await this.displayService.findAndDelete({ stockId: id });
-            await this.orderService.findAndDelete({ stockId: id });
-          })
-          .then(() => {
-            this.insertDisplay(id.toString());
-          });
-      }),
-    );
+    if (true) {
+      await Promise.all(
+        stocks.map(async (id) => {
+          if (id === '0050') return;
+          if (id.startsWith('REPLAY')) {
+            return this.stockRepository.delete(id);
+          }
+          return this.createMarket(id)
+            .then(async () => {
+              await this.displayService.findAndDelete({ stockId: id });
+              await this.orderService.findAndDelete({ stockId: id });
+            })
+            .then(() => {
+              this.insertDisplay(id.toString());
+            });
+        }),
+      );
+    }
   }
 
   public async createMarket(id: string, marketName?: string) {
@@ -295,7 +297,9 @@ export class MatchService {
 
   public async getReplayOrdersAndMarketBook(
     stockId: string,
-    createdTime?: string,
+    startTime?: string,
+    replayTime?: string,
+    endTime?: string,
     isReset = false,
   ) {
     const marketName = `REPLAY_${stockId}_${new Date()
@@ -311,10 +315,10 @@ export class MatchService {
       } = await this.stockRepository.findOne({ id: stockId });
       await this.stockRepository.insert({ ...stock, id: marketName });
     }
-    if (createdTime) {
+    if (replayTime) {
       const { content: beforeOrders } = await this.orderService.get({
         stockId,
-        createdTime: { max: createdTime },
+        createdTime: { max: replayTime, min: startTime },
         order: { orderBy: 'createdTime', order: 'ASC' },
       });
 
@@ -323,7 +327,9 @@ export class MatchService {
 
     const { content: orders } = await this.orderService.get({
       stockId,
-      createdTime: createdTime ? { min: createdTime } : undefined,
+      createdTime: replayTime
+        ? { min: replayTime, max: endTime }
+        : { min: startTime, max: endTime },
       order: { orderBy: 'createdTime', order: 'ASC' },
     });
 
@@ -332,7 +338,7 @@ export class MatchService {
         this.orderService.deleteOrderByIds(orders.map((order) => order.id)),
         this.displayService.findAndDelete({
           stockId,
-          createdTime: createdTime ? { min: createdTime } : undefined,
+          createdTime: replayTime ? { min: replayTime } : undefined,
         }),
       ]);
     }

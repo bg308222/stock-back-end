@@ -65,13 +65,23 @@ export class StockController {
   })
   @Put('reset')
   public async reset(
-    @Body() { id, createdTime, isReset, virtualOrderContainerId }: IStockReset,
+    @Body()
+    {
+      id,
+      startTime,
+      replayTime,
+      endTime,
+      isReset,
+      virtualOrderContainerId,
+    }: IStockReset,
   ) {
     if (id === undefined) throw new BadRequestException('Missing id');
     const { orders, marketBook, marketName } =
       await this.matchService.getReplayOrdersAndMarketBook(
         id,
-        createdTime,
+        startTime,
+        replayTime,
+        endTime,
         isReset,
       );
 

@@ -1,4 +1,8 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NestMiddleware,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { InvestorService } from 'src/module/investor/investor.service';
 
@@ -46,8 +50,27 @@ export class LoggerMiddleware implements NestMiddleware {
       }
     });
 
-    if (req.body.createdTime && req.method === 'PUT') {
-      req.body.createdTime = transferDateToISODate(req.body.createdTime);
+    if (req.baseUrl === '/api/stock/reset' && req.method === 'PUT') {
+      const { startTime, replayTime, endTime } = req.body;
+      if (endTime && replayTime && !(new Date(endTime) > new Date(replayTime)))
+        throw new BadRequestException('endTime must greater than replayTime');
+
+      if (endTime && startTime && !(new Date(endTime) > new Date(startTime)))
+        throw new BadRequestException('endTime must greater than startTime');
+
+      if (
+        replayTime &&
+        startTime &&
+        !(new Date(replayTime) > new Date(startTime))
+      )
+        throw new BadRequestException('replayTime must greater than startTime');
+
+      if (req.body.startTime)
+        req.body.startTime = transferDateToISODate(req.body.startTime);
+      if (req.body.replayTime)
+        req.body.replayTime = transferDateToISODate(req.body.replayTime);
+      if (req.body.endTime)
+        req.body.endTime = transferDateToISODate(req.body.endTime);
     }
 
     if (!disabledCheckedList.includes(req.baseUrl)) {
