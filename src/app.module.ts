@@ -14,6 +14,7 @@ import { DisplayModule } from './module/display/display.module';
 import { VirtualOrderModule } from './module/virtual-order/virtual-order.module';
 import { FrequentDataModule } from './module/frequent-data/frequent-data.module';
 import { GroupModule } from './module/group/group.module';
+import { RealDataModule } from './module/real-data/real-data.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { GroupModule } from './module/group/group.module';
     VirtualOrderModule,
     FrequentDataModule,
     GroupModule,
+    RealDataModule,
   ],
   controllers: [AppController],
   providers: [AppService],
