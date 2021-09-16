@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Stock } from 'src/common/entity/stock.entity';
-import { DateFormatEnum, StockTypeEnum, TrendFlagEnum } from 'src/common/enum';
+import { StockTypeEnum, TrendFlagEnum } from 'src/common/enum';
 import {
   getDateFormatString,
   getQueryBuilderContent,
 } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
-import { IFrequentDataQuery } from '../frequent-data/frequent-data.dto';
 import { getTickAfterNTick, getTickRange } from '../match/match.service';
 import {
   IDisplayChartQuery,
@@ -201,47 +200,6 @@ export class DisplayService {
     });
     // console.timeEnd('cal');
     return returnData;
-  }
-
-  public async getFrequentData({
-    createdTime,
-    stockId,
-    dateFormat,
-  }: IFrequentDataQuery) {
-    const queryBuilder = this.displayRepository.createQueryBuilder('display');
-    // select
-    if (!isNaN(dateFormat)) {
-      queryBuilder.select(
-        `DATE_FORMAT(display.createdTime,'${getDateFormatString(dateFormat)}')`,
-        'createdTime',
-      );
-    } else {
-      queryBuilder.select('display.createdTime', 'createdTime');
-    }
-    queryBuilder.addSelect('display.id', 'id');
-    queryBuilder.addSelect('display.buyTick', 'buyTick');
-    queryBuilder.addSelect('display.closedPrice', 'closedPrice');
-    queryBuilder.addSelect('display.marketBuyQuantity', 'marketBuyQuantity');
-    queryBuilder.addSelect('display.marketSellQuantity', 'marketSellQuantity');
-    queryBuilder.addSelect('display.matchPrice', 'matchPrice');
-    queryBuilder.addSelect('display.matchQuantity', 'matchQuantity');
-    queryBuilder.addSelect('display.sellTick', 'sellTick');
-    queryBuilder.addSelect('display.stockId', 'stockId');
-    queryBuilder.addSelect('display.trendFlag', 'trendFlag');
-
-    // where
-    queryBuilder.where('display.stockId = :stockId', { stockId });
-    if (createdTime) {
-      const { max, min } = createdTime;
-      if (max) queryBuilder.andWhere('display.createdTime < :max', { max });
-      if (min) queryBuilder.andWhere('display.createdTime >= :min', { min });
-    }
-    queryBuilder.orderBy('createdTime', 'ASC');
-
-    const displays = await queryBuilder.getRawMany<IDisplaySchema>();
-    return await Promise.all(
-      displays.map((display) => this.transferDisplayToReturnType(display)),
-    );
   }
 
   public transferDisplayToReturnType = async (

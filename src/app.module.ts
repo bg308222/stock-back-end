@@ -12,7 +12,6 @@ import { LoggerMiddleware } from './middleware/api.middleware';
 import { MatchModule } from './module/match/match.module';
 import { DisplayModule } from './module/display/display.module';
 import { VirtualOrderModule } from './module/virtual-order/virtual-order.module';
-import { FrequentDataModule } from './module/frequent-data/frequent-data.module';
 import { GroupModule } from './module/group/group.module';
 import { RealDataModule } from './module/real-data/real-data.module';
 
@@ -44,7 +43,6 @@ import { RealDataModule } from './module/real-data/real-data.module';
     MatchModule,
     DisplayModule,
     VirtualOrderModule,
-    FrequentDataModule,
     GroupModule,
     RealDataModule,
   ],

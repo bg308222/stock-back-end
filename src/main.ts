@@ -20,7 +20,6 @@ const runSwagger = (
     .addTag('VirtualOrder')
     .addTag('Transaction')
     .addTag('Display')
-    .addTag('FrequentData')
     .addTag('Group')
     .addTag('RealData')
     .addServer(`http://${host}:${port}`)
