@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json } from 'express';
 import { AppModule } from './app.module';
 import { MatchService } from './module/match/match.service';
 
@@ -31,6 +32,7 @@ const runSwagger = (
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use(json({ limit: '10mb' }));
   app.setGlobalPrefix('api');
   app.enableCors();
 

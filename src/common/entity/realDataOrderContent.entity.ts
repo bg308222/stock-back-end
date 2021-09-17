@@ -17,10 +17,10 @@ export class RealDataOrderContent {
   @ManyToOne(() => RealDataOrder, { onDelete: 'CASCADE', nullable: false })
   realDataOrder: RealDataOrder;
 
-  @Column()
+  @Column({ width: 6 })
   createdTime: Date;
 
-  @Column()
+  @Column({ type: 'varchar', length: 6 })
   stockId: string;
 
   @Column({ type: 'enum', enum: MethodEnum })

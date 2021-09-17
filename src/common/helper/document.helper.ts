@@ -106,8 +106,10 @@ export const getEnumDescription = (
             DateFormatEnum.HOUR,
             DateFormatEnum.DAY,
             DateFormatEnum.SECOND,
+            DateFormatEnum.MILLISECOND,
           ],
-          description: 'MINUTE = 0, HOUR = 1, DAY = 2, SECOND = 3',
+          description:
+            'MINUTE = 0, HOUR = 1, DAY = 2, SECOND = 3, MILLISECOND = 4',
           isArray: true,
         };
       }
@@ -177,7 +179,8 @@ export const getEnumDescription = (
       }
       case 'dateFormat': {
         return {
-          description: 'MINUTE = 0, HOUR = 1, DAY = 2, SECOND = 3',
+          description:
+            'MINUTE = 0, HOUR = 1, DAY = 2, SECOND = 3, MILLISECOND = 4',
           example: 0,
         };
       }

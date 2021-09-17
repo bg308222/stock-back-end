@@ -14,7 +14,7 @@ export class RealDataDisplayContent {
   @Column({ type: 'varchar', length: 6 })
   sym: string;
 
-  @Column()
+  @Column({ width: 6 })
   createdTime: Date;
 
   @Column({ type: 'float' })

@@ -115,7 +115,7 @@ export class RealDataService {
   public async insertOrder(id: string) {
     const realDataOrder = new RealDataOrder();
     realDataOrder.id = id;
-    await this.realDataOrderRepository.save(realDataOrder);
+    await this.realDataOrderRepository.insert(realDataOrder);
     return true;
   }
 
@@ -155,7 +155,7 @@ export class RealDataService {
   }
 
   public async insertOrderContent(body: IRealDataOrderContentInsert) {
-    await this.realDataOrderContentRepository.save(
+    await this.realDataOrderContentRepository.insert(
       body.map(({ realDataOrderId, ...v }) => {
         return {
           ...v,
@@ -185,7 +185,7 @@ export class RealDataService {
   public async insertDisplay(id: string) {
     const realDataDisplay = new RealDataDisplay();
     realDataDisplay.id = id;
-    await this.realDataDisplayRepository.save(realDataDisplay);
+    await this.realDataDisplayRepository.insert(realDataDisplay);
     return true;
   }
 
@@ -376,6 +376,10 @@ export class RealDataService {
   }
 
   public createFile(path: string, displays: any[]) {
+    if (!displays.length) {
+      fs.writeFileSync(path, FIELDS.join(',\n'));
+      return true;
+    }
     const fields = Object.keys(displays[0]);
     const headers = fields.join(',');
     fs.writeFileSync(path, headers + '\n');
@@ -394,7 +398,7 @@ export class RealDataService {
   }
 
   public async insertDisplayContent(body: IRealDataDisplayContentInsert) {
-    await this.realDataDisplayContentRepository.save(
+    await this.realDataDisplayContentRepository.insert(
       body.map(({ realDataDisplayId, ...v }) => {
         return {
           ...v,

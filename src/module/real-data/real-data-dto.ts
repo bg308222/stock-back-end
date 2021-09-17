@@ -13,10 +13,13 @@ import {
 } from 'src/common/helper/document.helper';
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
-export type IRealDataOrderContentInsert = Omit<RealDataOrderContent, 'id'>[];
+export type IRealDataOrderContentInsert = Omit<
+  RealDataOrderContent,
+  'id' | 'realDataOrder'
+>[];
 export type IRealDataDisplayContentInsert = Omit<
   RealDataDisplayContent,
-  'id'
+  'id' | 'realDataDisplay'
 >[];
 
 export type IRealDataDisplayContentSchema = Omit<
@@ -45,6 +48,15 @@ export const REAL_DATA_API_BODY = {
       },
     },
   },
+  orderContent: {
+    schema: {
+      type: 'array',
+      items: {
+        type: 'string',
+        example: '2019120600656RB009231383Y849910010.82+00000100000 0128J765M',
+      },
+    },
+  },
   display: {
     schema: {
       type: 'object',
@@ -62,6 +74,16 @@ export const REAL_DATA_API_BODY = {
       items: {
         type: 'string',
         example: 'dsp20191202',
+      },
+    },
+  },
+  displayContent: {
+    schema: {
+      type: 'array',
+      items: {
+        type: 'string',
+        example:
+          '0056  10513243  Y 002758000144355 00275700000032002756000002420027550000082200275400000210002753000002025 002758000000310027590000281200276000003849002761000034010027620000290620191202AA',
       },
     },
   },

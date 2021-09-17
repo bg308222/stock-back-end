@@ -26,6 +26,9 @@ const disabledCheckedList = [
   '/api/display',
   '/api/order/realData',
   '/api/display/chart',
+  '/api/real-data/display/content',
+  '/api/real-data/display/download',
+  '/api/real-data/order/content',
 ];
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
