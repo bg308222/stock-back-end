@@ -393,7 +393,7 @@ export class RealDataService {
   }
 
   public async removeFile(path: string) {
-    fs.rmSync(path);
+    fs.unlinkSync(path);
     return true;
   }
 
