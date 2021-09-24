@@ -39,7 +39,12 @@ export class RealDataController {
   @Post('order')
   @ApiBody(REAL_DATA_API_BODY.order)
   public async insertOrder(@Body('id') body: string) {
-    return await this.realDataService.insertOrder(body);
+    try {
+      const result = await this.realDataService.insertOrder(body);
+      return result;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Put('order')
@@ -165,7 +170,12 @@ export class RealDataController {
   @Post('display')
   @ApiBody(REAL_DATA_API_BODY.display)
   public async insertDisplay(@Body('id') body: string) {
-    return await this.realDataService.insertDisplay(body);
+    try {
+      const result = await this.realDataService.insertDisplay(body);
+      return result;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Put('display')
