@@ -164,7 +164,7 @@ export class RealDataController {
 
   @Get('display')
   public async getDisplay(@Query() query: IRealDataQuery) {
-    return await this.realDataService.getOrder(query);
+    return await this.realDataService.getDisplay(query);
   }
 
   @Post('display')
