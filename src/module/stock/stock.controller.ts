@@ -73,6 +73,7 @@ export class StockController {
       endTime,
       isReset,
       virtualOrderContainerId,
+      isAutoDisplay,
     }: IStockReset,
   ) {
     if (id === undefined) throw new BadRequestException('Missing id');
@@ -97,6 +98,8 @@ export class StockController {
       const display = await this.matchService.setMarketBook(
         id,
         newMarketBook || marketBook,
+        undefined,
+        isAutoDisplay,
       );
       return {
         display,

@@ -23,6 +23,7 @@ interface IChartReduceInput {
   price: number;
   quantity: number;
   createdTime: string;
+  originCreatedTime: string;
   buyTick: string;
   sellTick: string;
   stockType: StockTypeEnum;
@@ -38,6 +39,7 @@ interface IChartReduceOutput {
   close: number;
   firstOrderBuy: number;
   firstOrderSell: number;
+  originCreatedTime?: string;
 }
 @Injectable()
 export class DisplayService {
@@ -104,6 +106,7 @@ export class DisplayService {
 
     queryBuilder
       .select(`DATE_FORMAT(display.createdTime,'${dateFormat}')`, 'createdTime')
+      .addSelect(`display.createdTime`, 'originCreatedTime')
       .addSelect('display.buyTick', 'buyTick')
       .addSelect('display.sellTick', 'sellTick')
       .addSelect('display.matchPrice', 'price')
@@ -132,11 +135,12 @@ export class DisplayService {
     let defaultFirstOrderSell = null;
     // console.time('cal');
     const sortedResult = result.reduce<Record<string, IChartReduceOutput>>(
-      (p, chartReduce: IChartReduceInput) => {
+      (p, chartReduce: IChartReduceInput, index, array) => {
         const {
           price,
           quantity,
           createdTime,
+          originCreatedTime,
           buyTick: _buyTick,
           sellTick: _sellTick,
           closedPrice,
@@ -186,6 +190,9 @@ export class DisplayService {
         if (p[createdTime].firstOrderSell === null)
           p[createdTime].firstOrderSell = defaultFirstOrderSell;
         else defaultFirstOrderSell = p[createdTime].firstOrderSell;
+        if (index === array.length - 1) {
+          p[createdTime].originCreatedTime = originCreatedTime;
+        }
         return p;
       },
       {},

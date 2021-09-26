@@ -114,8 +114,11 @@ export class IStockReset {
   @ApiProperty({ example: '1' })
   id: string;
 
-  @ApiProperty({ example: false })
+  @ApiPropertyOptional({ example: false })
   isReset?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  isAutoDisplay?: boolean;
 
   @ApiProperty({ example: 1 })
   virtualOrderContainerId?: number;

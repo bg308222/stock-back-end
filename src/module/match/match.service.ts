@@ -361,6 +361,7 @@ export class MatchService {
     stockId: string,
     marketBook: IMarketBook,
     marketName?: string,
+    isAutoDisplay?: boolean,
   ) {
     const stock = await this.stockRepository.findOne({ id: stockId });
 
@@ -369,6 +370,7 @@ export class MatchService {
       await this.createMarket(stockId, marketName);
     this.stockMarketList[target].setMarketBook(stock, marketBook);
     if (!marketName) {
+      if (isAutoDisplay == false) return true;
       await this.insertDisplay(stockId);
       return await this.getDisplayReturnType(stockId);
     }
