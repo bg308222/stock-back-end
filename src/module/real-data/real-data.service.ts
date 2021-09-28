@@ -331,16 +331,15 @@ export class RealDataService {
     const transferFields = fields.filter((field) => {
       return FIELDS.includes(field);
     });
-    return groupDisplayContent.map(({ id, createdTime, ...display }, cnt) => {
+    return groupDisplayContent.map(({ id, createdTime, ...display }, count) => {
       const displayObj = {
-        cnt,
+        count,
         trdate: moment(createdTime).format('YYYYMMDD'),
         ts: moment(createdTime).format('HH:mm:ss'),
         ...display,
       };
 
       const returnObj: any = {};
-      returnObj.cnt = cnt;
       transferFields.forEach((field) => {
         returnObj[field] = displayObj[field];
       });
