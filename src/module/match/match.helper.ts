@@ -32,7 +32,7 @@ interface IDoCallAuctionResponse {
 class LimitBook {
   constructor(initialLimitBook?: LimitBook) {
     if (initialLimitBook) {
-      this.orders = initialLimitBook.orders;
+      this.orders = { ...initialLimitBook.orders };
       this.firstOrderPrice = initialLimitBook.firstOrderPrice;
       this.highestOrderPrice = initialLimitBook.highestOrderPrice;
       this.lowestOrderPrice = initialLimitBook.lowestOrderPrice;
@@ -112,6 +112,32 @@ export class StockMarket {
   }
 
   public dumpMarketBook() {
+    // if (isIgnoreSumulatedOrder) {
+    //   const limitBuy = new LimitBook(this.marketBook.limitBuy);
+    //   Object.entries(limitBuy.orders).forEach(([key, value]) => {
+    //     limitBuy.orders[key] = value.filter((v) => {
+    //       return !v.isSimulated;
+    //     });
+    //   });
+    //   const limitSell = new LimitBook(this.marketBook.limitSell);
+    //   Object.entries(limitSell.orders).forEach(([key, value]) => {
+    //     limitSell.orders[key] = value.filter((v) => {
+    //       return !v.isSimulated;
+    //     });
+    //   });
+    //   const result = {
+    //     ...this.marketBook,
+    //     marketBuy: this.marketBook.marketBuy.filter((v) => {
+    //       return !v.isSimulated;
+    //     }),
+    //     marketSell: this.marketBook.marketSell.filter((v) => {
+    //       return !v.isSimulated;
+    //     }),
+    //     limitBuy,
+    //     limitSell,
+    //   };
+    //   return result;
+    // }
     return this.marketBook;
   }
 
@@ -382,6 +408,8 @@ export class StockMarket {
           isNeverTransaction = false;
           order.quantity = 0;
           this.popFirstOrder(order, currentSideMethod);
+
+          inverseSideOrder.quantity = 0;
           this.popFirstOrder(inverseSideOrder, inverseSideMethod);
         }
       } else {

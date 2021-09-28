@@ -366,8 +366,9 @@ export class MatchService {
     const stock = await this.stockRepository.findOne({ id: stockId });
 
     const target = marketName || stockId;
-    if (!this.stockMarketList[target])
+    if (!this.stockMarketList[target]) {
       await this.createMarket(stockId, marketName);
+    }
     this.stockMarketList[target].setMarketBook(stock, marketBook);
     if (!marketName) {
       if (isAutoDisplay == false) return true;

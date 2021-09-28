@@ -17,7 +17,7 @@ import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export type IOrderSchema = Omit<Order, 'investor' | 'stock' | 'order'>;
 export interface IMatchOrder
-  extends Omit<IOrderSchema, 'createdTime' | 'stockId' | 'status' | 'id'> {
+  extends Omit<IOrderInsert, 'createdTime' | 'stockId' | 'status' | 'id'> {
   id?: number;
   stockId?: string;
   status?: number;
@@ -129,6 +129,12 @@ export class IOrderInsert {
 
   @ApiProperty()
   createdTime?: Date;
+
+  // @ApiProperty()
+  // isSimulated?: boolean;
+
+  @ApiProperty()
+  isAutoTime?: boolean;
 }
 
 export class IOrderDelete {

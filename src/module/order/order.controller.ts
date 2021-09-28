@@ -37,7 +37,11 @@ export class OrderController {
     private readonly matchService: MatchService,
     @InjectRepository(Display)
     private readonly displayRepository: Repository<Display>,
-  ) {}
+  ) {
+    this.latestTime = {};
+  }
+
+  private latestTime: Record<string, number>;
 
   @ApiResponse({ type: IOrderQueryResponse, status: 200 })
   @Get()
@@ -55,7 +59,15 @@ export class OrderController {
   public async insert(@Body() body: IOrderInsert) {
     if (body.investorId === undefined)
       throw new BadRequestException('Invalid investorId');
-    //normal order
+
+    if (body.createdTime) {
+      this.latestTime[body.stockId] = new Date(body.createdTime).getTime() + 1;
+    }
+
+    if (body.isAutoTime === true && this.latestTime[body.stockId]) {
+      body.createdTime = new Date(this.latestTime[body.stockId]++);
+    }
+
     const id = await this.orderService.insert(body);
     const result = await this.matchService.dispatchOrder({ ...body, id });
     return result;
