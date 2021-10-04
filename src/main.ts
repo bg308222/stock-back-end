@@ -6,11 +6,7 @@ import { json } from 'express';
 import { AppModule } from './app.module';
 import { MatchService } from './module/match/match.service';
 
-const runSwagger = (
-  app: NestExpressApplication,
-  host: string,
-  port: number,
-) => {
+const runSwagger = (app: NestExpressApplication, swaggerServer: string) => {
   const config = new DocumentBuilder()
     .setTitle('Stock-back-end')
     .setDescription('The API of stock server')
@@ -23,7 +19,7 @@ const runSwagger = (
     .addTag('Display')
     .addTag('Group')
     .addTag('RealData')
-    .addServer(`http://${host}:${port}`)
+    .addServer(swaggerServer)
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -40,7 +36,7 @@ async function bootstrap() {
   const matchService = app.get(MatchService);
   await matchService.init();
 
-  runSwagger(app, configService.get('HOST'), configService.get('PORT'));
+  runSwagger(app, configService.get('SWAGGER_SERVER'));
 
   await app.listen(configService.get('PORT'), () => {
     console.log(
