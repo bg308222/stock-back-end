@@ -26,6 +26,10 @@ import {
 } from './real-data-dto';
 import { RealDataService } from './real-data.service';
 
+const transferPriceToPoint = (str: string) => {
+  const lastTwoChar = str.slice(-2);
+  return `${str.split(lastTwoChar)[0]}.${lastTwoChar}`;
+};
 @ApiTags('RealData')
 @Controller('real-data')
 export class RealDataController {
@@ -247,8 +251,12 @@ export class RealDataController {
       const B_BASE = 34;
       for (let i = 0; i < 5; i++) {
         const tempBase = B_BASE + i * 14;
-        result[`b${i + 1}px`] = +rowData.slice(tempBase, tempBase + 6);
-        result[`b${i + 1}sz`] = +rowData.slice(tempBase + 6, tempBase + 14);
+        result[`b${i + 1}px`] = +transferPriceToPoint(
+          rowData.slice(tempBase, tempBase + 6),
+        );
+        result[`b${i + 1}sz`] = +transferPriceToPoint(
+          rowData.slice(tempBase + 6, tempBase + 14),
+        );
       }
 
       result.asz = +rowData.slice(104, 105);

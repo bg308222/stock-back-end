@@ -1,7 +1,14 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Index,
+} from 'typeorm';
 import { RealDataDisplay } from './realDataDisplay.entity';
 
 @Entity()
+@Index(['sym', 'createdTime'])
 export class RealDataDisplayContent {
   @PrimaryGeneratedColumn()
   id: number;

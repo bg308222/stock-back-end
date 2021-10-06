@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import {
   MethodEnum,
   PriceTypeEnum,
@@ -8,6 +14,7 @@ import {
 import { RealDataOrder } from './realDataOrder.entity';
 
 @Entity()
+@Index(['stockId', 'createdTime'])
 export class RealDataOrderContent {
   @PrimaryGeneratedColumn()
   id: number;
