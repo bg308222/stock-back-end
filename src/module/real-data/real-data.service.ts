@@ -318,15 +318,17 @@ export class RealDataService {
     const groupDisplayContent = await this.getGroupDisplayContent(query);
     const { fields } = query;
     if (!fields)
-      return groupDisplayContent.map(({ id, createdTime, ...display }, cnt) => {
-        const displayObj = {
-          cnt,
-          trdate: moment(createdTime).format('YYYYMMDD'),
-          ts: moment(createdTime).format('HH:mm:ss'),
-          ...display,
-        };
-        return displayObj;
-      });
+      return groupDisplayContent.map(
+        ({ id, createdTime, ...display }, count) => {
+          const displayObj = {
+            count,
+            trdate: moment(createdTime).format('YYYYMMDD'),
+            ts: moment(createdTime).format('HH:mm:ss'),
+            ...display,
+          };
+          return displayObj;
+        },
+      );
 
     const transferFields = fields.filter((field) => {
       return FIELDS.includes(field);
