@@ -30,7 +30,7 @@ import { RealDataModule } from './module/real-data/real-data.module';
           password: DB_PASSWORD,
           database: DB_NAME,
           entities,
-          synchronize: true,
+          synchronize: false,
           autoLoadEntities: true,
         };
       },
