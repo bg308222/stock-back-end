@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json } from 'express';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './exception-filter/exception-filter';
 import { MatchService } from './module/match/match.service';
 
 const runSwagger = (app: NestExpressApplication, swaggerServer: string) => {
@@ -28,6 +29,7 @@ const runSwagger = (app: NestExpressApplication, swaggerServer: string) => {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.use(json({ limit: '10mb' }));
   app.setGlobalPrefix('api');
   app.enableCors();
