@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stock } from 'src/common/entity/stock.entity';
 import { OrderStatusEnum, StockTypeEnum } from 'src/common/enum';
@@ -139,6 +144,7 @@ export const getTickList = ({
 export class MatchService {
   constructor(
     private readonly transactionService: TransactionService,
+    @Inject(forwardRef(() => DisplayService))
     private readonly displayService: DisplayService,
     private readonly orderService: OrderService,
 
@@ -376,5 +382,11 @@ export class MatchService {
       return await this.getDisplayReturnType(stockId);
     }
     return await this.getDisplayReturnType(marketName);
+  }
+
+  public getCertainInvestorOrder(investorId: number, stockId: string) {
+    const result =
+      this.stockMarketList[stockId].getCertainInvestorOrder(investorId);
+    return result;
   }
 }

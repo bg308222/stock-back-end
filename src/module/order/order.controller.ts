@@ -29,6 +29,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
+import { CommonQuery } from 'src/common/type';
 @ApiTags('Order')
 @Controller('order')
 export class OrderController {
@@ -56,9 +57,10 @@ export class OrderController {
       'investorId, stockId先傳1，等未來實作完stock跟investor再調成動態的',
   })
   @Post()
-  public async insert(@Body() body: IOrderInsert) {
-    if (body.investorId === undefined)
-      throw new BadRequestException('Invalid investorId');
+  public async insert(@Body() body: IOrderInsert, @Query() query: CommonQuery) {
+    if (body.investorId === undefined) {
+      body.investorId = query.investor.id;
+    }
 
     if (body.createdTime) {
       this.latestTime[body.stockId] = new Date(body.createdTime).getTime() + 1;
@@ -157,64 +159,6 @@ export class OrderController {
       return file.startsWith('odr');
     });
     return files;
-  }
-
-  @Post('realData')
-  public async postRealData(
-    @Body() body: { stockId: string; fileName: string },
-    @Res() res: Response,
-  ) {
-    const fileName = process.env.REAL_DATA + body.fileName;
-    const _stockId = body.stockId.padEnd(6);
-    const handleRequest = async (body: string[]) => {
-      await this.insertByRealData(body);
-    };
-    await this.displayRepository.delete({ stockId: body.stockId });
-    if (true) {
-      let tempStr = '';
-      const result = [];
-
-      const readStream = fs.createReadStream(fileName);
-      let findFlag = false;
-
-      readStream.on('data', function (chunk) {
-        const chunkStr = tempStr + chunk.toString();
-        const strArr = chunkStr.split('\n');
-        for (const str of strArr) {
-          if (str.length !== 59) {
-            tempStr = str;
-          } else {
-            const stockId = str.slice(8, 14);
-            if (stockId === _stockId) {
-              findFlag = true;
-              result.push(str);
-            } else {
-              if (findFlag) {
-                console.log(result.length);
-                readStream.emit('end');
-                readStream.close();
-                break;
-              }
-            }
-            tempStr = '';
-          }
-        }
-      });
-
-      readStream.on('end', async function () {
-        console.time('RealData');
-        let cnt = 0;
-        while (result.length !== 0) {
-          const data = result.splice(0, 1000);
-          cnt += data.length;
-          await handleRequest(data).then(() => {
-            console.log(cnt);
-          });
-        }
-        console.timeEnd('RealData');
-        res.json(true);
-      });
-    }
   }
 
   @ApiOperation({

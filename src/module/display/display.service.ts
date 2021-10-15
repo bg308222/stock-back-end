@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Stock } from 'src/common/entity/stock.entity';
@@ -8,7 +8,11 @@ import {
   getQueryBuilderContent,
 } from 'src/common/helper/database.helper';
 import { Repository } from 'typeorm';
-import { getTickAfterNTick, getTickRange } from '../match/match.service';
+import {
+  getTickAfterNTick,
+  getTickRange,
+  MatchService,
+} from '../match/match.service';
 import {
   IDisplayChartQuery,
   IDisplayInsert,
@@ -48,6 +52,8 @@ export class DisplayService {
     private readonly displayRepository: Repository<Display>,
     @InjectRepository(Stock)
     private readonly stockRepository: Repository<Stock>,
+    @Inject(forwardRef(() => MatchService))
+    private readonly matchService: MatchService,
   ) {}
 
   public async get(query: IDisplayQuery) {
@@ -60,14 +66,34 @@ export class DisplayService {
       );
 
     if (query.isGetLatest) {
+      const display = await fullQueryBuilder.getOne();
+      const certainInvestorOrderQuantity =
+        this.matchService.getCertainInvestorOrder(
+          query.investor.id,
+          display.stockId,
+        );
       const result = await this.transferDisplayToReturnType(
-        await fullQueryBuilder.getOne(),
+        display,
+        certainInvestorOrderQuantity,
       );
+
       return result;
     }
     const content = await fullQueryBuilder.getMany();
     const result = {
-      content: await Promise.all(content.map(this.transferDisplayToReturnType)),
+      content: await Promise.all(
+        content.map((display) => {
+          const certainInvestorOrderQuantity =
+            this.matchService.getCertainInvestorOrder(
+              query.investor.id,
+              display.stockId,
+            );
+          this.transferDisplayToReturnType(
+            display,
+            certainInvestorOrderQuantity,
+          );
+        }),
+      ),
       totalSize,
     };
     return result;
@@ -211,6 +237,12 @@ export class DisplayService {
 
   public transferDisplayToReturnType = async (
     displaySchema?: Omit<IDisplaySchema, 'id' | 'createdTime'>,
+    certainInvestorOrderQuantity?: {
+      marketBuy: number;
+      marketSell: number;
+      limitBuy: Record<string, number>;
+      limitSell: Record<string, number>;
+    },
   ) => {
     if (!displaySchema) return null;
     const {
@@ -307,12 +339,28 @@ export class DisplayService {
         price,
         buyQuantity: buyTick[index] + marketBuyAdder || 0,
         sellQuantity: sellTick[index] + marketSellAdder || 0,
+        investorBuyQuantity:
+          (certainInvestorOrderQuantity &&
+            certainInvestorOrderQuantity.limitBuy[price]) ||
+          undefined,
+        investorSellQuantity:
+          (certainInvestorOrderQuantity &&
+            certainInvestorOrderQuantity.limitSell[price]) ||
+          undefined,
       };
     });
 
     return {
       ...data,
 
+      investorMarketBuyQuantity:
+        (certainInvestorOrderQuantity &&
+          certainInvestorOrderQuantity.marketBuy) ||
+        undefined,
+      investorMarketSellQuantity:
+        (certainInvestorOrderQuantity &&
+          certainInvestorOrderQuantity.marketSell) ||
+        undefined,
       tickRange: transferTickRange,
       fiveTickRange: fiveTickRange.map((tickRangeIndex, index) => {
         let tickRangeValue: Partial<ITickRange> = transferTickRange[

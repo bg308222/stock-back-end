@@ -9,9 +9,9 @@ import { MatchService } from './match.service';
 @Global()
 @Module({
   imports: [
+    forwardRef(() => DisplayModule),
     TypeOrmModule.forFeature([Stock]),
     TransactionModule,
-    DisplayModule,
     OrderModule,
   ],
   providers: [MatchService],

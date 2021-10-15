@@ -18,6 +18,8 @@ export interface ITickRange {
   price: number;
   buyQuantity: number;
   sellQuantity: number;
+  investorBuyQuantity?: number;
+  investorSellQuantity?: number;
 }
 
 export interface ITransferDisplay {
@@ -33,6 +35,9 @@ export interface ITransferDisplay {
   trendFlag: number;
   stockType: number;
   createdTime?: string;
+
+  investorMarketBuyQuantity?: number;
+  investorMarketSellQuantity?: number;
 }
 export class IDisplayQuery extends PartialType(CommonQuery) {
   @ApiPropertyOptional({ description: '設為true可只拿取最新一筆，預設為false' })

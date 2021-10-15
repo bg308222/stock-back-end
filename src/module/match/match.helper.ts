@@ -459,4 +459,43 @@ export class StockMarket {
   public doContinuousTrading() {
     //
   }
+
+  public getCertainInvestorOrder(id: number) {
+    const marketBuy = this.marketBook.marketBuy.reduce((p, v) => {
+      if (v.investorId === id) p += v.quantity;
+      return p;
+    }, 0);
+
+    const marketSell = this.marketBook.marketSell.reduce((p, v) => {
+      if (v.investorId === id) p += v.quantity;
+      return p;
+    }, 0);
+
+    const limitBuy = {};
+    Object.entries(this.marketBook.limitBuy.orders).forEach(([key, value]) => {
+      const quantity = value.reduce((p, v) => {
+        if (v.investorId === id) p += v.quantity;
+        return p;
+      }, 0);
+      if (quantity !== 0) limitBuy[key] = quantity;
+    });
+
+    const limitSell = {};
+    Object.entries(this.marketBook.limitSell.orders).forEach(([key, value]) => {
+      const quantity = value.reduce((p, v) => {
+        if (v.investorId === id) p += v.quantity;
+        return p;
+      }, 0);
+      if (quantity !== 0) limitSell[key] = quantity;
+    });
+
+    const result = {
+      marketBuy,
+      marketSell,
+      limitBuy,
+      limitSell,
+    };
+
+    return result;
+  }
 }

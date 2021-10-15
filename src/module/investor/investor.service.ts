@@ -25,7 +25,6 @@ export class InvestorService {
 
   public async getByToken(token: string, isExpired = true) {
     // TODO Enable authentication
-    return true;
     let account;
     if (!token) throw new UnauthorizedException('Missing token');
     try {
