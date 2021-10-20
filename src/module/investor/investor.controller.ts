@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Query } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InvestorService } from './investor.service';
 import { IInvestorInsert, IInvestorLogin } from './investor.dto';
 import { Investor } from 'src/common/entity/investor.entity';
@@ -9,6 +9,7 @@ import { Investor } from 'src/common/entity/investor.entity';
 export class InvestorController {
   constructor(private readonly investService: InvestorService) {}
 
+  @ApiSecurity('login')
   @Post()
   public async create(@Body() body: IInvestorInsert) {
     return await this.investService.create(body);

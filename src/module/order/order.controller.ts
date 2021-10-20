@@ -8,7 +8,13 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   MethodEnum,
   OrderStatusEnum,
@@ -28,9 +34,9 @@ import * as fs from 'fs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Repository } from 'typeorm';
-import { Response } from 'express';
 import { CommonQuery } from 'src/common/type';
 @ApiTags('Order')
+@ApiSecurity('login')
 @Controller('order')
 export class OrderController {
   constructor(

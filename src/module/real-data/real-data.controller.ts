@@ -9,7 +9,13 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
-import { ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiQuery,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import {
   MethodEnum,
@@ -31,6 +37,7 @@ const transferPriceToPoint = (str: string) => {
   return `${str.split(lastTwoChar)[0]}.${lastTwoChar}`;
 };
 @ApiTags('RealData')
+@ApiSecurity('login')
 @Controller('real-data')
 export class RealDataController {
   constructor(private readonly realDataService: RealDataService) {}

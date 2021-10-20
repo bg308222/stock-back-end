@@ -21,6 +21,11 @@ const runSwagger = (app: NestExpressApplication, swaggerServer: string) => {
     .addTag('Group')
     .addTag('RealData')
     .addServer(swaggerServer)
+    .addSecurity('login', {
+      type: 'apiKey',
+      name: 'token',
+      in: 'header',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -8,7 +8,12 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IMarketBook } from '../match/match.helper';
 import { MatchService } from '../match/match.service';
 import { OrderService } from '../order/order.service';
@@ -24,6 +29,7 @@ import {
 import { StockService } from './stock.service';
 
 @ApiTags('Stock')
+@ApiSecurity('login')
 @Controller('stock')
 export class StockController {
   constructor(

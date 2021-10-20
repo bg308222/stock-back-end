@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   ITransactionQuery,
   ITransactionQueryResponse,
@@ -7,6 +7,7 @@ import {
 import { TransactionService } from './transaction.service';
 
 @ApiTags('Transaction')
+@ApiSecurity('login')
 @Controller('transaction')
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}

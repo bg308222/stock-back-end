@@ -7,7 +7,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   IGroupQuery,
   IGroupInsert,
@@ -18,6 +18,7 @@ import {
 import { GroupService } from './group.service';
 
 @Controller('group')
+@ApiSecurity('login')
 @ApiTags('Group')
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}

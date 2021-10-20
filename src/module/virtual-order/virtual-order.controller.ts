@@ -9,7 +9,12 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IDisplayObjectResponse } from '../display/display.dto';
 import { MatchService } from '../match/match.service';
 import { IOrderQueryResponse } from '../order/order.dto';
@@ -25,6 +30,7 @@ import {
 } from './virtualOrder.dto';
 
 @ApiTags('VirtualOrder')
+@ApiSecurity('login')
 @Controller('virtualOrder')
 export class VirtualOrderController {
   constructor(

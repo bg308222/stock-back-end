@@ -83,7 +83,7 @@ export class IStockInsert {
   @ApiProperty({ required: true, example: 100 })
   currentPrice: number;
 
-  @ApiProperty(getEnumDescription('stockType'))
+  @ApiProperty(getEnumDescription('stockType', false))
   type: StockTypeEnum;
 
   @ApiPropertyOptional({ example: [1, 2], isArray: true })
@@ -103,7 +103,7 @@ export class IStockUpdate {
   @ApiPropertyOptional({ required: false, example: 100 })
   currentPrice?: number;
 
-  @ApiPropertyOptional(getEnumDescription('stockType'))
+  @ApiPropertyOptional(getEnumDescription('stockType', false))
   type?: StockTypeEnum;
 
   @ApiPropertyOptional({ example: [1, 2], isArray: true })

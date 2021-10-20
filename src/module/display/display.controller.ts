@@ -1,5 +1,10 @@
 import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   IDisplayChartQuery,
   IDisplayChartQueryResponse,
@@ -9,6 +14,7 @@ import {
 import { DisplayService } from './display.service';
 
 @ApiTags('Display')
+@ApiSecurity('login')
 @Controller('display')
 export class DisplayController {
   constructor(private readonly displayService: DisplayService) {}

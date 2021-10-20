@@ -192,6 +192,7 @@ export const getEnumDescription = (
       case 'stockType': {
         return {
           description: 'STOCK = 0, ETF = 1, WARRANT = 2',
+          example: 0,
         };
       }
     }
