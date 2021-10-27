@@ -79,6 +79,7 @@ export class DisplayService {
 
       return result;
     }
+
     const content = await fullQueryBuilder.getMany();
     const result = {
       content: await Promise.all(
@@ -88,7 +89,7 @@ export class DisplayService {
               query.investor.id,
               display.stockId,
             );
-          this.transferDisplayToReturnType(
+          return this.transferDisplayToReturnType(
             display,
             certainInvestorOrderQuantity,
           );
