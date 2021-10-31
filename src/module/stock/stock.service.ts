@@ -45,11 +45,12 @@ export class StockService {
     };
   }
 
-  public async insert({ groupId, ...body }: IStockInsert) {
-    await this.stockRepository.insert(body);
+  public async insert({ id: _id, groupId, ...body }: IStockInsert) {
+    const id = _id.padEnd(6, ' ');
+    await this.stockRepository.insert({ id, ...body });
 
     if (groupId) {
-      await this.update({ id: body.id, groupId });
+      await this.update({ id, groupId });
     }
     return true;
   }
@@ -66,7 +67,7 @@ export class StockService {
       });
     }
     await this.stockRepository.save({ ...stock, ...body });
-    return true;
+    return { ...stock, ...body };
   }
 
   public async delete(body: IStockDelete) {

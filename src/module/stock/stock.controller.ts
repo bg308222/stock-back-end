@@ -58,7 +58,13 @@ export class StockController {
   })
   @Put()
   public async update(@Body() body: IStockUpdate) {
-    return await this.stockService.update(body);
+    const stock = await this.stockService.update(body);
+    const marketBook = this.matchService.getMarketBook(body.id);
+    if (marketBook) {
+      marketBook.stock = stock;
+      await this.matchService.setMarketBook(body.id, marketBook, undefined);
+    }
+    return true;
   }
 
   @ApiOperation({

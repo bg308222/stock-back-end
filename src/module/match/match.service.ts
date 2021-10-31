@@ -191,7 +191,9 @@ export class MatchService {
   }
 
   public getMarketBook(marketName: string) {
-    return this.stockMarketList[marketName].dumpMarketBook();
+    const marketBook = this.stockMarketList[marketName];
+    if (marketBook) return marketBook.dumpMarketBook();
+    else return undefined;
   }
 
   private getTransactionBody(
