@@ -1,15 +1,5 @@
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Post,
-  Query,
-  Res,
-} from '@nestjs/common';
-import {
-  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiSecurity,
@@ -30,7 +20,6 @@ import {
   IOrderQueryResponse,
 } from './order.dto';
 import { OrderService } from './order.service';
-import * as fs from 'fs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Display } from 'src/common/entity/display.entity';
 import { Repository } from 'typeorm';
@@ -157,14 +146,6 @@ export class OrderController {
       await this.matchService.dispatchOrder(insertOrder);
     }
     return true;
-  }
-
-  @Get('realData')
-  public async getRealData() {
-    const files = fs.readdirSync(process.env.REAL_DATA).filter((file) => {
-      return file.startsWith('odr');
-    });
-    return files;
   }
 
   @ApiOperation({

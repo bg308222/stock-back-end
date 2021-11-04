@@ -191,6 +191,9 @@ export class IRealDataDisplayContentQuery {
   @ApiPropertyOptional(getRangeDescription(false))
   createdTime?: IRange<string>;
 
+  @ApiPropertyOptional({ default: 1 })
+  unit?: number;
+
   @ApiPropertyOptional(getEnumDescription('dateFormat', false))
   dateFormat?: DateFormatEnum;
 

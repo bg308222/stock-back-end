@@ -4,7 +4,7 @@ import { RealDataDisplay } from 'src/common/entity/realDataDisplay.entity';
 import { RealDataDisplayContent } from 'src/common/entity/realDataDisplayContent.entity';
 import { RealDataOrder } from 'src/common/entity/realDataOrder.entity';
 import { RealDataOrderContent } from 'src/common/entity/realDataOrderContent.entity';
-import { SampleModeEnum } from 'src/common/enum';
+import { DateFormatEnum, SampleModeEnum } from 'src/common/enum';
 import {
   getDateFormatString,
   getQueryBuilderContent,
@@ -238,22 +238,87 @@ export class RealDataService {
     return await queryBuilder.getRawMany<IRealDataDisplayContentSchema>();
   }
 
+  private getTransferCreatedTime(dateFormat: DateFormatEnum, unit: number) {
+    switch (dateFormat) {
+      case DateFormatEnum.MILLISECOND: {
+        return (createdTime: string) => {
+          const ms = +createdTime.slice(20, 23);
+          const transferMs = (Math.floor(ms / unit) * unit)
+            .toString()
+            .padStart(3, '0');
+          return (
+            createdTime.substr(0, 20) + transferMs + createdTime.substr(23)
+          );
+        };
+      }
+      case DateFormatEnum.SECOND: {
+        return (createdTime: string) => {
+          const sec = +createdTime.slice(17, 19);
+          const transferMs = (Math.floor(sec / unit) * unit)
+            .toString()
+            .padStart(2, '0');
+          return (
+            createdTime.substr(0, 17) + transferMs + createdTime.substr(19)
+          );
+        };
+      }
+      case DateFormatEnum.HOUR: {
+        return (createdTime: string) => {
+          const hour = +createdTime.slice(11, 13);
+          const transferMs = (Math.floor(hour / unit) * unit)
+            .toString()
+            .padStart(2, '0');
+          return (
+            createdTime.substr(0, 11) + transferMs + createdTime.substr(13)
+          );
+        };
+      }
+      case DateFormatEnum.DAY: {
+        return (createdTime: string) => {
+          const day = +createdTime.slice(8, 10);
+          const transferMs = (Math.floor(day / unit) * unit)
+            .toString()
+            .padStart(2, '0');
+          return createdTime.substr(0, 8) + transferMs + createdTime.substr(10);
+        };
+      }
+      default: {
+        return (createdTime: string) => {
+          const min = +createdTime.slice(14, 16);
+          const transferMs = (Math.floor(min / unit) * unit)
+            .toString()
+            .padStart(2, '0');
+          return (
+            createdTime.substr(0, 14) + transferMs + createdTime.substr(16)
+          );
+        };
+      }
+    }
+  }
+
   private async getGroupDisplayContent(query: IRealDataDisplayContentQuery) {
     const originDisplayContent = await this.getOriginDisplayContent(query);
-    const { dateFormat, sampleMode } = query;
-    if (isNaN(dateFormat) || isNaN(sampleMode)) return originDisplayContent;
+    const {
+      dateFormat = DateFormatEnum.MINUTE,
+      sampleMode = SampleModeEnum.FIRST,
+      unit = 1,
+    } = query;
 
     let reduceTransferDisplay: Record<
       string,
       IRealDataDisplayContentSchema & { isAverage?: boolean }
     >;
+
+    const transferCreatedTime = this.getTransferCreatedTime(dateFormat, unit);
     switch (sampleMode) {
       case SampleModeEnum.FIRST: {
         reduceTransferDisplay = originDisplayContent.reduce<
           Record<string, IRealDataDisplayContentSchema>
-        >((p, display) => {
-          const { createdTime } = display;
-          if (!p[createdTime]) p[createdTime] = { ...display };
+        >((p, display, index) => {
+          const createdTime = transferCreatedTime(display.createdTime);
+          const transferDisplay = { ...display, createdTime };
+
+          if (!p[createdTime]) p[createdTime] = { ...transferDisplay };
           return p;
         }, {});
         break;
@@ -262,10 +327,11 @@ export class RealDataService {
         reduceTransferDisplay = originDisplayContent.reduce<
           Record<string, IRealDataDisplayContentSchema>
         >((p, display) => {
-          const { createdTime } = display;
-          if (!p[createdTime]) p[createdTime] = { ...display };
+          const createdTime = transferCreatedTime(display.createdTime);
+          const transferDisplay = { ...display, createdTime };
+          if (!p[createdTime]) p[createdTime] = { ...transferDisplay };
           else if (display.mthpx > p[createdTime].mthpx)
-            p[createdTime] = { ...display };
+            p[createdTime] = { ...transferDisplay };
           return p;
         }, {});
         break;
@@ -274,10 +340,11 @@ export class RealDataService {
         reduceTransferDisplay = originDisplayContent.reduce<
           Record<string, IRealDataDisplayContentSchema>
         >((p, display) => {
-          const { createdTime } = display;
-          if (!p[createdTime]) p[createdTime] = { ...display };
+          const createdTime = transferCreatedTime(display.createdTime);
+          const transferDisplay = { ...display, createdTime };
+          if (!p[createdTime]) p[createdTime] = { ...transferDisplay };
           else if (display.mthpx < p[createdTime].mthpx)
-            p[createdTime] = { ...display };
+            p[createdTime] = { ...transferDisplay };
           return p;
         }, {});
         break;
@@ -290,9 +357,10 @@ export class RealDataService {
           >
         >((p, display) => {
           if (display.mthsz === 0) return p;
-          const { createdTime } = display;
+          const createdTime = transferCreatedTime(display.createdTime);
+          const transferDisplay = { ...display, createdTime };
           if (!p[createdTime]) {
-            p[createdTime] = { ...display };
+            p[createdTime] = { ...transferDisplay };
             p[createdTime].mthpx = display.mthpx * display.mthsz;
             p[createdTime].isAverage = true;
           } else {
@@ -323,7 +391,7 @@ export class RealDataService {
           const displayObj = {
             count,
             trdate: moment(createdTime).format('YYYYMMDD'),
-            ts: moment(createdTime).format('HH:mm:ss'),
+            ts: moment(createdTime).format('HH:mm:ss.SSS'),
             ...display,
           };
           return displayObj;
@@ -337,7 +405,7 @@ export class RealDataService {
       const displayObj = {
         count,
         trdate: moment(createdTime).format('YYYYMMDD'),
-        ts: moment(createdTime).format('HH:mm:ss'),
+        ts: moment(createdTime).format('HH:mm:ss.SSS'),
         ...display,
       };
 
