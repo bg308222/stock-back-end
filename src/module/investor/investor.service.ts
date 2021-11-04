@@ -37,7 +37,8 @@ export class InvestorService {
     if (!investor) throw new UnauthorizedException('Invalid token');
     if (isExpired && new Date(investor.expiredTime) < new Date())
       throw new UnauthorizedException('Token expired');
-    investor.expiredTime = this.getExpiredTime();
+    if (this.getExpiredTime() > new Date(investor.expiredTime))
+      investor.expiredTime = this.getExpiredTime();
     await this.investorRepository.save(investor);
     return investor;
   }
