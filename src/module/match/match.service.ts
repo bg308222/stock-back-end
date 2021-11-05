@@ -322,15 +322,16 @@ export class MatchService {
         ...stock
       } = await this.stockRepository.findOne({ id: stockId });
       await this.stockRepository.insert({ ...stock, id: marketName });
-    }
-    if (replayTime) {
-      const { content: beforeOrders } = await this.orderService.get({
-        stockId,
-        createdTime: { max: replayTime, min: startTime },
-        order: { orderBy: 'createdTime', order: 'ASC' },
-      });
 
-      await this.runOrders(beforeOrders, marketName, isReset);
+      if (replayTime) {
+        const { content: beforeOrders } = await this.orderService.get({
+          stockId,
+          createdTime: { max: replayTime, min: startTime },
+          order: { orderBy: 'createdTime', order: 'ASC' },
+        });
+
+        await this.runOrders(beforeOrders, marketName, isReset);
+      }
     }
 
     const { content: orders } = await this.orderService.get({
@@ -377,7 +378,7 @@ export class MatchService {
     if (!this.stockMarketList[target]) {
       await this.createMarket(stockId, marketName);
     }
-    this.stockMarketList[target].setMarketBook(stock, marketBook);
+    this.stockMarketList[target].setMarketBook(stock, marketBook, true);
     if (!marketName) {
       if (isAutoDisplay == false) return true;
       await this.insertDisplay(stockId);

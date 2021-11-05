@@ -67,6 +67,7 @@ export class DisplayService {
 
     if (query.isGetLatest) {
       const display = await fullQueryBuilder.getOne();
+      if (!display) return true;
       const certainInvestorOrderQuantity =
         this.matchService.getCertainInvestorOrder(
           query.investor.id,

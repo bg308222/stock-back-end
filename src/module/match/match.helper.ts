@@ -21,6 +21,7 @@ export interface IMarketBook {
   stock: IStockSchema;
   accumulatedQuantity: number;
   trendFlag: TrendFlagEnum;
+  isNew: boolean;
 }
 
 interface IDoCallAuctionResponse {
@@ -87,15 +88,20 @@ class LimitBook {
 
 export class StockMarket {
   constructor(stock: IStockSchema, marketBook?: IMarketBook) {
-    this.setMarketBook(stock, marketBook);
+    this.setMarketBook(stock, marketBook, true);
   }
 
-  public setMarketBook(stock: IStockSchema, marketBook?: IMarketBook) {
+  public setMarketBook(
+    stock: IStockSchema,
+    marketBook?: IMarketBook,
+    isNew?: boolean,
+  ) {
     if (marketBook) {
       this.marketBook = {
         ...marketBook,
         limitBuy: new LimitBook(marketBook.limitBuy),
         limitSell: new LimitBook(marketBook.limitSell),
+        isNew: isNew === true ? true : false,
       };
     } else {
       this.marketBook = {
@@ -106,6 +112,7 @@ export class StockMarket {
         accumulatedQuantity: 0,
         trendFlag: TrendFlagEnum.SPACE,
         stock,
+        isNew: isNew === true ? true : false,
       };
     }
     return true;
@@ -453,6 +460,13 @@ export class StockMarket {
     this.marketBook[`limit${inverseSideMethod}`].adaptHighestLowestPrice(
       inverseSideMethod,
     );
+
+    if (this.marketBook.isNew && !order.subMethod) {
+      this.marketBook.isNew = false;
+      this.marketBook.stock.closedPrice = order.price;
+      this.marketBook.stock.currentPrice = order.price;
+      this.marketBook.stock.priceLimit = 20;
+    }
     return returnResponse;
   }
 
