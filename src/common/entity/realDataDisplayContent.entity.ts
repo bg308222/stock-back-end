@@ -18,7 +18,7 @@ export class RealDataDisplayContent {
   @ManyToOne(() => RealDataDisplay, { onDelete: 'CASCADE', nullable: false })
   realDataDisplay: RealDataDisplay;
 
-  @Column({ type: 'varchar', length: 6 })
+  @Column({ type: 'varchar' })
   sym: string;
 
   @Column({ width: 6 })

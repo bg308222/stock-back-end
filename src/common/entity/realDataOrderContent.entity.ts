@@ -27,7 +27,7 @@ export class RealDataOrderContent {
   @Column({ width: 6 })
   createdTime: Date;
 
-  @Column({ type: 'varchar', length: 6 })
+  @Column({ type: 'varchar' })
   stockId: string;
 
   @Column({ type: 'enum', enum: MethodEnum })

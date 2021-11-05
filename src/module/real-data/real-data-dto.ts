@@ -16,11 +16,11 @@ import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 export type IRealDataOrderContentInsert = Omit<
   RealDataOrderContent,
   'id' | 'realDataOrder'
->[];
+>;
 export type IRealDataDisplayContentInsert = Omit<
   RealDataDisplayContent,
   'id' | 'realDataDisplay'
->[];
+>;
 
 export type IRealDataDisplayContentSchema = Omit<
   RealDataDisplayContent,

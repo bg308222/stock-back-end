@@ -24,8 +24,10 @@ import {
   TimeRestrictiomEnum,
 } from 'src/common/enum';
 import {
+  IRealDataDisplayContentInsert,
   IRealDataDisplayContentQuery,
   IRealDataObjectResponse,
+  IRealDataOrderContentInsert,
   IRealDataOrderContentQuery,
   IRealDataQuery,
   REAL_DATA_API_BODY,
@@ -82,39 +84,85 @@ export class RealDataController {
     return await this.realDataService.getOrderContent(query);
   }
 
-  @Post('order/content')
-  @ApiBody(REAL_DATA_API_BODY.orderContent)
-  @ApiQuery({
-    name: 'id',
-    example: 'odr20191202',
-  })
-  public async insertOrderContent(
-    @Body() body: string[],
-    @Query('id') id: string,
-  ) {
-    if (id === undefined) throw new BadRequestException('Missing id');
-    const insertBody = body.map((rowData) => {
-      const investorId = null;
+  private parseFutureOrder(
+    rows: string[],
+    id: string,
+  ): IRealDataOrderContentInsert[] {
+    return rows.map((row, index) => {
+      const result = {} as IRealDataOrderContentInsert;
+      const array = row.split('\t');
 
-      const year = rowData.slice(0, 4);
-      const month = rowData.slice(4, 6);
-      const day = rowData.slice(6, 8);
+      const date = array[0]; //20190102
+      const time = array[9]; //13:39:55.837000
+      const year = date.slice(0, 4);
+      const month = date.slice(4, 6);
+      const day = date.slice(6, 8);
 
-      const hour = rowData.slice(16, 18);
-      const min = rowData.slice(18, 20);
-      const sec = rowData.slice(20, 22);
-      const mis = rowData.slice(22, 24);
+      const hour = time.slice(0, 2);
+      const min = time.slice(3, 5);
+      const sec = time.slice(6, 8);
+      const mis = time.slice(9, 12);
+
+      result.createdTime = new Date(
+        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+      );
+      result.realDataOrderId = id;
+      result.stockId = array[1];
+      result.method = array[2] === 'B' ? MethodEnum.BUY : MethodEnum.SELL;
+      result.quantity = +array[3];
+      result.price = +array[5];
+      result.priceType =
+        array[6] === 'L' ? PriceTypeEnum.LIMIT : PriceTypeEnum.MARKET;
+      switch (array[7]) {
+        case 'I': {
+          result.timeRestriction = TimeRestrictiomEnum.IOC;
+          break;
+        }
+        case 'F': {
+          result.timeRestriction = TimeRestrictiomEnum.FOK;
+          break;
+        }
+        default: {
+          result.timeRestriction = TimeRestrictiomEnum.ROD;
+          break;
+        }
+      }
+
+      if (index === 0) {
+        console.log(
+          `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+          result,
+        );
+      }
+      // TODO subMethod
+      return result;
+    });
+  }
+
+  private parseStockOrder(
+    rows: string[],
+    id: string,
+  ): IRealDataOrderContentInsert[] {
+    return rows.map((row) => {
+      const year = row.slice(0, 4);
+      const month = row.slice(4, 6);
+      const day = row.slice(6, 8);
+
+      const hour = row.slice(16, 18);
+      const min = row.slice(18, 20);
+      const sec = row.slice(20, 22);
+      const mis = row.slice(22, 24);
 
       const createdTime = new Date(
         `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
       );
 
-      const stockId = rowData.slice(8, 14);
+      const stockId = row.slice(8, 14);
 
       const method =
-        rowData.slice(14, 15) === 'B' ? MethodEnum.BUY : MethodEnum.SELL;
+        row.slice(14, 15) === 'B' ? MethodEnum.BUY : MethodEnum.SELL;
 
-      let subMethod = rowData.slice(29, 30) as any;
+      let subMethod = row.slice(29, 30) as any;
       switch (+subMethod) {
         case 1:
         case 4:
@@ -131,14 +179,12 @@ export class RealDataController {
           break;
       }
 
-      const price = +rowData.slice(30, 37);
-      const quantity = +rowData.slice(38, 48);
+      const price = +row.slice(30, 37);
+      const quantity = +row.slice(38, 48);
       const priceType =
-        rowData.slice(50, 51) === '1'
-          ? PriceTypeEnum.MARKET
-          : PriceTypeEnum.LIMIT;
+        row.slice(50, 51) === '1' ? PriceTypeEnum.MARKET : PriceTypeEnum.LIMIT;
 
-      let timeRestriction = rowData.slice(51, 52) as any;
+      let timeRestriction = row.slice(51, 52) as any;
       switch (+timeRestriction) {
         case 3:
           timeRestriction = TimeRestrictiomEnum.IOC;
@@ -152,7 +198,6 @@ export class RealDataController {
       }
 
       const result = {
-        investorId,
         stockId,
         method,
         subMethod,
@@ -165,6 +210,22 @@ export class RealDataController {
       };
       return result;
     });
+  }
+
+  @Post('order/content')
+  @ApiBody(REAL_DATA_API_BODY.orderContent)
+  @ApiQuery({
+    name: 'id',
+    example: 'odr20191202',
+  })
+  public async insertOrderContent(
+    @Body() body: string[],
+    @Query('id') id: string,
+  ) {
+    if (id === undefined) throw new BadRequestException('Missing id');
+    const insertBody = id.startsWith('odr')
+      ? this.parseStockOrder(body, id)
+      : this.parseFutureOrder(body, id);
     try {
       return await this.realDataService.insertOrderContent(insertBody);
     } catch {
@@ -223,6 +284,101 @@ export class RealDataController {
     });
   }
 
+  private parseFutureDisplay(
+    rows: string[],
+    id: string,
+  ): IRealDataDisplayContentInsert[] {
+    return rows.map((row, index) => {
+      const result = {} as IRealDataDisplayContentInsert;
+      const array = row.split('\t');
+
+      const date = array[0];
+      const time = array[2].padStart(12, '0');
+
+      const year = date.slice(0, 4);
+      const month = date.slice(4, 6);
+      const day = date.slice(6, 8);
+
+      const hour = time.slice(0, 2);
+      const min = time.slice(2, 4);
+      const sec = time.slice(4, 6);
+      const mis = time.slice(6, 9);
+
+      result.sym = array[1];
+      result.createdTime = new Date(
+        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+      );
+
+      for (let i = 0; i < 5; i++) {
+        result[`b${i + 1}px`] = +array[3 + 2 * i];
+        result[`b${i + 1}sz`] = +array[4 + 2 * i];
+
+        result[`a${i + 1}px`] = +array[13 + 2 * i];
+        result[`a${i + 1}sz`] = +array[14 + 2 * i];
+      }
+
+      result.bsz = +array[24];
+      result.asz = +array[26];
+      result.realDataDisplayId = id;
+      if (index === 0)
+        console.log(
+          `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+          result,
+        );
+
+      //TODO mthpx mthsz
+      return result;
+    });
+  }
+
+  private parseStockDisplay(
+    rows: string[],
+    id: string,
+  ): IRealDataDisplayContentInsert[] {
+    return rows.map((row) => {
+      const result = {} as IRealDataDisplayContentInsert;
+      result.sym = row.slice(0, 6);
+
+      const year = row.slice(176, 180);
+      const month = row.slice(180, 182);
+      const day = row.slice(182, 184);
+
+      const hour = row.slice(6, 8);
+      const min = row.slice(8, 10);
+      const sec = row.slice(10, 12);
+      const mis = row.slice(12, 14);
+
+      result.createdTime = new Date(
+        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+      );
+
+      result.mthpx = +row.slice(18, 24);
+      result.mthsz = +row.slice(24, 32);
+      result.bsz = +row.slice(32, 33);
+      const B_BASE = 34;
+      for (let i = 0; i < 5; i++) {
+        const tempBase = B_BASE + i * 14;
+        result[`b${i + 1}px`] = +transferPriceToPoint(
+          row.slice(tempBase, tempBase + 6),
+        );
+        result[`b${i + 1}sz`] = +row.slice(tempBase + 6, tempBase + 14);
+      }
+
+      result.asz = +row.slice(104, 105);
+      const A_BASE = 106;
+      for (let i = 0; i < 5; i++) {
+        const tempBase = A_BASE + i * 14;
+        result[`a${i + 1}px`] = +transferPriceToPoint(
+          row.slice(tempBase, tempBase + 6),
+        );
+        result[`a${i + 1}sz`] = +row.slice(tempBase + 6, tempBase + 14);
+      }
+
+      result.realDataDisplayId = id;
+      return result;
+    });
+  }
+
   @Post('display/content')
   @ApiBody(REAL_DATA_API_BODY.displayContent)
   @ApiQuery({
@@ -235,48 +391,9 @@ export class RealDataController {
   ) {
     if (id === undefined)
       throw new BadRequestException('Missing realDataDisplayId');
-    const insertBody = body.map((rowData) => {
-      const result = {} as any;
-      result.sym = rowData.slice(0, 6);
-
-      const year = rowData.slice(176, 180);
-      const month = rowData.slice(180, 182);
-      const day = rowData.slice(182, 184);
-
-      const hour = rowData.slice(6, 8);
-      const min = rowData.slice(8, 10);
-      const sec = rowData.slice(10, 12);
-      const mis = rowData.slice(12, 14);
-
-      result.createdTime = new Date(
-        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
-      );
-
-      result.mthpx = +rowData.slice(18, 24);
-      result.mthsz = +rowData.slice(24, 32);
-      result.bsz = +rowData.slice(32, 33);
-      const B_BASE = 34;
-      for (let i = 0; i < 5; i++) {
-        const tempBase = B_BASE + i * 14;
-        result[`b${i + 1}px`] = +transferPriceToPoint(
-          rowData.slice(tempBase, tempBase + 6),
-        );
-        result[`b${i + 1}sz`] = +rowData.slice(tempBase + 6, tempBase + 14);
-      }
-
-      result.asz = +rowData.slice(104, 105);
-      const A_BASE = 106;
-      for (let i = 0; i < 5; i++) {
-        const tempBase = A_BASE + i * 14;
-        result[`a${i + 1}px`] = +transferPriceToPoint(
-          rowData.slice(tempBase, tempBase + 6),
-        );
-        result[`a${i + 1}sz`] = +rowData.slice(tempBase + 6, tempBase + 14);
-      }
-
-      result.realDataDisplayId = id;
-      return result;
-    });
+    const insertBody = id.startsWith('dsp')
+      ? this.parseStockDisplay(body, id)
+      : this.parseFutureDisplay(body, id);
 
     try {
       return await this.realDataService.insertDisplayContent(insertBody);

@@ -154,7 +154,7 @@ export class RealDataService {
     };
   }
 
-  public async insertOrderContent(body: IRealDataOrderContentInsert) {
+  public async insertOrderContent(body: IRealDataOrderContentInsert[]) {
     await this.realDataOrderContentRepository.insert(
       body.map(({ realDataOrderId, ...v }) => {
         return {
@@ -466,7 +466,7 @@ export class RealDataService {
     return true;
   }
 
-  public async insertDisplayContent(body: IRealDataDisplayContentInsert) {
+  public async insertDisplayContent(body: IRealDataDisplayContentInsert[]) {
     await this.realDataDisplayContentRepository.insert(
       body.map(({ realDataDisplayId, ...v }) => {
         return {

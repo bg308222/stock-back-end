@@ -65,6 +65,7 @@ export class OrderController {
       body.createdTime = new Date(this.latestTime[body.stockId]++);
     }
 
+    body.stockId = body.stockId.trim();
     const id = await this.orderService.insert(body);
     const result = await this.matchService.dispatchOrder({ ...body, id });
     return result;
