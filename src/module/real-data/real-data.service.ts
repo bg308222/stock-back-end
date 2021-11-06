@@ -97,6 +97,10 @@ export class RealDataService {
   ) {}
 
   public async getOrder(query: IRealDataQuery) {
+    query.order = {
+      order: 'DESC',
+      orderBy: 'id',
+    };
     const { fullQueryBuilder, totalSize } =
       await getQueryBuilderContent<RealDataOrder>(
         'realDataOrder',
@@ -167,6 +171,10 @@ export class RealDataService {
   }
 
   public async getDisplay(query: IRealDataQuery) {
+    query.order = {
+      order: 'DESC',
+      orderBy: 'id',
+    };
     const { fullQueryBuilder, totalSize } =
       await getQueryBuilderContent<RealDataDisplay>(
         'realDataDisplay',
