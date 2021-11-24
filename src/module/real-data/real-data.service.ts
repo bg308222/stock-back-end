@@ -17,11 +17,59 @@ import {
   IRealDataOrderContentInsert,
   IRealDataOrderContentQuery,
   IRealDataQuery,
+  IRealDataTransactionContentInsert,
+  IRealDataTransactionContentSchema,
   realDataOrderContentQueryStrategy,
   realDataQueryStrategy,
 } from './real-data-dto';
 import * as moment from 'moment';
 import * as fs from 'fs';
+import { RealDataTransaction } from 'src/common/entity/realDataTransaction.entity';
+import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
+
+const ORDER_SELECT = [
+  'id',
+  'createdTime',
+  'method',
+  'subMethod',
+  'price',
+  'quantity',
+  'priceType',
+  'timeRestriction',
+  'stockId',
+  'code',
+];
+
+const ORDER_FIELDS = [
+  'count',
+  'method',
+  'subMethod',
+  'price',
+  'quantity',
+  'priceType',
+  'timeRestriction',
+  'stockId',
+  'trdate',
+  'ts',
+];
+
+const TRANSACTION_SELECT = [
+  'id',
+  'createdTime',
+  'stockId',
+  'price',
+  'quantity',
+  'code',
+];
+
+const TRANSACTION_FIELDS = [
+  'count',
+  'stockId',
+  'price',
+  'quantity',
+  'trdate',
+  'ts',
+];
 
 const DISPLAY_SELECT = [
   'id',
@@ -52,7 +100,7 @@ const DISPLAY_SELECT = [
   'a5sz',
 ];
 
-const FIELDS = [
+const DISPLAY_FIELDS = [
   'count',
   'mthpx',
   'mthsz',
@@ -94,157 +142,11 @@ export class RealDataService {
     private readonly realDataDisplayRepository: Repository<RealDataDisplay>,
     @InjectRepository(RealDataDisplayContent)
     private readonly realDataDisplayContentRepository: Repository<RealDataDisplayContent>,
+    @InjectRepository(RealDataTransaction)
+    private readonly realDataTransactionRepository: Repository<RealDataTransaction>,
+    @InjectRepository(RealDataTransactionContent)
+    private readonly realDataTransactionContentRepository: Repository<RealDataTransactionContent>,
   ) {}
-
-  public async getOrder(query: IRealDataQuery) {
-    query.order = {
-      order: 'DESC',
-      orderBy: 'id',
-    };
-    const { fullQueryBuilder, totalSize } =
-      await getQueryBuilderContent<RealDataOrder>(
-        'realDataOrder',
-        this.realDataOrderRepository.createQueryBuilder('realDataOrder'),
-        realDataQueryStrategy,
-        query,
-      );
-
-    const content = await fullQueryBuilder.getMany();
-    return {
-      content,
-      totalSize,
-    };
-  }
-
-  public async insertOrder(id: string) {
-    const realDataOrder = new RealDataOrder();
-    realDataOrder.id = id;
-    await this.realDataOrderRepository.insert(realDataOrder);
-    return true;
-  }
-
-  public async toggleOrderStatus(id: string) {
-    const realDataOrder = await this.realDataOrderRepository.findOne({ id });
-    if (!realDataOrder) throw new BadRequestException("Id doesn't exist");
-
-    realDataOrder.isFinished = 1;
-    await this.realDataOrderRepository.save(realDataOrder);
-    return true;
-  }
-
-  public async deleteOrder(id: string[]) {
-    if (id && id.length) {
-      await this.realDataOrderRepository.delete(id);
-      return true;
-    }
-    return false;
-  }
-
-  public async getOrderContent(query: IRealDataOrderContentQuery) {
-    const { fullQueryBuilder, totalSize } =
-      await getQueryBuilderContent<RealDataOrderContent>(
-        'realDataOrderContent',
-        this.realDataOrderContentRepository.createQueryBuilder(
-          'realDataOrderContent',
-        ),
-        realDataOrderContentQueryStrategy,
-        query,
-      );
-
-    const content = await fullQueryBuilder.getMany();
-    return {
-      content,
-      totalSize,
-    };
-  }
-
-  public async insertOrderContent(body: IRealDataOrderContentInsert[]) {
-    await this.realDataOrderContentRepository.insert(
-      body.map(({ realDataOrderId, ...v }) => {
-        return {
-          ...v,
-          realDataOrder: { id: realDataOrderId },
-        };
-      }),
-    );
-    return true;
-  }
-
-  public async getDisplay(query: IRealDataQuery) {
-    query.order = {
-      order: 'DESC',
-      orderBy: 'id',
-    };
-    const { fullQueryBuilder, totalSize } =
-      await getQueryBuilderContent<RealDataDisplay>(
-        'realDataDisplay',
-        this.realDataDisplayRepository.createQueryBuilder('realDataDisplay'),
-        realDataQueryStrategy,
-        query,
-      );
-
-    const content = await fullQueryBuilder.getMany();
-    return {
-      content,
-      totalSize,
-    };
-  }
-
-  public async insertDisplay(id: string) {
-    const realDataDisplay = new RealDataDisplay();
-    realDataDisplay.id = id;
-    await this.realDataDisplayRepository.insert(realDataDisplay);
-    return true;
-  }
-
-  public async toggleDisplayStatus(id: string) {
-    const realDataDisplay = await this.realDataDisplayRepository.findOne({
-      id,
-    });
-    if (!realDataDisplay) throw new BadRequestException("Id doesn't exist");
-
-    realDataDisplay.isFinished = 1;
-    await this.realDataDisplayRepository.save(realDataDisplay);
-    return true;
-  }
-
-  public async deleteDisplay(id: string[]) {
-    if (id && id.length) {
-      await this.realDataDisplayRepository.delete(id);
-      return true;
-    }
-    return false;
-  }
-
-  private async getOriginDisplayContent({
-    stockId,
-    createdTime,
-    dateFormat,
-  }: IRealDataDisplayContentQuery) {
-    if (!stockId) throw new BadRequestException('Missing stockId');
-
-    const queryBuilder =
-      this.realDataDisplayContentRepository.createQueryBuilder('display');
-
-    queryBuilder.select('display.id', 'id');
-    DISPLAY_SELECT.forEach((select) => {
-      queryBuilder.addSelect(`display.${select}`, select);
-    });
-    queryBuilder.addSelect(
-      `DATE_FORMAT(display.createdTime,'${getDateFormatString(dateFormat)}')`,
-      'createdTime',
-    );
-
-    queryBuilder.where('display.sym = :stockId', { stockId });
-    if (createdTime) {
-      const { min, max } = createdTime;
-      if (min) queryBuilder.andWhere('display.createdTime >= :min', { min });
-      if (max) queryBuilder.andWhere('display.createdTime < :max', { max });
-    }
-    queryBuilder.orderBy('createdTime', 'ASC');
-
-    return await queryBuilder.getRawMany<IRealDataDisplayContentSchema>();
-  }
 
   private getTransferCreatedTime(dateFormat: DateFormatEnum, unit: number) {
     switch (dateFormat) {
@@ -302,6 +204,381 @@ export class RealDataService {
         };
       }
     }
+  }
+
+  public async getOrder(query: IRealDataQuery) {
+    query.order = {
+      order: 'DESC',
+      orderBy: 'id',
+    };
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<RealDataOrder>(
+        'realDataOrder',
+        this.realDataOrderRepository.createQueryBuilder('realDataOrder'),
+        realDataQueryStrategy,
+        query,
+      );
+
+    const content = await fullQueryBuilder.getMany();
+    return {
+      content,
+      totalSize,
+    };
+  }
+
+  public async insertOrder(id: string) {
+    const realDataOrder = new RealDataOrder();
+    realDataOrder.id = id;
+    await this.realDataOrderRepository.insert(realDataOrder);
+    return true;
+  }
+
+  public async toggleOrderStatus(id: string) {
+    const realDataOrder = await this.realDataOrderRepository.findOne({ id });
+    if (!realDataOrder) throw new BadRequestException("Id doesn't exist");
+
+    realDataOrder.isFinished = 1;
+    await this.realDataOrderRepository.save(realDataOrder);
+    return true;
+  }
+
+  public async deleteOrder(id: string[]) {
+    if (id && id.length) {
+      await this.realDataOrderRepository.delete(id);
+      return true;
+    }
+    throw new BadRequestException('Missing id');
+  }
+
+  public async getOrderContent(query: IRealDataOrderContentQuery) {
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<RealDataOrderContent>(
+        'realDataOrderContent',
+        this.realDataOrderContentRepository.createQueryBuilder(
+          'realDataOrderContent',
+        ),
+        realDataOrderContentQueryStrategy,
+        query,
+      );
+
+    const content = await fullQueryBuilder.getMany();
+    return {
+      content,
+      totalSize,
+    };
+  }
+
+  public async insertOrderContent(body: IRealDataOrderContentInsert[]) {
+    await this.realDataOrderContentRepository.insert(
+      body.map(({ realDataOrderId, ...v }) => {
+        return {
+          ...v,
+          realDataOrder: { id: realDataOrderId },
+        };
+      }),
+    );
+    return true;
+  }
+
+  public async getTransaction(query: IRealDataQuery) {
+    query.order = {
+      order: 'DESC',
+      orderBy: 'id',
+    };
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<RealDataTransaction>(
+        'realDataTransaction',
+        this.realDataTransactionRepository.createQueryBuilder(
+          'realDataTransaction',
+        ),
+        realDataQueryStrategy,
+        query,
+      );
+
+    const content = await fullQueryBuilder.getMany();
+    return {
+      content,
+      totalSize,
+    };
+  }
+
+  public async insertTransaction(id: string) {
+    const realDataTransaction = new RealDataTransaction();
+    realDataTransaction.id = id;
+    await this.realDataTransactionRepository.insert(realDataTransaction);
+    return true;
+  }
+
+  public async toggleTransactionStatus(id: string) {
+    const realDataTransaction =
+      await this.realDataTransactionRepository.findOne({ id });
+    if (!realDataTransaction) throw new BadRequestException("Id doesn't exist");
+
+    realDataTransaction.isFinished = 1;
+    await this.realDataTransactionRepository.save(realDataTransaction);
+    return true;
+  }
+
+  public async deleteTransaction(id: string[]) {
+    if (id && id.length) {
+      await this.realDataTransactionRepository.delete(id);
+      return true;
+    }
+    throw new BadRequestException('Missing id');
+  }
+
+  private async getOriginTransactionContent({
+    stockId,
+    createdTime,
+    dateFormat,
+  }: IRealDataDisplayContentQuery) {
+    if (!stockId) throw new BadRequestException('Missing stockId');
+
+    const queryBuilder =
+      this.realDataTransactionContentRepository.createQueryBuilder(
+        'transaction',
+      );
+
+    queryBuilder.select('transaction.id', 'id');
+    TRANSACTION_SELECT.forEach((select) => {
+      queryBuilder.addSelect(`transaction.${select}`, select);
+    });
+    queryBuilder.addSelect(
+      `DATE_FORMAT(transaction.createdTime,'${getDateFormatString(
+        dateFormat,
+      )}')`,
+      'createdTime',
+    );
+
+    queryBuilder.where('transaction.stockId = :stockId', { stockId });
+    if (createdTime) {
+      const { min, max } = createdTime;
+      if (min)
+        queryBuilder.andWhere('transaction.createdTime >= :min', { min });
+      if (max) queryBuilder.andWhere('transaction.createdTime < :max', { max });
+    }
+    queryBuilder.orderBy('createdTime', 'ASC');
+
+    return await queryBuilder.getRawMany<IRealDataTransactionContentSchema>();
+  }
+
+  private async getGroupTransactionContent(
+    query: IRealDataDisplayContentQuery,
+  ) {
+    const originTransactionContent = await this.getOriginTransactionContent(
+      query,
+    );
+    const {
+      dateFormat = DateFormatEnum.MINUTE,
+      sampleMode = SampleModeEnum.FIRST,
+      unit = 1,
+    } = query;
+
+    let reduceTransferTransaction: Record<
+      string,
+      IRealDataTransactionContentSchema & { isAverage?: boolean }
+    >;
+
+    const transferCreatedTime = this.getTransferCreatedTime(dateFormat, unit);
+    switch (sampleMode) {
+      case SampleModeEnum.FIRST: {
+        reduceTransferTransaction = originTransactionContent.reduce<
+          Record<string, IRealDataTransactionContentSchema>
+        >((p, transaction) => {
+          const createdTime = transferCreatedTime(transaction.createdTime);
+          const transferTransaction = { ...transaction, createdTime };
+
+          if (!p[createdTime]) p[createdTime] = { ...transferTransaction };
+          return p;
+        }, {});
+        break;
+      }
+      case SampleModeEnum.MAX: {
+        reduceTransferTransaction = originTransactionContent.reduce<
+          Record<string, IRealDataTransactionContentSchema>
+        >((p, transaction) => {
+          const createdTime = transferCreatedTime(transaction.createdTime);
+          const transferTransaction = { ...transaction, createdTime };
+          if (!p[createdTime]) p[createdTime] = { ...transferTransaction };
+          else if (transaction.price > p[createdTime].price)
+            p[createdTime] = { ...transferTransaction };
+          return p;
+        }, {});
+        break;
+      }
+      case SampleModeEnum.MIN: {
+        reduceTransferTransaction = originTransactionContent.reduce<
+          Record<string, IRealDataTransactionContentSchema>
+        >((p, transaction) => {
+          const createdTime = transferCreatedTime(transaction.createdTime);
+          const transferTransaction = { ...transaction, createdTime };
+          if (!p[createdTime]) p[createdTime] = { ...transferTransaction };
+          else if (transaction.price < p[createdTime].price)
+            p[createdTime] = { ...transferTransaction };
+          return p;
+        }, {});
+        break;
+      }
+      default: {
+        reduceTransferTransaction = originTransactionContent.reduce<
+          Record<
+            string,
+            IRealDataTransactionContentSchema & { isAverage?: boolean }
+          >
+        >((p, transaction) => {
+          if (transaction.quantity === 0) return p;
+          const createdTime = transferCreatedTime(transaction.createdTime);
+          const transferTransaction = { ...transaction, createdTime };
+          if (!p[createdTime]) {
+            p[createdTime] = { ...transferTransaction };
+            p[createdTime].price = transaction.price * transaction.quantity;
+            p[createdTime].isAverage = true;
+          } else {
+            p[createdTime].price += transaction.price * transaction.quantity;
+            p[createdTime].quantity += transaction.quantity;
+          }
+          return p;
+        }, {});
+        break;
+      }
+    }
+
+    return Object.values(reduceTransferTransaction).map(
+      ({ isAverage, ...transaction }) => {
+        if (isAverage && transaction.quantity !== 0)
+          transaction.price = transaction.price / transaction.quantity;
+        return transaction;
+      },
+    );
+  }
+
+  public async getTransactionContent(query: IRealDataDisplayContentQuery) {
+    const groupTransactionContent = await this.getGroupTransactionContent(
+      query,
+    );
+    const { fields } = query;
+    if (!fields)
+      return groupTransactionContent.map(
+        ({ id, createdTime, ...transaction }, count) => {
+          const transactionObj = {
+            count,
+            trdate: moment(createdTime).format('YYYYMMDD'),
+            ts: moment(createdTime).format('HH:mm:ss.SSS'),
+            ...transaction,
+          };
+          return transactionObj;
+        },
+      );
+
+    const transferFields = fields.filter((field) => {
+      return TRANSACTION_FIELDS.includes(field);
+    });
+    return groupTransactionContent.map(
+      ({ id, createdTime, ...transaction }, count) => {
+        const transactionObj = {
+          count,
+          trdate: moment(createdTime).format('YYYYMMDD'),
+          ts: moment(createdTime).format('HH:mm:ss.SSS'),
+          ...transaction,
+        };
+
+        const returnObj: any = {};
+        transferFields.forEach((field) => {
+          returnObj[field] = transactionObj[field];
+        });
+        return returnObj;
+      },
+    );
+  }
+
+  public async insertTransactionContent(
+    body: IRealDataTransactionContentInsert[],
+  ) {
+    await this.realDataTransactionContentRepository.insert(
+      body.map(({ realDataTransactionId, ...v }) => {
+        return {
+          ...v,
+          realDataTransaction: { id: realDataTransactionId },
+        };
+      }),
+    );
+    return true;
+  }
+
+  public async getDisplay(query: IRealDataQuery) {
+    query.order = {
+      order: 'DESC',
+      orderBy: 'id',
+    };
+    const { fullQueryBuilder, totalSize } =
+      await getQueryBuilderContent<RealDataDisplay>(
+        'realDataDisplay',
+        this.realDataDisplayRepository.createQueryBuilder('realDataDisplay'),
+        realDataQueryStrategy,
+        query,
+      );
+
+    const content = await fullQueryBuilder.getMany();
+    return {
+      content,
+      totalSize,
+    };
+  }
+
+  public async insertDisplay(id: string) {
+    const realDataDisplay = new RealDataDisplay();
+    realDataDisplay.id = id;
+    await this.realDataDisplayRepository.insert(realDataDisplay);
+    return true;
+  }
+
+  public async toggleDisplayStatus(id: string) {
+    const realDataDisplay = await this.realDataDisplayRepository.findOne({
+      id,
+    });
+    if (!realDataDisplay) throw new BadRequestException("Id doesn't exist");
+
+    realDataDisplay.isFinished = 1;
+    await this.realDataDisplayRepository.save(realDataDisplay);
+    return true;
+  }
+
+  public async deleteDisplay(id: string[]) {
+    if (id && id.length) {
+      await this.realDataDisplayRepository.delete(id);
+      return true;
+    }
+    throw new BadRequestException('Missing id');
+  }
+
+  private async getOriginDisplayContent({
+    stockId,
+    createdTime,
+    dateFormat,
+  }: IRealDataDisplayContentQuery) {
+    if (!stockId) throw new BadRequestException('Missing stockId');
+
+    const queryBuilder =
+      this.realDataDisplayContentRepository.createQueryBuilder('display');
+
+    queryBuilder.select('display.id', 'id');
+    DISPLAY_SELECT.forEach((select) => {
+      queryBuilder.addSelect(`display.${select}`, select);
+    });
+    queryBuilder.addSelect(
+      `DATE_FORMAT(display.createdTime,'${getDateFormatString(dateFormat)}')`,
+      'createdTime',
+    );
+
+    queryBuilder.where('display.sym = :stockId', { stockId });
+    if (createdTime) {
+      const { min, max } = createdTime;
+      if (min) queryBuilder.andWhere('display.createdTime >= :min', { min });
+      if (max) queryBuilder.andWhere('display.createdTime < :max', { max });
+    }
+    queryBuilder.orderBy('createdTime', 'ASC');
+
+    return await queryBuilder.getRawMany<IRealDataDisplayContentSchema>();
   }
 
   private async getGroupDisplayContent(query: IRealDataDisplayContentQuery) {
@@ -407,7 +684,7 @@ export class RealDataService {
       );
 
     const transferFields = fields.filter((field) => {
-      return FIELDS.includes(field);
+      return DISPLAY_FIELDS.includes(field);
     });
     return groupDisplayContent.map(({ id, createdTime, ...display }, count) => {
       const displayObj = {
@@ -454,7 +731,7 @@ export class RealDataService {
 
   public createFile(path: string, displays: any[]) {
     if (!displays.length) {
-      fs.writeFileSync(path, FIELDS.join(',\n'));
+      fs.writeFileSync(path, DISPLAY_FIELDS.join(',\n'));
       return true;
     }
     const fields = Object.keys(displays[0]);

@@ -14,6 +14,7 @@ const checkRequest = (req: Request, isCheck = true) => {
     console.log(`${req.method} ${req.baseUrl}`);
     console.log('Query: ', req.query);
     console.log('Body: ', req.body);
+    console.log('Token: ', req.headers.token);
     console.log('-------------\n');
   }
 };
@@ -27,8 +28,9 @@ const disabledCheckedList = [
   '/api/order/realData',
   '/api/display/chart',
   '/api/real-data/display/content',
-  '/api/real-data/display/download',
   '/api/real-data/order/content',
+  '/api/real-data/transaction/content',
+  '/api/real-data/display/download',
 ];
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {

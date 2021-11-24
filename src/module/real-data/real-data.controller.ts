@@ -30,6 +30,7 @@ import {
   IRealDataOrderContentInsert,
   IRealDataOrderContentQuery,
   IRealDataQuery,
+  IRealDataTransactionContentInsert,
   REAL_DATA_API_BODY,
 } from './real-data-dto';
 import { RealDataService } from './real-data.service';
@@ -88,7 +89,7 @@ export class RealDataController {
     rows: string[],
     id: string,
   ): IRealDataOrderContentInsert[] {
-    return rows.map((row, index) => {
+    return rows.map((row) => {
       const result = {} as IRealDataOrderContentInsert;
       const array = row.split('\t');
 
@@ -127,13 +128,8 @@ export class RealDataController {
           break;
         }
       }
+      result.code = array[12];
 
-      if (index === 0) {
-        console.log(
-          `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
-          result,
-        );
-      }
       // TODO subMethod
       return result;
     });
@@ -162,6 +158,7 @@ export class RealDataController {
       const method =
         row.slice(14, 15) === 'B' ? MethodEnum.BUY : MethodEnum.SELL;
 
+      const code = row.slice(24, 29);
       let subMethod = row.slice(29, 30) as any;
       switch (+subMethod) {
         case 1:
@@ -207,6 +204,7 @@ export class RealDataController {
         timeRestriction,
         createdTime,
         realDataOrderId: id,
+        code,
       };
       return result;
     });
@@ -230,6 +228,125 @@ export class RealDataController {
       return await this.realDataService.insertOrderContent(insertBody);
     } catch {
       await this.realDataService.deleteOrder([id]);
+      throw new BadRequestException('Text type error');
+    }
+  }
+
+  @Get('transaction')
+  public async getTransaction(@Query() query: IRealDataQuery) {
+    return await this.realDataService.getTransaction(query);
+  }
+
+  @Post('transaction')
+  public async insertTransaction(@Body('id') body: string) {
+    try {
+      const result = await this.realDataService.insertTransaction(body);
+      return result;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Put('transaction')
+  public async toggleTransactionStatus(@Body('id') body: string) {
+    return await this.realDataService.toggleTransactionStatus(body);
+  }
+
+  @Delete('transaction')
+  public async deleteTransaction(@Body() body: string[]) {
+    return await this.realDataService.deleteTransaction(body);
+  }
+
+  @Get('transaction/content')
+  public async getTransactionContent(
+    @Query() query: IRealDataDisplayContentQuery,
+  ) {
+    return await this.realDataService.getTransactionContent(query);
+  }
+
+  private parseStockTransaction(
+    rows: string[],
+    id: string,
+  ): IRealDataTransactionContentInsert[] {
+    return rows.map((row) => {
+      const result = {} as IRealDataTransactionContentInsert;
+
+      const date = row.slice(0, 8);
+      const time = row.slice(16, 24);
+
+      const year = date.slice(0, 4);
+      const month = date.slice(4, 6);
+      const day = date.slice(6, 8);
+
+      const hour = time.slice(0, 2);
+      const min = time.slice(2, 4);
+      const sec = time.slice(4, 6);
+      const mis = time.slice(6, 8);
+
+      result.stockId = row.slice(8, 14);
+      result.price = +row.slice(37, 44);
+      result.quantity = +row.slice(44, 53);
+      result.createdTime = new Date(
+        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+      );
+
+      result.realDataTransactionId = id;
+      result.code = row.slice(32, 37);
+
+      return result;
+    });
+  }
+
+  private parseFutureTransaction(
+    rows: string[],
+    id: string,
+  ): IRealDataTransactionContentInsert[] {
+    return rows.map((row) => {
+      const result = {} as IRealDataTransactionContentInsert;
+      const array = row.split('\t');
+
+      const date = array[0];
+      const time = array[15];
+
+      const year = date.slice(0, 4);
+      const month = date.slice(4, 6);
+      const day = date.slice(6, 8);
+
+      const hour = time.slice(0, 2);
+      const min = time.slice(3, 5);
+      const sec = time.slice(6, 8);
+      const mis = time.slice(9, 12);
+
+      result.stockId = array[1];
+      result.price = +array[11];
+      result.quantity = +array[12];
+      result.createdTime = new Date(
+        `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
+      );
+
+      result.realDataTransactionId = id;
+      result.code = array[18];
+
+      return result;
+    });
+  }
+
+  @Post('transaction/content')
+  public async insertTransactionContent(
+    @Body() body: string[],
+    @Query('id') id: string,
+  ) {
+    console.log(body);
+    if (id === undefined)
+      throw new BadRequestException('Missing realDataTransactionId');
+    const insertBody = id.startsWith('mth')
+      ? this.parseStockTransaction(body, id)
+      : this.parseFutureTransaction(body, id);
+
+    try {
+      return await this.realDataService.insertTransactionContent(insertBody);
+    } catch {
+      await this.realDataService.deleteTransaction([id]);
       throw new BadRequestException('Text type error');
     }
   }
@@ -288,7 +405,7 @@ export class RealDataController {
     rows: string[],
     id: string,
   ): IRealDataDisplayContentInsert[] {
-    return rows.map((row, index) => {
+    return rows.map((row) => {
       const result = {} as IRealDataDisplayContentInsert;
       const array = row.split('\t');
 
@@ -320,13 +437,6 @@ export class RealDataController {
       result.bsz = +array[24];
       result.asz = +array[26];
       result.realDataDisplayId = id;
-      if (index === 0)
-        console.log(
-          `${year} ${month} ${day} ${hour}:${min}:${sec}:${mis}`,
-          result,
-        );
-
-      //TODO mthpx mthsz
       return result;
     });
   }

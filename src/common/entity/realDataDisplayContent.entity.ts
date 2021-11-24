@@ -24,10 +24,10 @@ export class RealDataDisplayContent {
   @Column({ width: 6 })
   createdTime: Date;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'float', nullable: true })
   mthpx: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   mthsz: number;
 
   @Column({ type: 'int' })

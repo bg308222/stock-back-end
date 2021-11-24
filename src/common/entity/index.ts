@@ -6,6 +6,8 @@ import { RealDataDisplay } from './realDataDisplay.entity';
 import { RealDataDisplayContent } from './realDataDisplayContent.entity';
 import { RealDataOrder } from './realDataOrder.entity';
 import { RealDataOrderContent } from './realDataOrderContent.entity';
+import { RealDataTransaction } from './realDataTransaction.entity';
+import { RealDataTransactionContent } from './realDataTransactionContent.entity';
 import { Stock } from './stock.entity';
 import { Transaction } from './transaction.entity';
 import { VirtualOrder } from './virtualOrder.entity';
@@ -24,4 +26,6 @@ export const entities = [
   RealDataOrderContent,
   RealDataDisplay,
   RealDataDisplayContent,
+  RealDataTransaction,
+  RealDataTransactionContent,
 ];

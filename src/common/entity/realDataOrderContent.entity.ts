@@ -47,4 +47,7 @@ export class RealDataOrderContent {
 
   @Column({ type: 'enum', enum: TimeRestrictiomEnum })
   timeRestriction: number;
+
+  @Column({ type: 'varchar' })
+  code: string;
 }

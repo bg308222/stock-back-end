@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { RealDataDisplayContent } from 'src/common/entity/realDataDisplayContent.entity';
 import { RealDataOrderContent } from 'src/common/entity/realDataOrderContent.entity';
+import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
 import {
   DateFormatEnum,
   QueryStrategyEnum,
@@ -17,10 +18,21 @@ export type IRealDataOrderContentInsert = Omit<
   RealDataOrderContent,
   'id' | 'realDataOrder'
 >;
+
+export type IRealDataTransactionContentInsert = Omit<
+  RealDataTransactionContent,
+  'id' | 'realDataTransaction'
+>;
+
 export type IRealDataDisplayContentInsert = Omit<
   RealDataDisplayContent,
   'id' | 'realDataDisplay'
 >;
+
+export type IRealDataTransactionContentSchema = Omit<
+  RealDataTransactionContent,
+  'realDataTransaction' | 'realDataTransactionId' | 'createdTime'
+> & { createdTime: string };
 
 export type IRealDataDisplayContentSchema = Omit<
   RealDataDisplayContent,
