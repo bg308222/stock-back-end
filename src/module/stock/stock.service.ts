@@ -45,8 +45,7 @@ export class StockService {
     };
   }
 
-  public async insert({ id: _id, groupId, ...body }: IStockInsert) {
-    const id = _id.padEnd(6, ' ');
+  public async insert({ id, groupId, ...body }: IStockInsert) {
     await this.stockRepository.insert({ id, ...body });
 
     if (groupId) {

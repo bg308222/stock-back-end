@@ -37,10 +37,6 @@ export class LoggerMiddleware implements NestMiddleware {
   constructor(private readonly investorService: InvestorService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     Object.entries(req.query).forEach(([key, value]) => {
-      if (key === 'stockId') {
-        req.query[key] = value.toString().padEnd(6);
-        return;
-      }
       try {
         req.query[key] = JSON.parse(value as any);
       } catch {}

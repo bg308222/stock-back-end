@@ -12,10 +12,11 @@ import {
 import { Repository } from 'typeorm';
 import {
   IRealDataDisplayContentInsert,
-  IRealDataDisplayContentQuery,
+  IRealDataCommonContentQuery,
   IRealDataDisplayContentSchema,
   IRealDataOrderContentInsert,
   IRealDataOrderContentQuery,
+  IRealDataOrderContentSchema,
   IRealDataQuery,
   IRealDataTransactionContentInsert,
   IRealDataTransactionContentSchema,
@@ -250,7 +251,147 @@ export class RealDataService {
     throw new BadRequestException('Missing id');
   }
 
-  public async getOrderContent(query: IRealDataOrderContentQuery) {
+  private async getOriginOrderContent({
+    stockId,
+    createdTime,
+    dateFormat,
+  }: IRealDataCommonContentQuery) {
+    if (!stockId) throw new BadRequestException('Missing stockId');
+
+    const queryBuilder =
+      this.realDataOrderContentRepository.createQueryBuilder('order');
+
+    queryBuilder.select('order.id', 'id');
+    ORDER_SELECT.forEach((select) => {
+      queryBuilder.addSelect(`order.${select}`, select);
+    });
+    queryBuilder.addSelect(
+      `DATE_FORMAT(order.createdTime,'${getDateFormatString(dateFormat)}')`,
+      'createdTime',
+    );
+
+    queryBuilder.where('order.stockId = :stockId', { stockId });
+    if (createdTime) {
+      const { min, max } = createdTime;
+      if (min) queryBuilder.andWhere('order.createdTime >= :min', { min });
+      if (max) queryBuilder.andWhere('order.createdTime < :max', { max });
+    }
+    queryBuilder.orderBy('createdTime', 'ASC');
+    return await queryBuilder.getRawMany<IRealDataOrderContentSchema>();
+  }
+
+  private async getGroupOrderContent(query: IRealDataCommonContentQuery) {
+    const originOrderContent = await this.getOriginOrderContent(query);
+    const { dateFormat, sampleMode = SampleModeEnum.FIRST, unit = 1 } = query;
+    if (!dateFormat === undefined) return originOrderContent;
+
+    let reduceTransferOrder: Record<
+      string,
+      IRealDataOrderContentSchema & { isAverage?: boolean }
+    >;
+
+    const transferCreatedTime = this.getTransferCreatedTime(dateFormat, unit);
+    switch (sampleMode) {
+      case SampleModeEnum.FIRST: {
+        reduceTransferOrder = originOrderContent.reduce<
+          Record<string, IRealDataOrderContentSchema>
+        >((p, order) => {
+          const createdTime = transferCreatedTime(order.createdTime);
+          const transferOrder = { ...order, createdTime };
+
+          if (!p[createdTime]) p[createdTime] = { ...transferOrder };
+          return p;
+        }, {});
+        break;
+      }
+      case SampleModeEnum.MAX: {
+        reduceTransferOrder = originOrderContent.reduce<
+          Record<string, IRealDataOrderContentSchema>
+        >((p, order) => {
+          const createdTime = transferCreatedTime(order.createdTime);
+          const transferOrder = { ...order, createdTime };
+          if (!p[createdTime]) p[createdTime] = { ...transferOrder };
+          else if (order.price > p[createdTime].price)
+            p[createdTime] = { ...transferOrder };
+          return p;
+        }, {});
+        break;
+      }
+      case SampleModeEnum.MIN: {
+        reduceTransferOrder = originOrderContent.reduce<
+          Record<string, IRealDataOrderContentSchema>
+        >((p, order) => {
+          const createdTime = transferCreatedTime(order.createdTime);
+          const transferOrder = { ...order, createdTime };
+          if (!p[createdTime]) p[createdTime] = { ...transferOrder };
+          else if (order.price < p[createdTime].price)
+            p[createdTime] = { ...transferOrder };
+          return p;
+        }, {});
+        break;
+      }
+      default: {
+        reduceTransferOrder = originOrderContent.reduce<
+          Record<string, IRealDataOrderContentSchema & { isAverage?: boolean }>
+        >((p, order) => {
+          if (order.quantity === 0) return p;
+          const createdTime = transferCreatedTime(order.createdTime);
+          const transferOrder = { ...order, createdTime };
+          if (!p[createdTime]) {
+            p[createdTime] = { ...transferOrder };
+            p[createdTime].price = order.price * order.quantity;
+            p[createdTime].isAverage = true;
+          } else {
+            p[createdTime].price += order.price * order.quantity;
+            p[createdTime].quantity += order.quantity;
+          }
+          return p;
+        }, {});
+        break;
+      }
+    }
+
+    return Object.values(reduceTransferOrder).map(({ isAverage, ...order }) => {
+      if (isAverage && order.quantity !== 0)
+        order.price = order.price / order.quantity;
+      return order;
+    });
+  }
+
+  public async getOrderContent(query: IRealDataCommonContentQuery) {
+    const groupOrderContent = await this.getGroupOrderContent(query);
+    const { fields } = query;
+    if (!fields)
+      return groupOrderContent.map(({ id, createdTime, ...order }, count) => {
+        const orderObj = {
+          count,
+          trdate: moment(createdTime).format('YYYYMMDD'),
+          ts: moment(createdTime).format('HH:mm:ss.SSS'),
+          ...order,
+        };
+        return orderObj;
+      });
+
+    const transferFields = fields.filter((field) => {
+      return ORDER_FIELDS.includes(field);
+    });
+    return groupOrderContent.map(({ id, createdTime, ...order }, count) => {
+      const orderObj = {
+        count,
+        trdate: moment(createdTime).format('YYYYMMDD'),
+        ts: moment(createdTime).format('HH:mm:ss.SSS'),
+        ...order,
+      };
+
+      const returnObj: any = {};
+      transferFields.forEach((field) => {
+        returnObj[field] = orderObj[field];
+      });
+      return returnObj;
+    });
+  }
+
+  public async getSimulatedOrderContent(query: IRealDataOrderContentQuery) {
     const { fullQueryBuilder, totalSize } =
       await getQueryBuilderContent<RealDataOrderContent>(
         'realDataOrderContent',
@@ -331,7 +472,7 @@ export class RealDataService {
     stockId,
     createdTime,
     dateFormat,
-  }: IRealDataDisplayContentQuery) {
+  }: IRealDataCommonContentQuery) {
     if (!stockId) throw new BadRequestException('Missing stockId');
 
     const queryBuilder =
@@ -362,17 +503,12 @@ export class RealDataService {
     return await queryBuilder.getRawMany<IRealDataTransactionContentSchema>();
   }
 
-  private async getGroupTransactionContent(
-    query: IRealDataDisplayContentQuery,
-  ) {
+  private async getGroupTransactionContent(query: IRealDataCommonContentQuery) {
     const originTransactionContent = await this.getOriginTransactionContent(
       query,
     );
-    const {
-      dateFormat = DateFormatEnum.MINUTE,
-      sampleMode = SampleModeEnum.FIRST,
-      unit = 1,
-    } = query;
+    const { dateFormat, sampleMode = SampleModeEnum.FIRST, unit = 1 } = query;
+    if (!dateFormat === undefined) return originTransactionContent;
 
     let reduceTransferTransaction: Record<
       string,
@@ -452,7 +588,7 @@ export class RealDataService {
     );
   }
 
-  public async getTransactionContent(query: IRealDataDisplayContentQuery) {
+  public async getTransactionContent(query: IRealDataCommonContentQuery) {
     const groupTransactionContent = await this.getGroupTransactionContent(
       query,
     );
@@ -555,7 +691,7 @@ export class RealDataService {
     stockId,
     createdTime,
     dateFormat,
-  }: IRealDataDisplayContentQuery) {
+  }: IRealDataCommonContentQuery) {
     if (!stockId) throw new BadRequestException('Missing stockId');
 
     const queryBuilder =
@@ -581,13 +717,18 @@ export class RealDataService {
     return await queryBuilder.getRawMany<IRealDataDisplayContentSchema>();
   }
 
-  private async getGroupDisplayContent(query: IRealDataDisplayContentQuery) {
+  private async getGroupDisplayContent(query: IRealDataCommonContentQuery) {
     const originDisplayContent = await this.getOriginDisplayContent(query);
-    const {
-      dateFormat = DateFormatEnum.MINUTE,
-      sampleMode = SampleModeEnum.FIRST,
-      unit = 1,
-    } = query;
+    const { dateFormat, unit = 1 } = query;
+    let { sampleMode = SampleModeEnum.FIRST } = query;
+    if (!dateFormat === undefined) {
+      return originDisplayContent;
+    }
+    if (
+      originDisplayContent[0].mthpx === undefined ||
+      originDisplayContent[0].mthpx === null
+    )
+      sampleMode = SampleModeEnum.FIRST;
 
     let reduceTransferDisplay: Record<
       string,
@@ -599,7 +740,7 @@ export class RealDataService {
       case SampleModeEnum.FIRST: {
         reduceTransferDisplay = originDisplayContent.reduce<
           Record<string, IRealDataDisplayContentSchema>
-        >((p, display, index) => {
+        >((p, display) => {
           const createdTime = transferCreatedTime(display.createdTime);
           const transferDisplay = { ...display, createdTime };
 
@@ -667,7 +808,7 @@ export class RealDataService {
     );
   }
 
-  public async getDisplayContent(query: IRealDataDisplayContentQuery) {
+  public async getDisplayContent(query: IRealDataCommonContentQuery) {
     const groupDisplayContent = await this.getGroupDisplayContent(query);
     const { fields } = query;
     if (!fields)
@@ -702,7 +843,7 @@ export class RealDataService {
     });
   }
 
-  public async getFilePath(query: IRealDataDisplayContentQuery) {
+  public async getFilePath(query: IRealDataCommonContentQuery) {
     const min =
       query.createdTime && query.createdTime.min
         ? moment(query.createdTime.min).format('YYYYMMDD') +

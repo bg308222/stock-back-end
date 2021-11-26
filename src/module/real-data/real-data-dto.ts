@@ -29,6 +29,11 @@ export type IRealDataDisplayContentInsert = Omit<
   'id' | 'realDataDisplay'
 >;
 
+export type IRealDataOrderContentSchema = Omit<
+  RealDataOrderContent,
+  'realDataOrder' | 'realDataOrderId' | 'createdTime'
+> & { createdTime: string };
+
 export type IRealDataTransactionContentSchema = Omit<
   RealDataTransactionContent,
   'realDataTransaction' | 'realDataTransactionId' | 'createdTime'
@@ -199,7 +204,7 @@ export const realDataOrderContentQueryStrategy: IQueryStategy<IRealDataOrderCont
     createdTime: QueryStrategyEnum.range,
   };
 
-export class IRealDataDisplayContentQuery {
+export class IRealDataCommonContentQuery {
   @ApiPropertyOptional(getRangeDescription(false))
   createdTime?: IRange<string>;
 

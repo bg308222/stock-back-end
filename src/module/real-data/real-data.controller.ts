@@ -25,15 +25,15 @@ import {
 } from 'src/common/enum';
 import {
   IRealDataDisplayContentInsert,
-  IRealDataDisplayContentQuery,
+  IRealDataCommonContentQuery,
   IRealDataObjectResponse,
   IRealDataOrderContentInsert,
-  IRealDataOrderContentQuery,
   IRealDataQuery,
   IRealDataTransactionContentInsert,
   REAL_DATA_API_BODY,
 } from './real-data-dto';
 import { RealDataService } from './real-data.service';
+import * as moment from 'moment';
 
 const transferPriceToPoint = (str: string) => {
   const lastTwoChar = str.slice(-2);
@@ -74,15 +74,26 @@ export class RealDataController {
   }
 
   @Get('order/content')
-  public async getOrderContent(@Query() query: IRealDataOrderContentQuery) {
-    if (query.stockId === undefined)
-      throw new BadRequestException('Missing stockId');
+  public async getOrderContent(
+    @Query()
+    query: any,
+    @Res()
+    res: Response,
+  ) {
+    if (query.isSimulatedOrder) {
+      if (query.stockId === undefined)
+        throw new BadRequestException('Missing stockId');
 
-    query.order = {
-      order: 'ASC',
-      orderBy: 'createdTime',
-    };
-    return await this.realDataService.getOrderContent(query);
+      query.order = {
+        order: 'ASC',
+        orderBy: 'createdTime',
+      };
+      res.json(await this.realDataService.getSimulatedOrderContent(query));
+    } else {
+      res.setHeader('Access-Control-Expose-Headers', 'filename');
+      res.setHeader('filename', this.getFilename(query, 'odr'));
+      res.json(await this.realDataService.getOrderContent(query));
+    }
   }
 
   private parseFutureOrder(
@@ -259,9 +270,12 @@ export class RealDataController {
 
   @Get('transaction/content')
   public async getTransactionContent(
-    @Query() query: IRealDataDisplayContentQuery,
+    @Query() query: IRealDataCommonContentQuery,
+    @Res() res: Response,
   ) {
-    return await this.realDataService.getTransactionContent(query);
+    res.setHeader('Access-Control-Expose-Headers', 'filename');
+    res.setHeader('filename', this.getFilename(query, 'mth'));
+    res.json(await this.realDataService.getTransactionContent(query));
   }
 
   private parseStockTransaction(
@@ -336,7 +350,6 @@ export class RealDataController {
     @Body() body: string[],
     @Query('id') id: string,
   ) {
-    console.log(body);
     if (id === undefined)
       throw new BadRequestException('Missing realDataTransactionId');
     const insertBody = id.startsWith('mth')
@@ -379,15 +392,49 @@ export class RealDataController {
     return await this.realDataService.deleteDisplay(body);
   }
 
+  private getFilename(
+    query: IRealDataCommonContentQuery,
+    fileType: 'odr' | 'mth' | 'dsp',
+  ) {
+    const min =
+      query.createdTime && query.createdTime.min
+        ? moment(query.createdTime.min).format('YYYYMMDD') +
+          moment(query.createdTime.min).format('HHmmss')
+        : 'x';
+    const max =
+      query.createdTime && query.createdTime.max
+        ? moment(query.createdTime.max).format('YYYYMMDD') +
+          moment(query.createdTime.max).format('HHmmss')
+        : 'x';
+
+    const mode =
+      query.dateFormat !== undefined
+        ? `${query.dateFormat}${
+            query.sampleMode !== undefined ? query.sampleMode : 'x'
+          }`
+        : 'xx';
+
+    const timeStamp = new Date().getTime();
+
+    const fileName = `${fileType}_${query.stockId}_${min}_${max}_${mode}_${timeStamp}.csv`;
+
+    return fileName;
+  }
+
   @Get('display/content')
   @ApiResponse({ status: 200, schema: IRealDataObjectResponse })
-  public async getDisplayContent(@Query() query: IRealDataDisplayContentQuery) {
-    return await this.realDataService.getDisplayContent(query);
+  public async getDisplayContent(
+    @Query() query: IRealDataCommonContentQuery,
+    @Res() res: Response,
+  ) {
+    res.setHeader('Access-Control-Expose-Headers', 'filename');
+    res.setHeader('filename', this.getFilename(query, 'dsp'));
+    res.json(await this.realDataService.getDisplayContent(query));
   }
 
   @Get('display/download')
   public async downloadDisplayContent(
-    @Query() query: IRealDataDisplayContentQuery,
+    @Query() query: IRealDataCommonContentQuery,
     @Res() res: Response,
   ) {
     const displayContent = await this.realDataService.getDisplayContent(query);
