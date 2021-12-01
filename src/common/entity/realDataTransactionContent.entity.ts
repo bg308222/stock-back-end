@@ -10,7 +10,7 @@ import { RealDataTransaction } from './realDataTransaction.entity';
 @Entity()
 @Index(['stockId', 'createdTime'])
 export class RealDataTransactionContent {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column()

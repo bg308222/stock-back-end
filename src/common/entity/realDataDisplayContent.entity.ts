@@ -10,7 +10,7 @@ import { RealDataDisplay } from './realDataDisplay.entity';
 @Entity()
 @Index(['sym', 'createdTime'])
 export class RealDataDisplayContent {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column()

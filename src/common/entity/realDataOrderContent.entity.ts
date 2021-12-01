@@ -16,7 +16,7 @@ import { RealDataOrder } from './realDataOrder.entity';
 @Entity()
 @Index(['stockId', 'createdTime'])
 export class RealDataOrderContent {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column()
