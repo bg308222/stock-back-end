@@ -554,9 +554,9 @@ export class RealDataController {
 
     try {
       return await this.realDataService.insertDisplayContent(insertBody);
-    } catch {
+    } catch (e) {
       await this.realDataService.deleteDisplay([id]);
-      throw new BadRequestException('Text type error');
+      throw new BadRequestException(e.message ? e.message : 'Text type error');
     }
   }
 }

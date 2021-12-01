@@ -725,8 +725,9 @@ export class RealDataService {
       return originDisplayContent;
     }
     if (
-      originDisplayContent[0].mthpx === undefined ||
-      originDisplayContent[0].mthpx === null
+      originDisplayContent[0] &&
+      (originDisplayContent[0].mthpx === undefined ||
+        originDisplayContent[0].mthpx === null)
     )
       sampleMode = SampleModeEnum.FIRST;
 
