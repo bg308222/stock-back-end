@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Post,
   Put,
   Query,
@@ -237,10 +238,15 @@ export class RealDataController {
       : this.parseFutureOrder(body, id);
     try {
       return await this.realDataService.insertOrderContent(insertBody);
-    } catch {
+    } catch (e) {
       await this.realDataService.deleteOrder([id]);
-      throw new BadRequestException('Text type error');
+      throw new BadRequestException(e.message || 'Text type error');
     }
+  }
+
+  @Get('order/available/:stockId')
+  public async getAvailableOrderDate(@Param('stockId') stockId: string) {
+    return await this.realDataService.getAvailableOrderDate(stockId);
   }
 
   @Get('transaction')
@@ -358,10 +364,15 @@ export class RealDataController {
 
     try {
       return await this.realDataService.insertTransactionContent(insertBody);
-    } catch {
+    } catch (e) {
       await this.realDataService.deleteTransaction([id]);
-      throw new BadRequestException('Text type error');
+      throw new BadRequestException(e.message || 'Text type error');
     }
+  }
+
+  @Get('transaction/available/:stockId')
+  public async getAvailableTransactionDate(@Param('stockId') stockId: string) {
+    return await this.realDataService.getAvailableTransactionDate(stockId);
   }
 
   @Get('display')
@@ -556,7 +567,12 @@ export class RealDataController {
       return await this.realDataService.insertDisplayContent(insertBody);
     } catch (e) {
       await this.realDataService.deleteDisplay([id]);
-      throw new BadRequestException(e.message ? e.message : 'Text type error');
+      throw new BadRequestException(e.message || 'Text type error');
     }
+  }
+
+  @Get('display/available/:stockId')
+  public async getAvailableDisplayDate(@Param('stockId') stockId: string) {
+    return await this.realDataService.getAvailableDisplayDate(stockId);
   }
 }

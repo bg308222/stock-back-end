@@ -421,6 +421,20 @@ export class RealDataService {
     return true;
   }
 
+  public async getAvailableOrderDate(stockId: string) {
+    const queryBuilder =
+      this.realDataOrderContentRepository.createQueryBuilder('order');
+    queryBuilder.select(
+      `DISTINCT DATE_FORMAT(order.createdTime,'${getDateFormatString(
+        DateFormatEnum.DAY,
+      )}')`,
+      'createdTime',
+    );
+    queryBuilder.where('order.stockId = :stockId', { stockId });
+    const result = await queryBuilder.getRawMany();
+    return result.map((v) => v.createdTime);
+  }
+
   public async getTransaction(query: IRealDataQuery) {
     query.order = {
       order: 'DESC',
@@ -641,6 +655,22 @@ export class RealDataService {
     return true;
   }
 
+  public async getAvailableTransactionDate(stockId: string) {
+    const queryBuilder =
+      this.realDataTransactionContentRepository.createQueryBuilder(
+        'transaction',
+      );
+    queryBuilder.select(
+      `DISTINCT DATE_FORMAT(transaction.createdTime,'${getDateFormatString(
+        DateFormatEnum.DAY,
+      )}')`,
+      'createdTime',
+    );
+    queryBuilder.where('transaction.stockId = :stockId', { stockId });
+    const result = await queryBuilder.getRawMany();
+    return result.map((v) => v.createdTime);
+  }
+
   public async getDisplay(query: IRealDataQuery) {
     query.order = {
       order: 'DESC',
@@ -842,6 +872,20 @@ export class RealDataService {
       });
       return returnObj;
     });
+  }
+
+  public async getAvailableDisplayDate(stockId: string) {
+    const queryBuilder =
+      this.realDataDisplayContentRepository.createQueryBuilder('display');
+    queryBuilder.select(
+      `DISTINCT DATE_FORMAT(display.createdTime,'${getDateFormatString(
+        DateFormatEnum.DAY,
+      )}')`,
+      'createdTime',
+    );
+    queryBuilder.where('display.sym = :stockId', { stockId });
+    const result = await queryBuilder.getRawMany();
+    return result.map((v) => v.createdTime);
   }
 
   public async getFilePath(query: IRealDataCommonContentQuery) {
