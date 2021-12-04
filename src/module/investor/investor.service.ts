@@ -67,8 +67,14 @@ export class InvestorService {
     if (!investor) throw new BadRequestException("Investor doesn't exist");
     if (compareSync(password, investor.password)) {
       const token = sign({ account }, privateKey);
-      investor.expiredTime = this.getExpiredTime();
-      await this.investorRepository.save(investor);
+      if (
+        !investor.expiredTime ||
+        new Date(investor.expiredTime).getTime() <
+          this.getExpiredTime().getTime()
+      ) {
+        investor.expiredTime = this.getExpiredTime();
+        await this.investorRepository.save(investor);
+      }
       return token;
     } else {
       throw new ForbiddenException('Password is wrong');
@@ -79,7 +85,7 @@ export class InvestorService {
     if (
       investor &&
       investor.expiredTime &&
-      new Date(investor.expiredTime).getTime() - new Date().getTime() < 86400000
+      new Date(investor.expiredTime).getTime() < this.getExpiredTime().getTime()
     ) {
       investor.expiredTime = null;
       await this.investorRepository.save(investor);
