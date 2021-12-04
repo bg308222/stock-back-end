@@ -187,7 +187,11 @@ export class RealDataService {
     if (createdTime) {
       const { min, max } = createdTime;
       if (min) queryBuilder.andWhere('order.createdTime >= :min', { min });
+      else throw new BadRequestException('startTime is required');
       if (max) queryBuilder.andWhere('order.createdTime < :max', { max });
+      else throw new BadRequestException('endTime is required');
+    } else {
+      throw new BadRequestException('createdTime is required');
     }
     queryBuilder.orderBy('createdTime', 'ASC');
     return await queryBuilder.getRawMany<IRealDataOrderContentSchema>();
@@ -423,7 +427,11 @@ export class RealDataService {
       const { min, max } = createdTime;
       if (min)
         queryBuilder.andWhere('transaction.createdTime >= :min', { min });
+      else throw new BadRequestException('startTime is required');
       if (max) queryBuilder.andWhere('transaction.createdTime < :max', { max });
+      else throw new BadRequestException('endTime is required');
+    } else {
+      throw new BadRequestException('createdTime is required');
     }
     queryBuilder.orderBy('createdTime', 'ASC');
 
@@ -653,7 +661,11 @@ export class RealDataService {
     if (createdTime) {
       const { min, max } = createdTime;
       if (min) queryBuilder.andWhere('display.createdTime >= :min', { min });
+      else throw new BadRequestException('startTime is required');
       if (max) queryBuilder.andWhere('display.createdTime < :max', { max });
+      else throw new BadRequestException('endTime is required');
+    } else {
+      throw new BadRequestException('createdTime is required');
     }
     queryBuilder.orderBy('createdTime', 'ASC');
 
