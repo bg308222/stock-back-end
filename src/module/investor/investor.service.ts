@@ -76,7 +76,11 @@ export class InvestorService {
   }
 
   public async logout(investor: Investor) {
-    if (investor) {
+    if (
+      investor &&
+      investor.expiredTime &&
+      new Date(investor.expiredTime).getTime() - new Date().getTime() < 86400000
+    ) {
       investor.expiredTime = null;
       await this.investorRepository.save(investor);
     }
