@@ -27,110 +27,15 @@ import * as moment from 'moment';
 import * as fs from 'fs';
 import { RealDataTransaction } from 'src/common/entity/realDataTransaction.entity';
 import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
-
-const ORDER_SELECT = [
-  'id',
-  'createdTime',
-  'method',
-  'subMethod',
-  'price',
-  'quantity',
-  'priceType',
-  'timeRestriction',
-  'stockId',
-  'code',
-];
-
-const ORDER_FIELDS = [
-  'count',
-  'method',
-  'subMethod',
-  'price',
-  'quantity',
-  'priceType',
-  'timeRestriction',
-  'stockId',
-  'trdate',
-  'ts',
-];
-
-const TRANSACTION_SELECT = [
-  'id',
-  'createdTime',
-  'stockId',
-  'price',
-  'quantity',
-  'code',
-];
-
-const TRANSACTION_FIELDS = [
-  'count',
-  'stockId',
-  'price',
-  'quantity',
-  'trdate',
-  'ts',
-];
-
-const DISPLAY_SELECT = [
-  'id',
-  'sym',
-  'mthpx',
-  'mthsz',
-  'bsz',
-  'b1px',
-  'b1sz',
-  'b2px',
-  'b2sz',
-  'b3px',
-  'b3sz',
-  'b4px',
-  'b4sz',
-  'b5px',
-  'b5sz',
-  'asz',
-  'a1px',
-  'a1sz',
-  'a2px',
-  'a2sz',
-  'a3px',
-  'a3sz',
-  'a4px',
-  'a4sz',
-  'a5px',
-  'a5sz',
-];
-
-const DISPLAY_FIELDS = [
-  'count',
-  'mthpx',
-  'mthsz',
-  'a1px',
-  'a1sz',
-  'a2px',
-  'a2sz',
-  'a3px',
-  'a3sz',
-  'a4px',
-  'a4sz',
-  'a5px',
-  'a5sz',
-  'b1px',
-  'b1sz',
-  'b2px',
-  'b2sz',
-  'b3px',
-  'b3sz',
-  'b4px',
-  'b4sz',
-  'b5px',
-  'b5sz',
-  'asz',
-  'bsz',
-  'sym',
-  'trdate',
-  'ts',
-];
+import {
+  AVAILABLE_STOCK,
+  ORDER_SELECT,
+  ORDER_FIELDS,
+  TRANSACTION_SELECT,
+  TRANSACTION_FIELDS,
+  DISPLAY_SELECT,
+  DISPLAY_FIELDS,
+} from './constant';
 
 @Injectable()
 export class RealDataService {
@@ -205,6 +110,10 @@ export class RealDataService {
         };
       }
     }
+  }
+
+  public getAvailableStock() {
+    return AVAILABLE_STOCK.map((stock) => stock.trim());
   }
 
   public async getOrder(query: IRealDataQuery) {

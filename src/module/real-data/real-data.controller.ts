@@ -46,6 +46,11 @@ const transferPriceToPoint = (str: string) => {
 export class RealDataController {
   constructor(private readonly realDataService: RealDataService) {}
 
+  @Get('available-stock')
+  public async getAvailableStock() {
+    return this.realDataService.getAvailableStock();
+  }
+
   @Get('order')
   public async getOrder(@Query() query: IRealDataQuery) {
     return await this.realDataService.getOrder(query);
