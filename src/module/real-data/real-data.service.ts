@@ -113,7 +113,11 @@ export class RealDataService {
   }
 
   public getAvailableStock() {
-    return AVAILABLE_STOCK.map((stock) => stock.trim());
+    return AVAILABLE_STOCK.map((stock) => {
+      return {
+        id: stock.trim(),
+      };
+    });
   }
 
   public async getOrder(query: IRealDataQuery) {
