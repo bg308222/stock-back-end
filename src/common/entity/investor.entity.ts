@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Role } from './role.entity';
 
 @Entity()
 export class Investor {
@@ -16,6 +18,17 @@ export class Investor {
 
   @Column({ type: 'varchar' })
   password: string;
+
+  @Column({ type: 'int', default: 5 })
+  totalApiTime: number;
+
+  @Column({ type: 'int', default: 5 })
+  restApiTime: number;
+
+  @Column()
+  roleId: number;
+  @ManyToOne(() => Role, { nullable: false, cascade: true })
+  role: Role;
 
   @CreateDateColumn()
   createdTime: Date;

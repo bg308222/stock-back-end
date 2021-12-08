@@ -18,7 +18,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let result = '';
     result += '\n---REQUEST---\n';
     result += new Date().toLocaleString() + '\n';
-    result += `${request.method} ${request.baseUrl}\n`;
+    result += `${request.method} ${request.url}\n`;
     result += 'Query: ' + JSON.stringify(request.query) + '\n';
     result += 'Body: ' + JSON.stringify(request.body) + '\n';
     result += status + ' ' + exception.message + '\n';
@@ -29,7 +29,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       timestamp: new Date().toISOString(),
       message: exception.message,
-      path: request.baseUrl,
+      path: request.url,
     });
   }
 }

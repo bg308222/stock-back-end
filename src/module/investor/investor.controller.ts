@@ -1,7 +1,21 @@
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InvestorService } from './investor.service';
-import { IInvestorInsert, IInvestorLogin } from './investor.dto';
+import {
+  IInvestorDelete,
+  IInvestorInsert,
+  IInvestorLogin,
+  IInvestorQuery,
+  IInvestorUpdate,
+} from './investor.dto';
 import { Investor } from 'src/common/entity/investor.entity';
 
 @ApiTags('Investor')
@@ -10,9 +24,30 @@ export class InvestorController {
   constructor(private readonly investService: InvestorService) {}
 
   @ApiSecurity('login')
+  @Get()
+  public async getInvestor(@Query() query: IInvestorQuery) {
+    return await this.investService.getInvestor(query);
+  }
+
+  @ApiSecurity('login')
   @Post()
-  public async create(@Body() body: IInvestorInsert) {
-    return await this.investService.create(body);
+  public async createInvestor(@Body() body: IInvestorInsert) {
+    await this.investService.createInvestor(body);
+    return true;
+  }
+
+  @ApiSecurity('login')
+  @Put()
+  public async updateInvestor(@Body() body: IInvestorUpdate) {
+    await this.investService.updateInvestor(body);
+    return true;
+  }
+
+  @ApiSecurity('login')
+  @Delete()
+  public async deleteRole(@Body() body: IInvestorDelete) {
+    await this.investService.deleteRole(body);
+    return true;
   }
 
   @Post('login')

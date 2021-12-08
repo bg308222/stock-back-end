@@ -33,9 +33,10 @@ const disabledCheckedList = [
   '/api/real-data/display/download',
 ];
 @Injectable()
-export class LoggerMiddleware implements NestMiddleware {
+export class ApiMiddleware implements NestMiddleware {
   constructor(private readonly investorService: InvestorService) {}
   async use(req: Request, res: Response, next: NextFunction) {
+    // Data preprocess
     Object.entries(req.query).forEach(([key, value]) => {
       try {
         req.query[key] = JSON.parse(value as any);

@@ -9,7 +9,16 @@ import { Investor } from 'src/common/entity/investor.entity';
 import { Repository } from 'typeorm';
 import { hashSync, compareSync } from 'bcrypt';
 import { sign, verify } from 'jsonwebtoken';
-import { IInvestorInsert, IInvestorLogin } from './investor.dto';
+import {
+  IInvestorDelete,
+  IInvestorInsert,
+  IInvestorLogin,
+  IInvestorQuery,
+  IInvestorUpdate,
+  queryStrategy,
+} from './investor.dto';
+import { getQueryBuilderContent } from 'src/common/helper/database.helper';
+import { Role } from 'src/common/entity/role.entity';
 const privateKey = 'STOCK_PRIVATE_KEY';
 
 @Injectable()
@@ -17,7 +26,84 @@ export class InvestorService {
   constructor(
     @InjectRepository(Investor)
     private readonly investorRepository: Repository<Investor>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
   ) {}
+
+  public async getInvestor(query: IInvestorQuery) {
+    const { fullQueryBuilder, totalSize } = await getQueryBuilderContent(
+      'investor',
+      this.investorRepository.createQueryBuilder('investor'),
+      queryStrategy,
+      query,
+    );
+    fullQueryBuilder.leftJoinAndSelect('investor.role', 'role');
+    const content = (await fullQueryBuilder.getMany()).map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ({ password: s1, roleId: s2, ...investor }) => {
+        return investor;
+      },
+    );
+    return {
+      content,
+      totalSize,
+    };
+  }
+
+  public async createInvestor(body: IInvestorInsert) {
+    const { account, password } = body;
+    if (!account || !password)
+      throw new BadRequestException('Missing account or password');
+    const hash = hashSync(password, 10);
+    if (await this.investorRepository.findOne({ account }))
+      throw new ForbiddenException('This account has already existed');
+    const role = new Role();
+    role.id = 1;
+
+    await this.investorRepository.insert({
+      account,
+      password: hash,
+      expiredTime: this.getExpiredTime(),
+      role,
+    });
+    return true;
+  }
+
+  public async updateInvestor({
+    id,
+    account,
+    password,
+    totalApiTime,
+    restApiTime,
+    roleId,
+  }: IInvestorUpdate) {
+    if (!id) throw new BadRequestException('Id is required');
+
+    const investor = await this.investorRepository.findOne({ id });
+    if (!investor) throw new BadRequestException("Investor doesn't exist");
+
+    if (account && account !== investor.account) {
+      if (await this.investorRepository.findOne({ account }))
+        throw new ForbiddenException('This account has already existed');
+      investor.account = account;
+    }
+    if (password) investor.password = hashSync(password, 10);
+    if (totalApiTime) investor.totalApiTime = totalApiTime;
+    if (restApiTime) investor.restApiTime = restApiTime;
+    if (roleId) {
+      const role = await this.roleRepository.findOne({ id: roleId });
+      investor.role = role;
+    }
+    await this.investorRepository.save(investor);
+    return true;
+  }
+
+  public async deleteRole(body: IInvestorDelete) {
+    if (body.id.length) {
+      await this.investorRepository.delete(body.id);
+    }
+    return true;
+  }
 
   private getExpiredTime() {
     return new Date(new Date().getTime() + 1800000);
@@ -40,22 +126,6 @@ export class InvestorService {
       investor.expiredTime = this.getExpiredTime();
     await this.investorRepository.save(investor);
     return investor;
-  }
-
-  public async create(body: IInvestorInsert) {
-    const { account, password } = body;
-    if (!account || !password)
-      throw new BadRequestException('Missing account or password');
-    const hash = hashSync(password, 10);
-    if (await this.investorRepository.findOne({ account }))
-      throw new ForbiddenException('This account has already existed');
-
-    await this.investorRepository.insert({
-      account,
-      password: hash,
-      expiredTime: this.getExpiredTime(),
-    });
-    return true;
   }
 
   public async login(body: IInvestorLogin) {

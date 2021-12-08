@@ -51,9 +51,12 @@ export const getQueryBuilderContent = async <T = any>(
   });
 
   if (query.order && query.order.order && query.order.orderBy) {
-    fullQueryBuilder.orderBy(query.order.orderBy, query.order.order);
+    fullQueryBuilder.orderBy(
+      `${alias}.${query.order.orderBy}`,
+      query.order.order,
+    );
   } else {
-    fullQueryBuilder.orderBy('createdTime', 'DESC');
+    fullQueryBuilder.orderBy(`${alias}.createdTime`, 'DESC');
   }
 
   const totalSize = await fullQueryBuilder.getCount();
