@@ -20,6 +20,7 @@ const runSwagger = (app: NestExpressApplication, swaggerServer: string) => {
     .addTag('Display')
     .addTag('Group')
     .addTag('RealData')
+    .addTag('Rbac')
     .addServer(swaggerServer)
     .addSecurity('login', {
       type: 'apiKey',

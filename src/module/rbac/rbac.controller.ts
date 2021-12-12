@@ -7,12 +7,13 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiSecurity } from '@nestjs/swagger';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { IRoleDelete, IRoleInsert, IRoleQuery, IRoleUpdate } from './rbac.dto';
 import { RbacService } from './rbac.service';
 
 @ApiSecurity('login')
 @Controller('rbac')
+@ApiTags('Rbac')
 export class RbacController {
   constructor(private readonly rbacService: RbacService) {}
 
