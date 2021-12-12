@@ -13,10 +13,11 @@ export class RbacMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     const investor = req.query.investor as any as Investor;
     if (!investor && req.baseUrl === '/api/investor/login') next();
-
-    const role = await this.rbacService.getRole({ id: investor.roleId });
-    const permissions = role && role.content && role.content[0].permissions;
-    // console.log(investor, role);
-    next();
+    else {
+      const role = await this.rbacService.getRole({ id: investor.roleId });
+      const permissions = role && role.content && role.content[0].permissions;
+      // console.log(investor, role);
+      next();
+    }
   }
 }
