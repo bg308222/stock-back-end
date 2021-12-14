@@ -28,7 +28,7 @@ export class GroupController {
   public async get(@Query() query: IGroupQuery) {
     query.order = {
       order: 'ASC',
-      orderBy: 'group.id',
+      orderBy: 'id',
     };
     return await this.groupService.get(query);
   }
