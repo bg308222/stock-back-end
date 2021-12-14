@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Investor } from 'src/common/entity/investor.entity';
 import { RealDataDisplayContent } from 'src/common/entity/realDataDisplayContent.entity';
 import { RealDataOrderContent } from 'src/common/entity/realDataOrderContent.entity';
 import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
@@ -222,6 +223,8 @@ export class IRealDataCommonContentQuery {
 
   @ApiProperty({ required: true, example: '0050  ' })
   stockId: string;
+
+  investor: Investor;
 }
 
 export const IRealDataObjectResponse = {

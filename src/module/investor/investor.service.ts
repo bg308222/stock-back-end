@@ -30,6 +30,27 @@ export class InvestorService {
     private readonly roleRepository: Repository<Role>,
   ) {}
 
+  private checkRestApiTime(investor: Investor) {
+    const { role, totalApiTime, restApiTime, updatedTime } = investor;
+    if (updatedTime.toLocaleDateString() !== new Date().toLocaleDateString()) {
+      investor.restApiTime = Math.max(
+        totalApiTime || (role && role.totalApiTime) || 5,
+        restApiTime,
+      );
+    }
+  }
+
+  public async subRestApiTime(investor: Investor) {
+    this.checkRestApiTime(investor);
+    if (investor.restApiTime === 0) {
+      throw new ForbiddenException("Today's chance has been used up");
+    } else {
+      investor.restApiTime -= 1;
+      await this.investorRepository.save(investor);
+    }
+    return true;
+  }
+
   public async getInvestor(query: IInvestorQuery) {
     const { fullQueryBuilder, totalSize } = await getQueryBuilderContent(
       'investor',
@@ -79,7 +100,10 @@ export class InvestorService {
   }: IInvestorUpdate) {
     if (!id) throw new BadRequestException('Id is required');
 
-    const investor = await this.investorRepository.findOne({ id });
+    const investor = await this.investorRepository.findOne(
+      { id },
+      { relations: ['role'] },
+    );
     if (!investor) throw new BadRequestException("Investor doesn't exist");
 
     if (account && account !== investor.account) {
@@ -89,9 +113,15 @@ export class InvestorService {
     }
     if (password) investor.password = hashSync(password, 10);
     if (totalApiTime) investor.totalApiTime = totalApiTime;
-    if (restApiTime) investor.restApiTime = restApiTime;
+    if (restApiTime) {
+      investor.restApiTime = restApiTime;
+    } else {
+      this.checkRestApiTime(investor);
+    }
+
     if (roleId) {
       const role = await this.roleRepository.findOne({ id: roleId });
+      if (!role) throw new BadRequestException("Role doesn't exist");
       investor.role = role;
     }
     await this.investorRepository.save(investor);
@@ -118,7 +148,10 @@ export class InvestorService {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const investor = await this.investorRepository.findOne({ account });
+    const investor = await this.investorRepository.findOne(
+      { account },
+      { relations: ['role'] },
+    );
     if (!investor) throw new UnauthorizedException('Invalid token');
     if (isExpired && new Date(investor.expiredTime) < new Date())
       throw new UnauthorizedException('Token expired');

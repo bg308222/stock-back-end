@@ -9,7 +9,7 @@ import {
   getDateFormatString,
   getQueryBuilderContent,
 } from 'src/common/helper/database.helper';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import {
   IRealDataDisplayContentInsert,
   IRealDataCommonContentQuery,
@@ -36,6 +36,7 @@ import {
   DISPLAY_SELECT,
   DISPLAY_FIELDS,
 } from './constant';
+import { IRange } from 'src/common/type';
 
 @Injectable()
 export class RealDataService {
@@ -53,6 +54,28 @@ export class RealDataService {
     @InjectRepository(RealDataTransactionContent)
     private readonly realDataTransactionContentRepository: Repository<RealDataTransactionContent>,
   ) {}
+
+  private checkCreatedTimeFormat(
+    createdTime: IRange<string>,
+    queryBuilder: SelectQueryBuilder<any>,
+    alias: string,
+  ) {
+    if (createdTime) {
+      const { min, max } = createdTime;
+      if (min) queryBuilder.andWhere(`${alias}.createdTime >= :min`, { min });
+      else throw new BadRequestException('startTime is required');
+      if (max) queryBuilder.andWhere(`${alias}.createdTime < :max`, { max });
+      else throw new BadRequestException('endTime is required');
+
+      const diff = new Date(max).getTime() - new Date(min).getTime();
+      if (diff > 86400000 * 5) {
+        throw new BadRequestException('range is more than 5 days');
+      }
+    } else {
+      throw new BadRequestException('createdTime is required');
+    }
+    queryBuilder.orderBy(`${alias}.createdTime`, 'ASC');
+  }
 
   private getTransferCreatedTime(dateFormat: DateFormatEnum, unit: number) {
     switch (dateFormat) {
@@ -184,16 +207,8 @@ export class RealDataService {
     );
 
     queryBuilder.where('order.stockId = :stockId', { stockId });
-    if (createdTime) {
-      const { min, max } = createdTime;
-      if (min) queryBuilder.andWhere('order.createdTime >= :min', { min });
-      else throw new BadRequestException('startTime is required');
-      if (max) queryBuilder.andWhere('order.createdTime < :max', { max });
-      else throw new BadRequestException('endTime is required');
-    } else {
-      throw new BadRequestException('createdTime is required');
-    }
-    queryBuilder.orderBy('createdTime', 'ASC');
+    this.checkCreatedTimeFormat(createdTime, queryBuilder, 'order');
+
     return await queryBuilder.getRawMany<IRealDataOrderContentSchema>();
   }
 
@@ -423,18 +438,7 @@ export class RealDataService {
     );
 
     queryBuilder.where('transaction.stockId = :stockId', { stockId });
-    if (createdTime) {
-      const { min, max } = createdTime;
-      if (min)
-        queryBuilder.andWhere('transaction.createdTime >= :min', { min });
-      else throw new BadRequestException('startTime is required');
-      if (max) queryBuilder.andWhere('transaction.createdTime < :max', { max });
-      else throw new BadRequestException('endTime is required');
-    } else {
-      throw new BadRequestException('createdTime is required');
-    }
-    queryBuilder.orderBy('createdTime', 'ASC');
-
+    this.checkCreatedTimeFormat(createdTime, queryBuilder, 'transaction');
     return await queryBuilder.getRawMany<IRealDataTransactionContentSchema>();
   }
 
@@ -658,16 +662,7 @@ export class RealDataService {
     );
 
     queryBuilder.where('display.sym = :stockId', { stockId });
-    if (createdTime) {
-      const { min, max } = createdTime;
-      if (min) queryBuilder.andWhere('display.createdTime >= :min', { min });
-      else throw new BadRequestException('startTime is required');
-      if (max) queryBuilder.andWhere('display.createdTime < :max', { max });
-      else throw new BadRequestException('endTime is required');
-    } else {
-      throw new BadRequestException('createdTime is required');
-    }
-    queryBuilder.orderBy('createdTime', 'ASC');
+    this.checkCreatedTimeFormat(createdTime, queryBuilder, 'display');
 
     return await queryBuilder.getRawMany<IRealDataDisplayContentSchema>();
   }

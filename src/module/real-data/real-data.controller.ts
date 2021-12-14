@@ -35,6 +35,7 @@ import {
 } from './real-data-dto';
 import { RealDataService } from './real-data.service';
 import * as moment from 'moment';
+import { InvestorService } from '../investor/investor.service';
 
 const transferPriceToPoint = (str: string) => {
   const lastTwoChar = str.slice(-2);
@@ -44,7 +45,10 @@ const transferPriceToPoint = (str: string) => {
 @ApiSecurity('login')
 @Controller('real-data')
 export class RealDataController {
-  constructor(private readonly realDataService: RealDataService) {}
+  constructor(
+    private readonly realDataService: RealDataService,
+    private readonly investService: InvestorService,
+  ) {}
 
   @Get('available-stock')
   public async getAvailableStock() {
@@ -98,7 +102,9 @@ export class RealDataController {
     } else {
       res.setHeader('Access-Control-Expose-Headers', 'filename');
       res.setHeader('filename', this.getFilename(query, 'odr'));
-      res.json(await this.realDataService.getOrderContent(query));
+      const result = await this.realDataService.getOrderContent(query);
+      await this.investService.subRestApiTime(query.investor);
+      res.json(result);
     }
   }
 
@@ -286,7 +292,9 @@ export class RealDataController {
   ) {
     res.setHeader('Access-Control-Expose-Headers', 'filename');
     res.setHeader('filename', this.getFilename(query, 'mth'));
-    res.json(await this.realDataService.getTransactionContent(query));
+    const result = await this.realDataService.getTransactionContent(query);
+    await this.investService.subRestApiTime(query.investor);
+    res.json(result);
   }
 
   private parseStockTransaction(
@@ -445,7 +453,9 @@ export class RealDataController {
   ) {
     res.setHeader('Access-Control-Expose-Headers', 'filename');
     res.setHeader('filename', this.getFilename(query, 'dsp'));
-    res.json(await this.realDataService.getDisplayContent(query));
+    const result = await this.realDataService.getDisplayContent(query);
+    await this.investService.subRestApiTime(query.investor);
+    res.json(result);
   }
 
   @Get('display/download')
