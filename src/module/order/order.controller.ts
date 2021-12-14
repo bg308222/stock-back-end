@@ -5,13 +5,7 @@ import {
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  MethodEnum,
-  OrderStatusEnum,
-  PriceTypeEnum,
-  SubMethodEnum,
-  TimeRestrictiomEnum,
-} from 'src/common/enum';
+
 import { MatchService } from '../match/match.service';
 import {
   IOrderDelete,

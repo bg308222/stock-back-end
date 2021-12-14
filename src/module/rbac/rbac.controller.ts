@@ -7,10 +7,15 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { IRoleDelete, IRoleInsert, IRoleQuery, IRoleUpdate } from './rbac.dto';
+import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  IRoleDelete,
+  IRoleInsert,
+  IRoleQuery,
+  IRoleQueryResponse,
+  IRoleUpdate,
+} from './rbac.dto';
 import { RbacService } from './rbac.service';
-
 @ApiSecurity('login')
 @Controller('rbac')
 @ApiTags('Rbac')
@@ -18,6 +23,7 @@ export class RbacController {
   constructor(private readonly rbacService: RbacService) {}
 
   @Get('role')
+  @ApiResponse({ type: IRoleQueryResponse, status: 200 })
   public async getRole(@Query() query: IRoleQuery) {
     return await this.rbacService.getRole(query);
   }
@@ -41,6 +47,7 @@ export class RbacController {
   }
 
   @Get('permission')
+  @ApiResponse({ isArray: true, type: 'string' })
   public async getPermission() {
     return await this.rbacService.getPermission();
   }

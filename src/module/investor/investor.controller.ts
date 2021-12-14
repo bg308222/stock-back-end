@@ -14,6 +14,7 @@ import {
   IInvestorInsert,
   IInvestorLogin,
   IInvestorQuery,
+  IInvestorQueryResponse,
   IInvestorUpdate,
 } from './investor.dto';
 import { Investor } from 'src/common/entity/investor.entity';
@@ -24,6 +25,7 @@ export class InvestorController {
   constructor(private readonly investService: InvestorService) {}
 
   @ApiSecurity('login')
+  @ApiResponse({ type: IInvestorQueryResponse, status: 200 })
   @Get()
   public async getInvestor(@Query() query: IInvestorQuery) {
     return await this.investService.getInvestor(query);
