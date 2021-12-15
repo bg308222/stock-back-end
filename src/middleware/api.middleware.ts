@@ -20,7 +20,9 @@ const checkRequest = (req: Request, isCheck = true) => {
 };
 
 const transferDateToISODate = (date: string) => {
-  return new Date(new Date(date).getTime() + 8 * 3600000).toISOString();
+  return new Date(new Date(date).getTime() + 8 * 3600000)
+    .toISOString()
+    .replace('Z', '');
 };
 
 const disabledCheckedList = [
@@ -41,6 +43,10 @@ export class ApiMiddleware implements NestMiddleware {
       try {
         req.query[key] = JSON.parse(value as any);
       } catch {}
+      if (key === 'stockId') {
+        req.query[key] = value.toString();
+        return;
+      }
       if (key.endsWith('Time')) {
         const value = req.query[key] as any;
         if (typeof value === 'string') {
