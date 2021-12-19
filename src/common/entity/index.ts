@@ -1,3 +1,5 @@
+import { AvailableStock } from './availableStock.entity';
+import { AvailableStockDate } from './availableStockDate.entity';
 import { Display } from './display.entity';
 import { Group } from './group.entity';
 import { Investor } from './investor.entity';
@@ -16,6 +18,8 @@ import { VirtualOrder } from './virtualOrder.entity';
 import { VirtualOrderContainer } from './virtualOrderContainer.entity';
 
 export const entities = [
+  AvailableStock,
+  AvailableStockDate,
   Investor,
   Order,
   Stock,
