@@ -28,7 +28,6 @@ import * as fs from 'fs';
 import { RealDataTransaction } from 'src/common/entity/realDataTransaction.entity';
 import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
 import {
-  AVAILABLE_STOCK,
   ORDER_SELECT,
   ORDER_FIELDS,
   TRANSACTION_SELECT,
@@ -37,6 +36,7 @@ import {
   DISPLAY_FIELDS,
 } from './constant';
 import { IRange } from 'src/common/type';
+import { AvailableService } from '../available/available.service';
 
 @Injectable()
 export class RealDataService {
@@ -53,6 +53,8 @@ export class RealDataService {
     private readonly realDataTransactionRepository: Repository<RealDataTransaction>,
     @InjectRepository(RealDataTransactionContent)
     private readonly realDataTransactionContentRepository: Repository<RealDataTransactionContent>,
+
+    private readonly availableService: AvailableService,
   ) {}
 
   private checkCreatedTimeFormat(
@@ -85,9 +87,7 @@ export class RealDataService {
           const transferMs = (Math.floor(ms / unit) * unit)
             .toString()
             .padStart(3, '0');
-          return (
-            createdTime.substr(0, 20) + transferMs + createdTime.substr(23)
-          );
+          return createdTime.slice(0, 20) + transferMs + createdTime.slice(23);
         };
       }
       case DateFormatEnum.SECOND: {
@@ -96,9 +96,7 @@ export class RealDataService {
           const transferMs = (Math.floor(sec / unit) * unit)
             .toString()
             .padStart(2, '0');
-          return (
-            createdTime.substr(0, 17) + transferMs + createdTime.substr(19)
-          );
+          return createdTime.slice(0, 17) + transferMs + createdTime.slice(19);
         };
       }
       case DateFormatEnum.HOUR: {
@@ -107,9 +105,7 @@ export class RealDataService {
           const transferMs = (Math.floor(hour / unit) * unit)
             .toString()
             .padStart(2, '0');
-          return (
-            createdTime.substr(0, 11) + transferMs + createdTime.substr(13)
-          );
+          return createdTime.slice(0, 11) + transferMs + createdTime.slice(13);
         };
       }
       case DateFormatEnum.DAY: {
@@ -118,7 +114,7 @@ export class RealDataService {
           const transferMs = (Math.floor(day / unit) * unit)
             .toString()
             .padStart(2, '0');
-          return createdTime.substr(0, 8) + transferMs + createdTime.substr(10);
+          return createdTime.slice(0, 8) + transferMs + createdTime.slice(10);
         };
       }
       default: {
@@ -127,20 +123,10 @@ export class RealDataService {
           const transferMs = (Math.floor(min / unit) * unit)
             .toString()
             .padStart(2, '0');
-          return (
-            createdTime.substr(0, 14) + transferMs + createdTime.substr(16)
-          );
+          return createdTime.slice(0, 14) + transferMs + createdTime.slice(16);
         };
       }
     }
-  }
-
-  public getAvailableStock() {
-    return AVAILABLE_STOCK.map((stock) => {
-      return {
-        id: stock.trim(),
-      };
-    });
   }
 
   public async getOrder(query: IRealDataQuery) {
@@ -176,6 +162,7 @@ export class RealDataService {
 
     realDataOrder.isFinished = 1;
     await this.realDataOrderRepository.save(realDataOrder);
+    this.availableService.checkAvailableStockDate(id);
     return true;
   }
 
@@ -353,20 +340,6 @@ export class RealDataService {
     return true;
   }
 
-  public async getAvailableOrderDate(stockId: string) {
-    const queryBuilder =
-      this.realDataOrderContentRepository.createQueryBuilder('order');
-    queryBuilder.select(
-      `DISTINCT DATE_FORMAT(order.createdTime,'${getDateFormatString(
-        DateFormatEnum.DAY,
-      )}')`,
-      'createdTime',
-    );
-    queryBuilder.where('order.stockId = :stockId', { stockId });
-    const result = await queryBuilder.getRawMany();
-    return result.map((v) => v.createdTime);
-  }
-
   public async getTransaction(query: IRealDataQuery) {
     query.order = {
       order: 'DESC',
@@ -403,6 +376,7 @@ export class RealDataService {
 
     realDataTransaction.isFinished = 1;
     await this.realDataTransactionRepository.save(realDataTransaction);
+    this.availableService.checkAvailableStockDate(id);
     return true;
   }
 
@@ -580,22 +554,6 @@ export class RealDataService {
     return true;
   }
 
-  public async getAvailableTransactionDate(stockId: string) {
-    const queryBuilder =
-      this.realDataTransactionContentRepository.createQueryBuilder(
-        'transaction',
-      );
-    queryBuilder.select(
-      `DISTINCT DATE_FORMAT(transaction.createdTime,'${getDateFormatString(
-        DateFormatEnum.DAY,
-      )}')`,
-      'createdTime',
-    );
-    queryBuilder.where('transaction.stockId = :stockId', { stockId });
-    const result = await queryBuilder.getRawMany();
-    return result.map((v) => v.createdTime);
-  }
-
   public async getDisplay(query: IRealDataQuery) {
     query.order = {
       order: 'DESC',
@@ -631,6 +589,7 @@ export class RealDataService {
 
     realDataDisplay.isFinished = 1;
     await this.realDataDisplayRepository.save(realDataDisplay);
+    this.availableService.checkAvailableStockDate(id);
     return true;
   }
 
@@ -792,20 +751,6 @@ export class RealDataService {
       });
       return returnObj;
     });
-  }
-
-  public async getAvailableDisplayDate(stockId: string) {
-    const queryBuilder =
-      this.realDataDisplayContentRepository.createQueryBuilder('display');
-    queryBuilder.select(
-      `DISTINCT DATE_FORMAT(display.createdTime,'${getDateFormatString(
-        DateFormatEnum.DAY,
-      )}')`,
-      'createdTime',
-    );
-    queryBuilder.where('display.sym = :stockId', { stockId });
-    const result = await queryBuilder.getRawMany();
-    return result.map((v) => v.createdTime);
   }
 
   public async getFilePath(query: IRealDataCommonContentQuery) {

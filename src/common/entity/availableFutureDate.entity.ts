@@ -1,7 +1,7 @@
-import { Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity()
-export class AvailableStockDate {
+export class AvailableFutureDate {
   @PrimaryColumn()
   id: string;
 

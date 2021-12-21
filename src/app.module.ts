@@ -16,6 +16,7 @@ import { GroupModule } from './module/group/group.module';
 import { RealDataModule } from './module/real-data/real-data.module';
 import { RbacModule } from './module/rbac/rbac.module';
 import { RbacMiddleware } from './middleware/rbac.middleware';
+import { AvailableModule } from './module/available/available.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { RbacMiddleware } from './middleware/rbac.middleware';
     GroupModule,
     RealDataModule,
     RbacModule,
+    AvailableModule,
   ],
   controllers: [AppController],
   providers: [AppService],

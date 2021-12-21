@@ -1,10 +1,10 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Entity, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class AvailableStock {
   @PrimaryColumn()
   id: string;
 
-  @Column()
+  @PrimaryColumn()
   type: string;
 }

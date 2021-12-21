@@ -50,11 +50,6 @@ export class RealDataController {
     private readonly investService: InvestorService,
   ) {}
 
-  @Get('available-stock')
-  public async getAvailableStock() {
-    return this.realDataService.getAvailableStock();
-  }
-
   @Get('order')
   public async getOrder(@Query() query: IRealDataQuery) {
     return await this.realDataService.getOrder(query);
@@ -255,11 +250,6 @@ export class RealDataController {
     }
   }
 
-  @Get('order/available/:stockId')
-  public async getAvailableOrderDate(@Param('stockId') stockId: string) {
-    return await this.realDataService.getAvailableOrderDate(stockId);
-  }
-
   @Get('transaction')
   public async getTransaction(@Query() query: IRealDataQuery) {
     return await this.realDataService.getTransaction(query);
@@ -381,11 +371,6 @@ export class RealDataController {
       await this.realDataService.deleteTransaction([id]);
       throw new BadRequestException(e.message || 'Text type error');
     }
-  }
-
-  @Get('transaction/available/:stockId')
-  public async getAvailableTransactionDate(@Param('stockId') stockId: string) {
-    return await this.realDataService.getAvailableTransactionDate(stockId);
   }
 
   @Get('display')
@@ -584,10 +569,5 @@ export class RealDataController {
       await this.realDataService.deleteDisplay([id]);
       throw new BadRequestException(e.message || 'Text type error');
     }
-  }
-
-  @Get('display/available/:stockId')
-  public async getAvailableDisplayDate(@Param('stockId') stockId: string) {
-    return await this.realDataService.getAvailableDisplayDate(stockId);
   }
 }

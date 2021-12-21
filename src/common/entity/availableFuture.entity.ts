@@ -1,12 +1,9 @@
 import { Entity, PrimaryColumn } from 'typeorm';
 
 @Entity()
-export class AvailableStockDate {
+export class AvailableFuture {
   @PrimaryColumn()
   id: string;
-
-  @PrimaryColumn()
-  date: Date;
 
   @PrimaryColumn()
   type: string;
