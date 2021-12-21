@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  Param,
   Post,
   Put,
   Query,
@@ -36,6 +35,7 @@ import {
 import { RealDataService } from './real-data.service';
 import * as moment from 'moment';
 import { InvestorService } from '../investor/investor.service';
+import { IOrder } from 'src/common/type';
 
 const transferPriceToPoint = (str: string) => {
   const lastTwoChar = str.slice(-2);
@@ -81,15 +81,15 @@ export class RealDataController {
   @Get('order/content')
   public async getOrderContent(
     @Query()
-    query: any,
+    query: IRealDataCommonContentQuery,
     @Res()
     res: Response,
   ) {
-    if (query.isSimulatedOrder) {
+    if ((query as any).isSimulatedOrder) {
       if (query.stockId === undefined)
         throw new BadRequestException('Missing stockId');
 
-      query.order = {
+      (query as any).order = {
         order: 'ASC',
         orderBy: 'createdTime',
       };
@@ -405,16 +405,14 @@ export class RealDataController {
     query: IRealDataCommonContentQuery,
     fileType: 'odr' | 'mth' | 'dsp',
   ) {
-    const min =
-      query.createdTime && query.createdTime.min
-        ? moment(query.createdTime.min).format('YYYYMMDD') +
-          moment(query.createdTime.min).format('HHmmss')
-        : 'x';
-    const max =
-      query.createdTime && query.createdTime.max
-        ? moment(query.createdTime.max).format('YYYYMMDD') +
-          moment(query.createdTime.max).format('HHmmss')
-        : 'x';
+    const min = query.startTime
+      ? moment(query.startTime).format('YYYYMMDD') +
+        moment(query.startTime).format('HHmmss')
+      : 'x';
+    const max = query.endTime
+      ? moment(query.endTime).format('YYYYMMDD') +
+        moment(query.endTime).format('HHmmss')
+      : 'x';
 
     const mode =
       query.dateFormat !== undefined
@@ -441,22 +439,6 @@ export class RealDataController {
     const result = await this.realDataService.getDisplayContent(query);
     await this.investService.subRestApiTime(query.investor);
     res.json(result);
-  }
-
-  @Get('display/download')
-  public async downloadDisplayContent(
-    @Query() query: IRealDataCommonContentQuery,
-    @Res() res: Response,
-  ) {
-    const displayContent = await this.realDataService.getDisplayContent(query);
-
-    const path = await this.realDataService.getFilePath(query);
-    this.realDataService.createFile(path, displayContent);
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-    res.download(path, () => {
-      this.realDataService.removeFile(path);
-      res.end();
-    });
   }
 
   private parseFutureDisplay(

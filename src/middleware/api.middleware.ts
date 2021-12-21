@@ -47,7 +47,7 @@ export class ApiMiddleware implements NestMiddleware {
         req.query[key] = value.toString();
         return;
       }
-      if (key.endsWith('Time')) {
+      if (['createdTime', 'updatedTime', 'expiredTime'].includes(key)) {
         const value = req.query[key] as any;
         if (typeof value === 'string') {
           req.query[key] = transferDateToISODate(value);

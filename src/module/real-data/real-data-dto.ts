@@ -206,8 +206,12 @@ export const realDataOrderContentQueryStrategy: IQueryStategy<IRealDataOrderCont
   };
 
 export class IRealDataCommonContentQuery {
-  @ApiPropertyOptional(getRangeDescription(false))
-  createdTime?: IRange<string>;
+  // createdTime: IRange<string>;
+
+  @ApiProperty({ required: true, example: '2021-09-04 14:49:14.884229' })
+  startTime: string;
+  @ApiProperty({ required: true, example: '2021-09-04 14:50:14.884229' })
+  endTime: string;
 
   @ApiPropertyOptional({ default: 1 })
   unit?: number;

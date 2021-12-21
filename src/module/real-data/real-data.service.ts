@@ -176,7 +176,8 @@ export class RealDataService {
 
   private async getOriginOrderContent({
     stockId,
-    createdTime,
+    startTime,
+    endTime,
     dateFormat,
   }: IRealDataCommonContentQuery) {
     if (!stockId) throw new BadRequestException('Missing stockId');
@@ -194,7 +195,11 @@ export class RealDataService {
     );
 
     queryBuilder.where('order.stockId = :stockId', { stockId });
-    this.checkCreatedTimeFormat(createdTime, queryBuilder, 'order');
+    this.checkCreatedTimeFormat(
+      { min: startTime, max: endTime },
+      queryBuilder,
+      'order',
+    );
 
     return await queryBuilder.getRawMany<IRealDataOrderContentSchema>();
   }
@@ -390,7 +395,8 @@ export class RealDataService {
 
   private async getOriginTransactionContent({
     stockId,
-    createdTime,
+    startTime,
+    endTime,
     dateFormat,
   }: IRealDataCommonContentQuery) {
     if (!stockId) throw new BadRequestException('Missing stockId');
@@ -412,7 +418,11 @@ export class RealDataService {
     );
 
     queryBuilder.where('transaction.stockId = :stockId', { stockId });
-    this.checkCreatedTimeFormat(createdTime, queryBuilder, 'transaction');
+    this.checkCreatedTimeFormat(
+      { min: startTime, max: endTime },
+      queryBuilder,
+      'transaction',
+    );
     return await queryBuilder.getRawMany<IRealDataTransactionContentSchema>();
   }
 
@@ -603,7 +613,8 @@ export class RealDataService {
 
   private async getOriginDisplayContent({
     stockId,
-    createdTime,
+    startTime,
+    endTime,
     dateFormat,
   }: IRealDataCommonContentQuery) {
     if (!stockId) throw new BadRequestException('Missing stockId');
@@ -621,7 +632,11 @@ export class RealDataService {
     );
 
     queryBuilder.where('display.sym = :stockId', { stockId });
-    this.checkCreatedTimeFormat(createdTime, queryBuilder, 'display');
+    this.checkCreatedTimeFormat(
+      { min: startTime, max: endTime },
+      queryBuilder,
+      'display',
+    );
 
     return await queryBuilder.getRawMany<IRealDataDisplayContentSchema>();
   }
@@ -751,55 +766,6 @@ export class RealDataService {
       });
       return returnObj;
     });
-  }
-
-  public async getFilePath(query: IRealDataCommonContentQuery) {
-    const min =
-      query.createdTime && query.createdTime.min
-        ? moment(query.createdTime.min).format('YYYYMMDD') +
-          moment(query.createdTime.min).format('HHmmss')
-        : 'x';
-    const max =
-      query.createdTime && query.createdTime.max
-        ? moment(query.createdTime.max).format('YYYYMMDD') +
-          moment(query.createdTime.max).format('HHmmss')
-        : 'x';
-
-    const mode =
-      query.dateFormat !== undefined
-        ? `${query.dateFormat}${
-            query.sampleMode !== undefined ? query.sampleMode : 'x'
-          }`
-        : 'xx';
-
-    const timeStamp = new Date().getTime();
-
-    const fileName = `${query.stockId}_${min}_${max}_${mode}_${timeStamp}.csv`;
-    const path = `${__dirname}/${fileName}`;
-
-    return path;
-  }
-
-  public createFile(path: string, displays: any[]) {
-    if (!displays.length) {
-      fs.writeFileSync(path, DISPLAY_FIELDS.join(',\n'));
-      return true;
-    }
-    const fields = Object.keys(displays[0]);
-    const headers = fields.join(',');
-    fs.writeFileSync(path, headers + '\n');
-
-    displays.forEach((display) => {
-      const content = Object.values(display).join(',');
-      fs.appendFileSync(path, content + '\n');
-    });
-
-    return true;
-  }
-
-  public async removeFile(path: string) {
-    fs.unlinkSync(path);
-    return true;
   }
 
   public async insertDisplayContent(body: IRealDataDisplayContentInsert[]) {
