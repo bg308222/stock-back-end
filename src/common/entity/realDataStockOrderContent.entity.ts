@@ -11,18 +11,18 @@ import {
   SubMethodEnum,
   TimeRestrictiomEnum,
 } from '../enum';
-import { RealDataOrder } from './realDataOrder.entity';
+import { RealDataStockOrder } from './realDataStockOrder.entity';
 
 @Entity()
 @Index(['stockId', 'createdTime'])
-export class RealDataOrderContent {
+export class RealDataStockOrderContent {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column()
   realDataOrderId: string;
-  @ManyToOne(() => RealDataOrder, { onDelete: 'CASCADE', nullable: false })
-  realDataOrder: RealDataOrder;
+  @ManyToOne(() => RealDataStockOrder, { onDelete: 'CASCADE', nullable: false })
+  realDataOrder: RealDataStockOrder;
 
   @Column({ width: 6 })
   createdTime: Date;

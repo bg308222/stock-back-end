@@ -35,9 +35,6 @@ export class IInvestorUpdate {
   password: string;
 
   @ApiPropertyOptional()
-  totalApiTime: number;
-
-  @ApiPropertyOptional()
   restApiTime: number;
 
   @ApiPropertyOptional()
@@ -69,7 +66,6 @@ export class IInvestorQueryResponse {
       properties: getResponseProperties<IInvestorSchema>([
         { key: 'id', type: 'number' },
         { key: 'account', type: 'string' },
-        { key: 'totalApiTime', type: 'number' },
         { key: 'restApiTime', type: 'number' },
         { key: 'createdTime', type: 'date' },
         { key: 'updatedTime', type: 'date' },

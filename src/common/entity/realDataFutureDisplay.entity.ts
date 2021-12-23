@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class RealDataTransaction {
+export class RealDataFutureDisplay {
   @PrimaryColumn({ type: 'varchar' })
   id: string;
 

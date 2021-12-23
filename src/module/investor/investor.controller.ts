@@ -39,6 +39,13 @@ export class InvestorController {
   }
 
   @ApiSecurity('login')
+  @Post('student')
+  public async createStudent(@Body() body: IInvestorInsert) {
+    await this.investService.createStudent(body);
+    return true;
+  }
+
+  @ApiSecurity('login')
   @Put()
   public async updateInvestor(@Body() body: IInvestorUpdate) {
     await this.investService.updateInvestor(body);

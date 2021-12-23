@@ -4,12 +4,14 @@ import { AvailableFuture } from 'src/common/entity/availableFuture.entity';
 import { AvailableFutureDate } from 'src/common/entity/availableFutureDate.entity';
 import { AvailableStock } from 'src/common/entity/availableStock.entity';
 import { AvailableStockDate } from 'src/common/entity/availableStockDate.entity';
-import { RealDataDisplayContent } from 'src/common/entity/realDataDisplayContent.entity';
-import { RealDataOrderContent } from 'src/common/entity/realDataOrderContent.entity';
-import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
-import { DateFormatEnum } from 'src/common/enum';
-import { getDateFormatString } from 'src/common/helper/database.helper';
+import { RealDataFutureDisplayContent } from 'src/common/entity/realDataFutureDisplayContent.entity';
+import { RealDataFutureOrderContent } from 'src/common/entity/realDataFutureOrderContent.entity';
+import { RealDataFutureTransactionContent } from 'src/common/entity/realDataFutureTransactionContent.entity';
+import { RealDataStockDisplayContent } from 'src/common/entity/realDataStockDisplayContent.entity';
+import { RealDataStockOrderContent } from 'src/common/entity/realDataStockOrderContent.entity';
+import { RealDataStockTransactionContent } from 'src/common/entity/realDataStockTransactionContent.entity';
 import { Repository } from 'typeorm';
+import { IFileType } from '../real-data/real-data.service';
 
 @Injectable()
 export class AvailableService {
@@ -23,12 +25,18 @@ export class AvailableService {
     @InjectRepository(AvailableFutureDate)
     private readonly availableFutureDateRepository: Repository<AvailableFutureDate>,
 
-    @InjectRepository(RealDataOrderContent)
-    private readonly realDataOrderContentRepository: Repository<RealDataOrderContent>,
-    @InjectRepository(RealDataDisplayContent)
-    private readonly realDataDisplayContentRepository: Repository<RealDataDisplayContent>,
-    @InjectRepository(RealDataTransactionContent)
-    private readonly realDataTransactionContentRepository: Repository<RealDataTransactionContent>,
+    @InjectRepository(RealDataStockOrderContent)
+    private readonly realDataStockOrderContentRepository: Repository<RealDataStockOrderContent>,
+    @InjectRepository(RealDataStockDisplayContent)
+    private readonly realDataStockDisplayContentRepository: Repository<RealDataStockDisplayContent>,
+    @InjectRepository(RealDataStockTransactionContent)
+    private readonly realDataStockTransactionContentRepository: Repository<RealDataStockTransactionContent>,
+    @InjectRepository(RealDataFutureOrderContent)
+    private readonly realDataFutureOrderContentRepository: Repository<RealDataFutureOrderContent>,
+    @InjectRepository(RealDataFutureDisplayContent)
+    private readonly realDataFutureDisplayContentRepository: Repository<RealDataFutureDisplayContent>,
+    @InjectRepository(RealDataFutureTransactionContent)
+    private readonly realDataFutureTransactionContentRepository: Repository<RealDataFutureTransactionContent>,
   ) {}
 
   public async getAvailableStock(type: string) {
@@ -36,7 +44,13 @@ export class AvailableService {
     return result.map((v) => v.id);
   }
   public async getAvailableStockDate(id: string, type: string) {
-    const result = await this.availableStockDateRepository.find({ id, type });
+    const queryBuilder =
+      this.availableStockDateRepository.createQueryBuilder('q');
+    queryBuilder.select(`DATE_FORMAT(date,'%Y-%m-%d')`, 'date');
+    queryBuilder.where('id = :id', { id });
+    queryBuilder.andWhere('type = :type', { type });
+
+    const result = await queryBuilder.getRawMany();
     return result.map((v) => v.date);
   }
 
@@ -45,12 +59,18 @@ export class AvailableService {
     return result.map((v) => v.id);
   }
   public async getAvailableFutureDate(id: string, type: string) {
-    const result = await this.availableFutureDateRepository.find({ id, type });
+    const queryBuilder =
+      this.availableFutureDateRepository.createQueryBuilder('q');
+    queryBuilder.select(`DATE_FORMAT(date,'%Y-%m-%d')`, 'date');
+    queryBuilder.where('id = :id', { id });
+    queryBuilder.andWhere('type = :type', { type });
+
+    const result = await queryBuilder.getRawMany();
     return result.map((v) => v.date);
   }
 
-  public async checkAvailableStock(fileName: string) {
-    if (fileName.startsWith('odr')) {
+  public async checkAvailableStock(fileType: IFileType) {
+    if (fileType === 'order') {
       const originStock = (
         await this.availableStockRepository.find({
           type: 'order',
@@ -76,7 +96,7 @@ export class AvailableService {
         });
 
       await this.availableStockRepository.insert(insertStock);
-    } else if (fileName.startsWith('mth')) {
+    } else if (fileType === 'transaction') {
       const originStock = (
         await this.availableStockRepository.find({
           type: 'transaction',
@@ -131,24 +151,24 @@ export class AvailableService {
     }
   }
 
-  public async checkAvailableStockDate(fileName: string) {
-    if (fileName.startsWith('odr')) {
+  public async checkAvailableStockDate(fileName: string, fileType: IFileType) {
+    if (fileType === 'order') {
       const queryBuilder =
-        this.realDataOrderContentRepository.createQueryBuilder('order');
+        this.realDataStockOrderContentRepository.createQueryBuilder('order');
       queryBuilder.select(
-        `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d ') AS \`date\`,"order" AS \`type\``,
+        `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"order" AS \`type\``,
       );
       queryBuilder.where('realDataOrderId = :fileName', { fileName });
 
       const insertBody = await queryBuilder.getRawMany();
       await this.availableStockDateRepository.insert(insertBody);
-    } else if (fileName.startsWith('mth')) {
+    } else if (fileType === 'transaction') {
       const queryBuilder =
-        this.realDataTransactionContentRepository.createQueryBuilder(
+        this.realDataStockTransactionContentRepository.createQueryBuilder(
           'transaction',
         );
       queryBuilder.select(
-        `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d ') AS \`date\`,"transaction" AS \`type\``,
+        `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"transaction" AS \`type\``,
       );
       queryBuilder.where('realDataTransactionId = :fileName', { fileName });
 
@@ -156,15 +176,133 @@ export class AvailableService {
       await this.availableStockDateRepository.insert(insertBody);
     } else {
       const queryBuilder =
-        this.realDataDisplayContentRepository.createQueryBuilder();
+        this.realDataStockDisplayContentRepository.createQueryBuilder();
       queryBuilder.select(
-        `DISTINCT sym AS id, DATE_FORMAT(createdTime,'%Y-%m-%d ') AS \`date\`,"display" AS \`type\``,
+        `DISTINCT sym AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"display" AS \`type\``,
       );
       queryBuilder.where('realDataDisplayId = :fileName', { fileName });
 
       const insertBody = await queryBuilder.getRawMany();
       await this.availableStockDateRepository.insert(insertBody);
     }
-    this.checkAvailableStock(fileName);
+    this.checkAvailableStock(fileType);
+  }
+
+  public async checkAvailableFuture(fileType: IFileType) {
+    if (fileType === 'order') {
+      const originFuture = (
+        await this.availableFutureRepository.find({
+          type: 'order',
+        })
+      ).map((v) => v.id);
+      const queryBuilder =
+        this.availableFutureDateRepository.createQueryBuilder();
+      queryBuilder.select('DISTINCT id, type');
+      queryBuilder.where('type = "order"');
+      const newFuture = (await queryBuilder.getRawMany<AvailableFuture>()).map(
+        (v) => v.id,
+      );
+
+      const insertFuture = newFuture
+        .filter((v) => {
+          return !originFuture.includes(v);
+        })
+        .map((id) => {
+          return {
+            id,
+            type: 'order',
+          };
+        });
+
+      await this.availableFutureRepository.insert(insertFuture);
+    } else if (fileType === 'transaction') {
+      const originFuture = (
+        await this.availableFutureRepository.find({
+          type: 'transaction',
+        })
+      ).map((v) => v.id);
+      const queryBuilder =
+        this.availableFutureDateRepository.createQueryBuilder();
+      queryBuilder.select('DISTINCT id, type');
+      queryBuilder.where('type = "transaction"');
+      const newFuture = (await queryBuilder.getRawMany<AvailableFuture>()).map(
+        (v) => v.id,
+      );
+
+      const insertFuture = newFuture
+        .filter((v) => {
+          return !originFuture.includes(v);
+        })
+        .map((id) => {
+          return {
+            id,
+            type: 'transaction',
+          };
+        });
+
+      await this.availableFutureRepository.insert(insertFuture);
+    } else {
+      const originFuture = (
+        await this.availableFutureRepository.find({
+          type: 'display',
+        })
+      ).map((v) => v.id);
+      const queryBuilder =
+        this.availableFutureDateRepository.createQueryBuilder();
+      queryBuilder.select('DISTINCT id, type');
+      queryBuilder.where('type = "display"');
+      const newFuture = (await queryBuilder.getRawMany<AvailableFuture>()).map(
+        (v) => v.id,
+      );
+
+      const insertFuture = newFuture
+        .filter((v) => {
+          return !originFuture.includes(v);
+        })
+        .map((id) => {
+          return {
+            id,
+            type: 'display',
+          };
+        });
+
+      await this.availableFutureRepository.insert(insertFuture);
+    }
+  }
+  public async checkAvailableFutureDate(fileName: string, fileType: IFileType) {
+    if (fileType === 'order') {
+      const queryBuilder =
+        this.realDataFutureOrderContentRepository.createQueryBuilder('order');
+      queryBuilder.select(
+        `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"order" AS \`type\``,
+      );
+      queryBuilder.where('realDataOrderId = :fileName', { fileName });
+
+      const insertBody = await queryBuilder.getRawMany();
+      await this.availableFutureDateRepository.insert(insertBody);
+    } else if (fileType === 'transaction') {
+      const queryBuilder =
+        this.realDataFutureTransactionContentRepository.createQueryBuilder(
+          'transaction',
+        );
+      queryBuilder.select(
+        `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"transaction" AS \`type\``,
+      );
+      queryBuilder.where('realDataTransactionId = :fileName', { fileName });
+
+      const insertBody = await queryBuilder.getRawMany();
+      await this.availableFutureDateRepository.insert(insertBody);
+    } else {
+      const queryBuilder =
+        this.realDataFutureDisplayContentRepository.createQueryBuilder();
+      queryBuilder.select(
+        `DISTINCT sym AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"display" AS \`type\``,
+      );
+      queryBuilder.where('realDataDisplayId = :fileName', { fileName });
+
+      const insertBody = await queryBuilder.getRawMany();
+      await this.availableFutureDateRepository.insert(insertBody);
+    }
+    this.checkAvailableFuture(fileType);
   }
 }

@@ -5,12 +5,18 @@ import { Group } from './group.entity';
 import { Investor } from './investor.entity';
 import { Order } from './order.entity';
 import { Permission } from './permission.entity';
-import { RealDataDisplay } from './realDataDisplay.entity';
-import { RealDataDisplayContent } from './realDataDisplayContent.entity';
-import { RealDataOrder } from './realDataOrder.entity';
-import { RealDataOrderContent } from './realDataOrderContent.entity';
-import { RealDataTransaction } from './realDataTransaction.entity';
-import { RealDataTransactionContent } from './realDataTransactionContent.entity';
+import { RealDataFutureDisplay } from './realDataFutureDisplay.entity';
+import { RealDataFutureDisplayContent } from './realDataFutureDisplayContent.entity';
+import { RealDataFutureOrder } from './realDataFutureOrder.entity';
+import { RealDataFutureOrderContent } from './realDataFutureOrderContent.entity';
+import { RealDataFutureTransaction } from './realDataFutureTransaction.entity';
+import { RealDataFutureTransactionContent } from './realDataFutureTransactionContent.entity';
+import { RealDataStockDisplay } from './realDataStockDisplay.entity';
+import { RealDataStockDisplayContent } from './realDataStockDisplayContent.entity';
+import { RealDataStockOrder } from './realDataStockOrder.entity';
+import { RealDataStockOrderContent } from './realDataStockOrderContent.entity';
+import { RealDataStockTransaction } from './realDataStockTransaction.entity';
+import { RealDataStockTransactionContent } from './realDataStockTransactionContent.entity';
 import { Role } from './role.entity';
 import { Stock } from './stock.entity';
 import { Transaction } from './transaction.entity';
@@ -28,12 +34,18 @@ export const entities = [
   VirtualOrder,
   VirtualOrderContainer,
   Group,
-  RealDataOrder,
-  RealDataOrderContent,
-  RealDataDisplay,
-  RealDataDisplayContent,
-  RealDataTransaction,
-  RealDataTransactionContent,
+  RealDataStockOrder,
+  RealDataStockOrderContent,
+  RealDataStockDisplay,
+  RealDataStockDisplayContent,
+  RealDataStockTransaction,
+  RealDataStockTransactionContent,
+  RealDataFutureOrder,
+  RealDataFutureOrderContent,
+  RealDataFutureDisplay,
+  RealDataFutureDisplayContent,
+  RealDataFutureTransaction,
+  RealDataFutureTransactionContent,
   Role,
   Permission,
 ];

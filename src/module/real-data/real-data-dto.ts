@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Investor } from 'src/common/entity/investor.entity';
-import { RealDataDisplayContent } from 'src/common/entity/realDataDisplayContent.entity';
-import { RealDataOrderContent } from 'src/common/entity/realDataOrderContent.entity';
-import { RealDataTransactionContent } from 'src/common/entity/realDataTransactionContent.entity';
+import { RealDataStockDisplayContent } from 'src/common/entity/realDataStockDisplayContent.entity';
+import { RealDataStockOrderContent } from 'src/common/entity/realDataStockOrderContent.entity';
+import { RealDataStockTransactionContent } from 'src/common/entity/realDataStockTransactionContent.entity';
 import {
   DateFormatEnum,
   QueryStrategyEnum,
@@ -16,32 +16,31 @@ import {
 import { CommonQuery, IQueryStategy, IRange } from 'src/common/type';
 
 export type IRealDataOrderContentInsert = Omit<
-  RealDataOrderContent,
-  'id' | 'realDataOrder'
->;
+  RealDataStockOrderContent,
+  'id' | 'realDataOrder' | 'realDataOrderId'
+> & { realDataOrder: Record<'id', string> };
 
 export type IRealDataTransactionContentInsert = Omit<
-  RealDataTransactionContent,
-  'id' | 'realDataTransaction'
->;
+  RealDataStockTransactionContent,
+  'id' | 'realDataTransaction' | 'realDataTransactionId'
+> & { realDataTransaction: Record<'id', string> };
 
 export type IRealDataDisplayContentInsert = Omit<
-  RealDataDisplayContent,
-  'id' | 'realDataDisplay'
->;
-
+  RealDataStockDisplayContent,
+  'id' | 'realDataDisplay' | 'realDataDisplayId'
+> & { realDataDisplay: Record<'id', string> };
 export type IRealDataOrderContentSchema = Omit<
-  RealDataOrderContent,
+  RealDataStockOrderContent,
   'realDataOrder' | 'realDataOrderId' | 'createdTime'
 > & { createdTime: string };
 
 export type IRealDataTransactionContentSchema = Omit<
-  RealDataTransactionContent,
+  RealDataStockTransactionContent,
   'realDataTransaction' | 'realDataTransactionId' | 'createdTime'
 > & { createdTime: string };
 
 export type IRealDataDisplayContentSchema = Omit<
-  RealDataDisplayContent,
+  RealDataStockDisplayContent,
   'realDataDisplay' | 'realDataDisplayId' | 'createdTime'
 > & { createdTime: string };
 
@@ -205,9 +204,7 @@ export const realDataOrderContentQueryStrategy: IQueryStategy<IRealDataOrderCont
     createdTime: QueryStrategyEnum.range,
   };
 
-export class IRealDataCommonContentQuery {
-  // createdTime: IRange<string>;
-
+export class IRealDataStockContentQuery {
   @ApiProperty({ required: true, example: '2021-09-04 14:49:14.884229' })
   startTime: string;
   @ApiProperty({ required: true, example: '2021-09-04 14:50:14.884229' })
@@ -227,6 +224,30 @@ export class IRealDataCommonContentQuery {
 
   @ApiProperty({ required: true, example: '0050  ' })
   stockId: string;
+
+  investor: Investor;
+}
+
+export class IRealDataFutureContentQuery {
+  @ApiProperty({ required: true, example: '2021-09-04 14:49:14.884229' })
+  startTime: string;
+  @ApiProperty({ required: true, example: '2021-09-04 14:50:14.884229' })
+  endTime: string;
+
+  @ApiPropertyOptional({ default: 1 })
+  unit?: number;
+
+  @ApiPropertyOptional(getEnumDescription('dateFormat', false))
+  dateFormat?: DateFormatEnum;
+
+  @ApiPropertyOptional(getEnumDescription('sampleMode', false))
+  sampleMode?: SampleModeEnum;
+
+  @ApiPropertyOptional()
+  fields?: string[];
+
+  @ApiProperty({ required: true, example: '0050  ' })
+  futureId: string;
 
   investor: Investor;
 }

@@ -20,10 +20,10 @@ export class Investor {
   password: string;
 
   @Column({ type: 'int', default: 5 })
-  totalApiTime: number;
-
-  @Column({ type: 'int', default: 5 })
   restApiTime: number;
+
+  @Column({ nullable: true })
+  token: string;
 
   @Column()
   roleId: number;

@@ -31,10 +31,10 @@ export class InvestorService {
   ) {}
 
   private checkRestApiTime(investor: Investor) {
-    const { role, totalApiTime, restApiTime, updatedTime } = investor;
+    const { role, restApiTime, updatedTime } = investor;
     if (updatedTime.toLocaleDateString() !== new Date().toLocaleDateString()) {
       investor.restApiTime = Math.max(
-        totalApiTime || (role && role.totalApiTime) || 5,
+        (role && role.totalApiTime) || 5,
         restApiTime,
       );
     }
@@ -90,11 +90,29 @@ export class InvestorService {
     return true;
   }
 
+  public async createStudent(body: IInvestorInsert) {
+    const { account, password } = body;
+    if (!account || !password)
+      throw new BadRequestException('Missing account or password');
+    const hash = hashSync(password, 10);
+    if (await this.investorRepository.findOne({ account }))
+      throw new ForbiddenException('This account has already existed');
+    const role = new Role();
+    role.id = 6;
+
+    await this.investorRepository.insert({
+      account,
+      password: hash,
+      expiredTime: this.getExpiredTime(),
+      role,
+    });
+    return true;
+  }
+
   public async updateInvestor({
     id,
     account,
     password,
-    totalApiTime,
     restApiTime,
     roleId,
   }: IInvestorUpdate) {
@@ -112,7 +130,6 @@ export class InvestorService {
       investor.account = account;
     }
     if (password) investor.password = hashSync(password, 10);
-    if (totalApiTime) investor.totalApiTime = totalApiTime;
     if (restApiTime) {
       investor.restApiTime = restApiTime;
     } else {
@@ -176,8 +193,9 @@ export class InvestorService {
           this.getExpiredTime().getTime()
       ) {
         investor.expiredTime = this.getExpiredTime();
-        await this.investorRepository.save(investor);
       }
+      investor.token = token;
+      await this.investorRepository.save(investor);
       return token;
     } else {
       throw new ForbiddenException('Password is wrong');

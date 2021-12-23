@@ -5,21 +5,21 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { RealDataTransaction } from './realDataTransaction.entity';
+import { RealDataFutureTransaction } from './realDataFutureTransaction.entity';
 
 @Entity()
 @Index(['stockId', 'createdTime'])
-export class RealDataTransactionContent {
+export class RealDataFutureTransactionContent {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column()
   realDataTransactionId: string;
-  @ManyToOne(() => RealDataTransaction, {
+  @ManyToOne(() => RealDataFutureTransaction, {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  realDataTransaction: RealDataTransaction;
+  realDataTransaction: RealDataFutureTransaction;
 
   @Column({ width: 6 })
   createdTime: Date;

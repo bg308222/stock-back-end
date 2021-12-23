@@ -5,18 +5,21 @@ import {
   PrimaryGeneratedColumn,
   Index,
 } from 'typeorm';
-import { RealDataDisplay } from './realDataDisplay.entity';
+import { RealDataFutureDisplay } from './realDataFutureDisplay.entity';
 
 @Entity()
 @Index(['sym', 'createdTime'])
-export class RealDataDisplayContent {
+export class RealDataFutureDisplayContent {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column()
   realDataDisplayId: string;
-  @ManyToOne(() => RealDataDisplay, { onDelete: 'CASCADE', nullable: false })
-  realDataDisplay: RealDataDisplay;
+  @ManyToOne(() => RealDataFutureDisplay, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  realDataDisplay: RealDataFutureDisplay;
 
   @Column({ type: 'varchar' })
   sym: string;
