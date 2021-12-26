@@ -185,6 +185,10 @@ export class InvestorService {
 
     const investor = await this.investorRepository.findOne({ account });
     if (!investor) throw new BadRequestException("Investor doesn't exist");
+    const role = await this.roleRepository.findOne(
+      { id: investor.roleId },
+      { relations: ['permissions'] },
+    );
     if (compareSync(password, investor.password)) {
       const token = sign({ account }, privateKey);
       if (
@@ -196,7 +200,12 @@ export class InvestorService {
       }
       investor.token = token;
       await this.investorRepository.save(investor);
-      return token;
+      return {
+        token,
+        permission: role.permissions
+          .sort((a, b) => a.order - b.order)
+          .map((v) => v.id),
+      };
     } else {
       throw new ForbiddenException('Password is wrong');
     }
