@@ -5,12 +5,12 @@ import { Group } from './group.entity';
 import { Investor } from './investor.entity';
 import { Order } from './order.entity';
 import { Permission } from './permission.entity';
-import { RealDataFutureDisplay } from './realDataFutureDisplay.entity';
-import { RealDataFutureDisplayContent } from './realDataFutureDisplayContent.entity';
-import { RealDataFutureOrder } from './realDataFutureOrder.entity';
-import { RealDataFutureOrderContent } from './realDataFutureOrderContent.entity';
-import { RealDataFutureTransaction } from './realDataFutureTransaction.entity';
-import { RealDataFutureTransactionContent } from './realDataFutureTransactionContent.entity';
+import { RealDataFuturesDisplay } from './realDataFuturesDisplay.entity';
+import { RealDataFuturesDisplayContent } from './realDataFuturesDisplayContent.entity';
+import { RealDataFuturesOrder } from './realDataFuturesOrder.entity';
+import { RealDataFuturesOrderContent } from './realDataFuturesOrderContent.entity';
+import { RealDataFuturesTransaction } from './realDataFuturesTransaction.entity';
+import { RealDataFuturesTransactionContent } from './realDataFuturesTransactionContent.entity';
 import { RealDataStockDisplay } from './realDataStockDisplay.entity';
 import { RealDataStockDisplayContent } from './realDataStockDisplayContent.entity';
 import { RealDataStockOrder } from './realDataStockOrder.entity';
@@ -40,12 +40,12 @@ export const entities = [
   RealDataStockDisplayContent,
   RealDataStockTransaction,
   RealDataStockTransactionContent,
-  RealDataFutureOrder,
-  RealDataFutureOrderContent,
-  RealDataFutureDisplay,
-  RealDataFutureDisplayContent,
-  RealDataFutureTransaction,
-  RealDataFutureTransactionContent,
+  RealDataFuturesOrder,
+  RealDataFuturesOrderContent,
+  RealDataFuturesDisplay,
+  RealDataFuturesDisplayContent,
+  RealDataFuturesTransaction,
+  RealDataFuturesTransactionContent,
   Role,
   Permission,
 ];

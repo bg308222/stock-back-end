@@ -1,7 +1,7 @@
 import { Entity, PrimaryColumn } from 'typeorm';
 
 @Entity()
-export class AvailableFuture {
+export class AvailableFutures {
   @PrimaryColumn()
   id: string;
 

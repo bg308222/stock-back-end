@@ -33,15 +33,15 @@ import {
 } from './constant';
 import { IRange } from 'src/common/type';
 import { AvailableService } from '../available/available.service';
-import { RealDataFutureOrder } from 'src/common/entity/realDataFutureOrder.entity';
-import { RealDataFutureDisplay } from 'src/common/entity/realDataFutureDisplay.entity';
-import { RealDataFutureDisplayContent } from 'src/common/entity/realDataFutureDisplayContent.entity';
-import { RealDataFutureOrderContent } from 'src/common/entity/realDataFutureOrderContent.entity';
-import { RealDataFutureTransaction } from 'src/common/entity/realDataFutureTransaction.entity';
-import { RealDataFutureTransactionContent } from 'src/common/entity/realDataFutureTransactionContent.entity';
+import { RealDataFuturesOrder } from 'src/common/entity/realDataFuturesOrder.entity';
+import { RealDataFuturesDisplay } from 'src/common/entity/realDataFuturesDisplay.entity';
+import { RealDataFuturesDisplayContent } from 'src/common/entity/realDataFuturesDisplayContent.entity';
+import { RealDataFuturesOrderContent } from 'src/common/entity/realDataFuturesOrderContent.entity';
+import { RealDataFuturesTransaction } from 'src/common/entity/realDataFuturesTransaction.entity';
+import { RealDataFuturesTransactionContent } from 'src/common/entity/realDataFuturesTransactionContent.entity';
 
 export type IFileType = 'order' | 'transaction' | 'display';
-export type IMarketType = 'stock' | 'future';
+export type IMarketType = 'stock' | 'futures';
 @Injectable()
 export class RealDataService {
   constructor(
@@ -58,18 +58,18 @@ export class RealDataService {
     @InjectRepository(RealDataStockTransactionContent)
     private readonly realDataTransactionContentRepository: Repository<RealDataStockTransactionContent>,
 
-    @InjectRepository(RealDataFutureOrder)
-    private readonly realDataFutureOrderRepository: Repository<RealDataFutureOrder>,
-    @InjectRepository(RealDataFutureOrderContent)
-    private readonly realDataFutureOrderContentRepository: Repository<RealDataFutureOrderContent>,
-    @InjectRepository(RealDataFutureDisplay)
-    private readonly realDataFutureDisplayRepository: Repository<RealDataFutureDisplay>,
-    @InjectRepository(RealDataFutureDisplayContent)
-    private readonly realDataFutureDisplayContentRepository: Repository<RealDataFutureDisplayContent>,
-    @InjectRepository(RealDataFutureTransaction)
-    private readonly realDataFutureTransactionRepository: Repository<RealDataFutureTransaction>,
-    @InjectRepository(RealDataFutureTransactionContent)
-    private readonly realDataFutureTransactionContentRepository: Repository<RealDataFutureTransactionContent>,
+    @InjectRepository(RealDataFuturesOrder)
+    private readonly realDataFuturesOrderRepository: Repository<RealDataFuturesOrder>,
+    @InjectRepository(RealDataFuturesOrderContent)
+    private readonly realDataFuturesOrderContentRepository: Repository<RealDataFuturesOrderContent>,
+    @InjectRepository(RealDataFuturesDisplay)
+    private readonly realDataFuturesDisplayRepository: Repository<RealDataFuturesDisplay>,
+    @InjectRepository(RealDataFuturesDisplayContent)
+    private readonly realDataFuturesDisplayContentRepository: Repository<RealDataFuturesDisplayContent>,
+    @InjectRepository(RealDataFuturesTransaction)
+    private readonly realDataFuturesTransactionRepository: Repository<RealDataFuturesTransaction>,
+    @InjectRepository(RealDataFuturesTransactionContent)
+    private readonly realDataFuturesTransactionContentRepository: Repository<RealDataFuturesTransactionContent>,
 
     private readonly availableService: AvailableService,
   ) {}
@@ -161,9 +161,9 @@ export class RealDataService {
     switch (fileType) {
       case 'display': {
         switch (marketType) {
-          case 'future': {
-            if (isContent) return this.realDataFutureDisplayContentRepository;
-            else return this.realDataFutureDisplayRepository;
+          case 'futures': {
+            if (isContent) return this.realDataFuturesDisplayContentRepository;
+            else return this.realDataFuturesDisplayRepository;
           }
           case 'stock': {
             if (isContent) return this.realDataDisplayContentRepository;
@@ -173,9 +173,9 @@ export class RealDataService {
       }
       case 'order': {
         switch (marketType) {
-          case 'future': {
-            if (isContent) return this.realDataFutureOrderContentRepository;
-            else return this.realDataFutureOrderRepository;
+          case 'futures': {
+            if (isContent) return this.realDataFuturesOrderContentRepository;
+            else return this.realDataFuturesOrderRepository;
           }
           case 'stock': {
             if (isContent) return this.realDataOrderContentRepository;
@@ -185,10 +185,10 @@ export class RealDataService {
       }
       case 'transaction': {
         switch (marketType) {
-          case 'future': {
+          case 'futures': {
             if (isContent)
-              return this.realDataFutureTransactionContentRepository;
-            else return this.realDataFutureTransactionRepository;
+              return this.realDataFuturesTransactionContentRepository;
+            else return this.realDataFuturesTransactionRepository;
           }
           case 'stock': {
             if (isContent) return this.realDataTransactionContentRepository;
@@ -205,8 +205,8 @@ export class RealDataService {
     marketType: IMarketType,
   ) {
     switch (marketType) {
-      case 'future': {
-        return this.availableService.checkAvailableFutureDate(id, fileType);
+      case 'futures': {
+        return this.availableService.checkAvailableFuturesDate(id, fileType);
       }
       case 'stock': {
         return this.availableService.checkAvailableStockDate(id, fileType);

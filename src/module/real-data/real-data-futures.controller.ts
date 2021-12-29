@@ -24,7 +24,7 @@ import {
 } from 'src/common/enum';
 import {
   IRealDataDisplayContentInsert,
-  IRealDataFutureContentQuery,
+  IRealDataFuturesContentQuery,
   IRealDataObjectResponse,
   IRealDataOrderContentInsert,
   IRealDataQuery,
@@ -35,10 +35,10 @@ import { RealDataService } from './real-data.service';
 import * as moment from 'moment';
 import { InvestorService } from '../investor/investor.service';
 
-@ApiTags('RealData Future')
+@ApiTags('RealData Futures')
 @ApiSecurity('login')
-@Controller('real-data/future')
-export class RealDataFutureController {
+@Controller('real-data/futures')
+export class RealDataFuturesController {
   constructor(
     private readonly realDataService: RealDataService,
     private readonly investService: InvestorService,
@@ -46,7 +46,7 @@ export class RealDataFutureController {
 
   @Get('order')
   public async getOrder(@Query() query: IRealDataQuery) {
-    return await this.realDataService.getRealData(query, 'order', 'future');
+    return await this.realDataService.getRealData(query, 'order', 'futures');
   }
 
   @Post('order')
@@ -56,7 +56,7 @@ export class RealDataFutureController {
       const result = await this.realDataService.insertRealData(
         body,
         'order',
-        'future',
+        'futures',
       );
       return result;
     } catch (e) {
@@ -70,25 +70,25 @@ export class RealDataFutureController {
     return await this.realDataService.toggleRealDataStatus(
       body,
       'order',
-      'future',
+      'futures',
     );
   }
 
   @Delete('order')
   @ApiBody(REAL_DATA_API_BODY.deleteOrder)
   public async deleteOrder(@Body() body: string[]) {
-    return await this.realDataService.deleteRealData(body, 'order', 'future');
+    return await this.realDataService.deleteRealData(body, 'order', 'futures');
   }
 
   @Get('order/content')
   public async getOrderContent(
     @Query()
-    query: IRealDataFutureContentQuery,
+    query: IRealDataFuturesContentQuery,
     @Res()
     res: Response,
   ) {
-    if (query.futureId === undefined)
-      throw new BadRequestException('Missing futureId');
+    if (query.futuresId === undefined)
+      throw new BadRequestException('Missing futuresId');
 
     if ((query as any).isSimulatedOrder) {
       (query as any).order = {
@@ -97,23 +97,23 @@ export class RealDataFutureController {
       };
       res.json(
         await this.realDataService.getSimulatedOrderContent(
-          { ...query, stockId: query.futureId },
-          'future',
+          { ...query, stockId: query.futuresId },
+          'futures',
         ),
       );
     } else {
       res.setHeader('Access-Control-Expose-Headers', 'filename');
       res.setHeader('filename', this.getFilename(query, 'odr'));
       const result = await this.realDataService.getOrderContent(
-        { ...query, stockId: query.futureId },
-        'future',
+        { ...query, stockId: query.futuresId },
+        'futures',
       );
       await this.investService.subRestApiTime(query.investor);
       res.json(result);
     }
   }
 
-  private parseFutureOrder(
+  private parseFuturesOrder(
     rows: string[],
     id: string,
   ): IRealDataOrderContentInsert[] {
@@ -174,12 +174,12 @@ export class RealDataFutureController {
     @Query('id') id: string,
   ) {
     if (id === undefined) throw new BadRequestException('Missing id');
-    const insertBody = this.parseFutureOrder(body, id);
+    const insertBody = this.parseFuturesOrder(body, id);
     try {
       return await this.realDataService.insertRealDataContent(
         insertBody,
         'order',
-        'future',
+        'futures',
       );
     } catch (e) {
       throw new BadRequestException(e.message || 'Text type error');
@@ -191,7 +191,7 @@ export class RealDataFutureController {
     return await this.realDataService.getRealData(
       query,
       'transaction',
-      'future',
+      'futures',
     );
   }
 
@@ -201,7 +201,7 @@ export class RealDataFutureController {
       const result = await this.realDataService.insertRealData(
         body,
         'transaction',
-        'future',
+        'futures',
       );
       return result;
     } catch (e) {
@@ -214,7 +214,7 @@ export class RealDataFutureController {
     return await this.realDataService.toggleRealDataStatus(
       body,
       'transaction',
-      'future',
+      'futures',
     );
   }
 
@@ -223,26 +223,26 @@ export class RealDataFutureController {
     return await this.realDataService.deleteRealData(
       body,
       'transaction',
-      'future',
+      'futures',
     );
   }
 
   @Get('transaction/content')
   public async getTransactionContent(
-    @Query() query: IRealDataFutureContentQuery,
+    @Query() query: IRealDataFuturesContentQuery,
     @Res() res: Response,
   ) {
     res.setHeader('Access-Control-Expose-Headers', 'filename');
     res.setHeader('filename', this.getFilename(query, 'mth'));
     const result = await this.realDataService.getTransactionContent(
-      { ...query, stockId: query.futureId },
-      'future',
+      { ...query, stockId: query.futuresId },
+      'futures',
     );
     await this.investService.subRestApiTime(query.investor);
     res.json(result);
   }
 
-  private parseFutureTransaction(
+  private parseFuturesTransaction(
     rows: string[],
     id: string,
   ): IRealDataTransactionContentInsert[] {
@@ -283,13 +283,13 @@ export class RealDataFutureController {
   ) {
     if (id === undefined)
       throw new BadRequestException('Missing realDataTransactionId');
-    const insertBody = this.parseFutureTransaction(body, id);
+    const insertBody = this.parseFuturesTransaction(body, id);
 
     try {
       return await this.realDataService.insertRealDataContent(
         insertBody,
         'transaction',
-        'future',
+        'futures',
       );
     } catch (e) {
       throw new BadRequestException(e.message || 'Text type error');
@@ -298,7 +298,7 @@ export class RealDataFutureController {
 
   @Get('display')
   public async getDisplay(@Query() query: IRealDataQuery) {
-    return await this.realDataService.getRealData(query, 'display', 'future');
+    return await this.realDataService.getRealData(query, 'display', 'futures');
   }
 
   @Post('display')
@@ -308,7 +308,7 @@ export class RealDataFutureController {
       const result = await this.realDataService.insertRealData(
         body,
         'display',
-        'future',
+        'futures',
       );
       return result;
     } catch (e) {
@@ -322,18 +322,22 @@ export class RealDataFutureController {
     return await this.realDataService.toggleRealDataStatus(
       body,
       'display',
-      'future',
+      'futures',
     );
   }
 
   @Delete('display')
   @ApiBody(REAL_DATA_API_BODY.deleteDisplay)
   public async deleteDisplay(@Body() body: string[]) {
-    return await this.realDataService.deleteRealData(body, 'display', 'future');
+    return await this.realDataService.deleteRealData(
+      body,
+      'display',
+      'futures',
+    );
   }
 
   private getFilename(
-    query: IRealDataFutureContentQuery,
+    query: IRealDataFuturesContentQuery,
     fileType: 'odr' | 'mth' | 'dsp',
   ) {
     const min = query.startTime
@@ -354,7 +358,7 @@ export class RealDataFutureController {
 
     const timeStamp = new Date().getTime();
 
-    const fileName = `${fileType}_${query.futureId}_${min}_${max}_${mode}_${timeStamp}.csv`;
+    const fileName = `${fileType}_${query.futuresId}_${min}_${max}_${mode}_${timeStamp}.csv`;
 
     return fileName;
   }
@@ -362,20 +366,20 @@ export class RealDataFutureController {
   @Get('display/content')
   @ApiResponse({ status: 200, schema: IRealDataObjectResponse })
   public async getDisplayContent(
-    @Query() query: IRealDataFutureContentQuery,
+    @Query() query: IRealDataFuturesContentQuery,
     @Res() res: Response,
   ) {
     res.setHeader('Access-Control-Expose-Headers', 'filename');
     res.setHeader('filename', this.getFilename(query, 'dsp'));
     const result = await this.realDataService.getDisplayContent(
-      { ...query, stockId: query.futureId },
-      'future',
+      { ...query, stockId: query.futuresId },
+      'futures',
     );
     await this.investService.subRestApiTime(query.investor);
     res.json(result);
   }
 
-  private parseFutureDisplay(
+  private parseFuturesDisplay(
     rows: string[],
     id: string,
   ): IRealDataDisplayContentInsert[] {
@@ -427,13 +431,13 @@ export class RealDataFutureController {
   ) {
     if (id === undefined)
       throw new BadRequestException('Missing realDataDisplayId');
-    const insertBody = this.parseFutureDisplay(body, id);
+    const insertBody = this.parseFuturesDisplay(body, id);
 
     try {
       return await this.realDataService.insertRealDataContent(
         insertBody,
         'display',
-        'future',
+        'futures',
       );
     } catch (e) {
       throw new BadRequestException(e.message || 'Text type error');

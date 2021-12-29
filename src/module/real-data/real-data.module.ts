@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RealDataFutureDisplay } from 'src/common/entity/realDataFutureDisplay.entity';
-import { RealDataFutureDisplayContent } from 'src/common/entity/realDataFutureDisplayContent.entity';
-import { RealDataFutureOrder } from 'src/common/entity/realDataFutureOrder.entity';
-import { RealDataFutureOrderContent } from 'src/common/entity/realDataFutureOrderContent.entity';
-import { RealDataFutureTransaction } from 'src/common/entity/realDataFutureTransaction.entity';
-import { RealDataFutureTransactionContent } from 'src/common/entity/realDataFutureTransactionContent.entity';
+import { RealDataFuturesDisplay } from 'src/common/entity/realDataFuturesDisplay.entity';
+import { RealDataFuturesDisplayContent } from 'src/common/entity/realDataFuturesDisplayContent.entity';
+import { RealDataFuturesOrder } from 'src/common/entity/realDataFuturesOrder.entity';
+import { RealDataFuturesOrderContent } from 'src/common/entity/realDataFuturesOrderContent.entity';
+import { RealDataFuturesTransaction } from 'src/common/entity/realDataFuturesTransaction.entity';
+import { RealDataFuturesTransactionContent } from 'src/common/entity/realDataFuturesTransactionContent.entity';
 import { RealDataStockDisplay } from 'src/common/entity/realDataStockDisplay.entity';
 import { RealDataStockDisplayContent } from 'src/common/entity/realDataStockDisplayContent.entity';
 import { RealDataStockOrder } from 'src/common/entity/realDataStockOrder.entity';
@@ -14,7 +14,7 @@ import { RealDataStockTransaction } from 'src/common/entity/realDataStockTransac
 import { RealDataStockTransactionContent } from 'src/common/entity/realDataStockTransactionContent.entity';
 import { AvailableModule } from '../available/available.module';
 import { InvestorModule } from '../investor/investor.module';
-import { RealDataFutureController } from './real-data-future.controller';
+import { RealDataFuturesController } from './real-data-futures.controller';
 import { RealDataStockController } from './real-data-stock.controller';
 import { RealDataService } from './real-data.service';
 
@@ -27,17 +27,17 @@ import { RealDataService } from './real-data.service';
       RealDataStockDisplayContent,
       RealDataStockTransaction,
       RealDataStockTransactionContent,
-      RealDataFutureOrder,
-      RealDataFutureOrderContent,
-      RealDataFutureDisplay,
-      RealDataFutureDisplayContent,
-      RealDataFutureTransaction,
-      RealDataFutureTransactionContent,
+      RealDataFuturesOrder,
+      RealDataFuturesOrderContent,
+      RealDataFuturesDisplay,
+      RealDataFuturesDisplayContent,
+      RealDataFuturesTransaction,
+      RealDataFuturesTransactionContent,
     ]),
     InvestorModule,
     AvailableModule,
   ],
-  controllers: [RealDataStockController, RealDataFutureController],
+  controllers: [RealDataStockController, RealDataFuturesController],
   providers: [RealDataService],
 })
 export class RealDataModule {}

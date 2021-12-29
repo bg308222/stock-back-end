@@ -228,7 +228,7 @@ export class IRealDataStockContentQuery {
   investor: Investor;
 }
 
-export class IRealDataFutureContentQuery {
+export class IRealDataFuturesContentQuery {
   @ApiProperty({ required: true, example: '2021-09-04 14:49:14.884229' })
   startTime: string;
   @ApiProperty({ required: true, example: '2021-09-04 14:50:14.884229' })
@@ -247,7 +247,7 @@ export class IRealDataFutureContentQuery {
   fields?: string[];
 
   @ApiProperty({ required: true, example: '0050  ' })
-  futureId: string;
+  futuresId: string;
 
   investor: Investor;
 }

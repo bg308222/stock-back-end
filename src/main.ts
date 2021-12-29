@@ -20,7 +20,7 @@ const runSwagger = (app: NestExpressApplication, swaggerServer: string) => {
     .addTag('Display')
     .addTag('Group')
     .addTag('RealData Stock')
-    .addTag('RealData Future')
+    .addTag('RealData Futures')
     .addTag('Rbac')
     .addTag('Available')
     .addServer(swaggerServer)

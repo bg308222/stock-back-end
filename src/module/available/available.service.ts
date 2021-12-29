@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AvailableFuture } from 'src/common/entity/availableFuture.entity';
-import { AvailableFutureDate } from 'src/common/entity/availableFutureDate.entity';
+import { AvailableFutures } from 'src/common/entity/availableFutures.entity';
+import { AvailableFuturesDate } from 'src/common/entity/availableFuturesDate.entity';
 import { AvailableStock } from 'src/common/entity/availableStock.entity';
 import { AvailableStockDate } from 'src/common/entity/availableStockDate.entity';
-import { RealDataFutureDisplayContent } from 'src/common/entity/realDataFutureDisplayContent.entity';
-import { RealDataFutureOrderContent } from 'src/common/entity/realDataFutureOrderContent.entity';
-import { RealDataFutureTransactionContent } from 'src/common/entity/realDataFutureTransactionContent.entity';
+import { RealDataFuturesDisplayContent } from 'src/common/entity/realDataFuturesDisplayContent.entity';
+import { RealDataFuturesOrderContent } from 'src/common/entity/realDataFuturesOrderContent.entity';
+import { RealDataFuturesTransactionContent } from 'src/common/entity/realDataFuturesTransactionContent.entity';
 import { RealDataStockDisplayContent } from 'src/common/entity/realDataStockDisplayContent.entity';
 import { RealDataStockOrderContent } from 'src/common/entity/realDataStockOrderContent.entity';
 import { RealDataStockTransactionContent } from 'src/common/entity/realDataStockTransactionContent.entity';
@@ -20,10 +20,10 @@ export class AvailableService {
     private readonly availableStockRepository: Repository<AvailableStock>,
     @InjectRepository(AvailableStockDate)
     private readonly availableStockDateRepository: Repository<AvailableStockDate>,
-    @InjectRepository(AvailableFuture)
-    private readonly availableFutureRepository: Repository<AvailableFuture>,
-    @InjectRepository(AvailableFutureDate)
-    private readonly availableFutureDateRepository: Repository<AvailableFutureDate>,
+    @InjectRepository(AvailableFutures)
+    private readonly availableFuturesRepository: Repository<AvailableFutures>,
+    @InjectRepository(AvailableFuturesDate)
+    private readonly availableFuturesDateRepository: Repository<AvailableFuturesDate>,
 
     @InjectRepository(RealDataStockOrderContent)
     private readonly realDataStockOrderContentRepository: Repository<RealDataStockOrderContent>,
@@ -31,12 +31,12 @@ export class AvailableService {
     private readonly realDataStockDisplayContentRepository: Repository<RealDataStockDisplayContent>,
     @InjectRepository(RealDataStockTransactionContent)
     private readonly realDataStockTransactionContentRepository: Repository<RealDataStockTransactionContent>,
-    @InjectRepository(RealDataFutureOrderContent)
-    private readonly realDataFutureOrderContentRepository: Repository<RealDataFutureOrderContent>,
-    @InjectRepository(RealDataFutureDisplayContent)
-    private readonly realDataFutureDisplayContentRepository: Repository<RealDataFutureDisplayContent>,
-    @InjectRepository(RealDataFutureTransactionContent)
-    private readonly realDataFutureTransactionContentRepository: Repository<RealDataFutureTransactionContent>,
+    @InjectRepository(RealDataFuturesOrderContent)
+    private readonly realDataFuturesOrderContentRepository: Repository<RealDataFuturesOrderContent>,
+    @InjectRepository(RealDataFuturesDisplayContent)
+    private readonly realDataFuturesDisplayContentRepository: Repository<RealDataFuturesDisplayContent>,
+    @InjectRepository(RealDataFuturesTransactionContent)
+    private readonly realDataFuturesTransactionContentRepository: Repository<RealDataFuturesTransactionContent>,
   ) {}
 
   public async getAvailableStock(type: string) {
@@ -54,13 +54,13 @@ export class AvailableService {
     return result.map((v) => v.date);
   }
 
-  public async getAvailableFuture(type: string) {
-    const result = await this.availableFutureRepository.find({ type });
+  public async getAvailableFutures(type: string) {
+    const result = await this.availableFuturesRepository.find({ type });
     return result.map((v) => v.id);
   }
-  public async getAvailableFutureDate(id: string, type: string) {
+  public async getAvailableFuturesDate(id: string, type: string) {
     const queryBuilder =
-      this.availableFutureDateRepository.createQueryBuilder('q');
+      this.availableFuturesDateRepository.createQueryBuilder('q');
     queryBuilder.select(`DATE_FORMAT(date,'%Y-%m-%d')`, 'date');
     queryBuilder.where('id = :id', { id });
     queryBuilder.andWhere('type = :type', { type });
@@ -188,24 +188,24 @@ export class AvailableService {
     this.checkAvailableStock(fileType);
   }
 
-  public async checkAvailableFuture(fileType: IFileType) {
+  public async checkAvailableFutures(fileType: IFileType) {
     if (fileType === 'order') {
-      const originFuture = (
-        await this.availableFutureRepository.find({
+      const originFutures = (
+        await this.availableFuturesRepository.find({
           type: 'order',
         })
       ).map((v) => v.id);
       const queryBuilder =
-        this.availableFutureDateRepository.createQueryBuilder();
+        this.availableFuturesDateRepository.createQueryBuilder();
       queryBuilder.select('DISTINCT id, type');
       queryBuilder.where('type = "order"');
-      const newFuture = (await queryBuilder.getRawMany<AvailableFuture>()).map(
-        (v) => v.id,
-      );
+      const newFutures = (
+        await queryBuilder.getRawMany<AvailableFutures>()
+      ).map((v) => v.id);
 
-      const insertFuture = newFuture
+      const insertFutures = newFutures
         .filter((v) => {
-          return !originFuture.includes(v);
+          return !originFutures.includes(v);
         })
         .map((id) => {
           return {
@@ -214,24 +214,24 @@ export class AvailableService {
           };
         });
 
-      await this.availableFutureRepository.insert(insertFuture);
+      await this.availableFuturesRepository.insert(insertFutures);
     } else if (fileType === 'transaction') {
-      const originFuture = (
-        await this.availableFutureRepository.find({
+      const originFutures = (
+        await this.availableFuturesRepository.find({
           type: 'transaction',
         })
       ).map((v) => v.id);
       const queryBuilder =
-        this.availableFutureDateRepository.createQueryBuilder();
+        this.availableFuturesDateRepository.createQueryBuilder();
       queryBuilder.select('DISTINCT id, type');
       queryBuilder.where('type = "transaction"');
-      const newFuture = (await queryBuilder.getRawMany<AvailableFuture>()).map(
-        (v) => v.id,
-      );
+      const newFutures = (
+        await queryBuilder.getRawMany<AvailableFutures>()
+      ).map((v) => v.id);
 
-      const insertFuture = newFuture
+      const insertFutures = newFutures
         .filter((v) => {
-          return !originFuture.includes(v);
+          return !originFutures.includes(v);
         })
         .map((id) => {
           return {
@@ -240,24 +240,24 @@ export class AvailableService {
           };
         });
 
-      await this.availableFutureRepository.insert(insertFuture);
+      await this.availableFuturesRepository.insert(insertFutures);
     } else {
-      const originFuture = (
-        await this.availableFutureRepository.find({
+      const originFutures = (
+        await this.availableFuturesRepository.find({
           type: 'display',
         })
       ).map((v) => v.id);
       const queryBuilder =
-        this.availableFutureDateRepository.createQueryBuilder();
+        this.availableFuturesDateRepository.createQueryBuilder();
       queryBuilder.select('DISTINCT id, type');
       queryBuilder.where('type = "display"');
-      const newFuture = (await queryBuilder.getRawMany<AvailableFuture>()).map(
-        (v) => v.id,
-      );
+      const newFutures = (
+        await queryBuilder.getRawMany<AvailableFutures>()
+      ).map((v) => v.id);
 
-      const insertFuture = newFuture
+      const insertFutures = newFutures
         .filter((v) => {
-          return !originFuture.includes(v);
+          return !originFutures.includes(v);
         })
         .map((id) => {
           return {
@@ -266,23 +266,26 @@ export class AvailableService {
           };
         });
 
-      await this.availableFutureRepository.insert(insertFuture);
+      await this.availableFuturesRepository.insert(insertFutures);
     }
   }
-  public async checkAvailableFutureDate(fileName: string, fileType: IFileType) {
+  public async checkAvailableFuturesDate(
+    fileName: string,
+    fileType: IFileType,
+  ) {
     if (fileType === 'order') {
       const queryBuilder =
-        this.realDataFutureOrderContentRepository.createQueryBuilder('order');
+        this.realDataFuturesOrderContentRepository.createQueryBuilder('order');
       queryBuilder.select(
         `DISTINCT stockId AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"order" AS \`type\``,
       );
       queryBuilder.where('realDataOrderId = :fileName', { fileName });
 
       const insertBody = await queryBuilder.getRawMany();
-      await this.availableFutureDateRepository.insert(insertBody);
+      await this.availableFuturesDateRepository.insert(insertBody);
     } else if (fileType === 'transaction') {
       const queryBuilder =
-        this.realDataFutureTransactionContentRepository.createQueryBuilder(
+        this.realDataFuturesTransactionContentRepository.createQueryBuilder(
           'transaction',
         );
       queryBuilder.select(
@@ -291,18 +294,18 @@ export class AvailableService {
       queryBuilder.where('realDataTransactionId = :fileName', { fileName });
 
       const insertBody = await queryBuilder.getRawMany();
-      await this.availableFutureDateRepository.insert(insertBody);
+      await this.availableFuturesDateRepository.insert(insertBody);
     } else {
       const queryBuilder =
-        this.realDataFutureDisplayContentRepository.createQueryBuilder();
+        this.realDataFuturesDisplayContentRepository.createQueryBuilder();
       queryBuilder.select(
         `DISTINCT sym AS id, DATE_FORMAT(createdTime,'%Y-%m-%d') AS \`date\`,"display" AS \`type\``,
       );
       queryBuilder.where('realDataDisplayId = :fileName', { fileName });
 
       const insertBody = await queryBuilder.getRawMany();
-      await this.availableFutureDateRepository.insert(insertBody);
+      await this.availableFuturesDateRepository.insert(insertBody);
     }
-    this.checkAvailableFuture(fileType);
+    this.checkAvailableFutures(fileType);
   }
 }

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AvailableFuture } from 'src/common/entity/availableFuture.entity';
-import { AvailableFutureDate } from 'src/common/entity/availableFutureDate.entity';
+import { AvailableFutures } from 'src/common/entity/availableFutures.entity';
+import { AvailableFuturesDate } from 'src/common/entity/availableFuturesDate.entity';
 import { AvailableStock } from 'src/common/entity/availableStock.entity';
 import { AvailableStockDate } from 'src/common/entity/availableStockDate.entity';
-import { RealDataFutureDisplayContent } from 'src/common/entity/realDataFutureDisplayContent.entity';
-import { RealDataFutureOrderContent } from 'src/common/entity/realDataFutureOrderContent.entity';
-import { RealDataFutureTransactionContent } from 'src/common/entity/realDataFutureTransactionContent.entity';
+import { RealDataFuturesDisplayContent } from 'src/common/entity/realDataFuturesDisplayContent.entity';
+import { RealDataFuturesOrderContent } from 'src/common/entity/realDataFuturesOrderContent.entity';
+import { RealDataFuturesTransactionContent } from 'src/common/entity/realDataFuturesTransactionContent.entity';
 import { RealDataStockDisplayContent } from 'src/common/entity/realDataStockDisplayContent.entity';
 import { RealDataStockOrderContent } from 'src/common/entity/realDataStockOrderContent.entity';
 import { RealDataStockTransactionContent } from 'src/common/entity/realDataStockTransactionContent.entity';
@@ -18,14 +18,14 @@ import { AvailableService } from './available.service';
     TypeOrmModule.forFeature([
       AvailableStock,
       AvailableStockDate,
-      AvailableFuture,
-      AvailableFutureDate,
+      AvailableFutures,
+      AvailableFuturesDate,
       RealDataStockDisplayContent,
       RealDataStockOrderContent,
       RealDataStockTransactionContent,
-      RealDataFutureDisplayContent,
-      RealDataFutureOrderContent,
-      RealDataFutureTransactionContent,
+      RealDataFuturesDisplayContent,
+      RealDataFuturesOrderContent,
+      RealDataFuturesTransactionContent,
     ]),
   ],
   controllers: [AvailableController],

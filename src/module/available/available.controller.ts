@@ -32,20 +32,23 @@ export class AvailableController {
     return result;
   }
 
-  @Get('future')
-  public async getAvailableFuture(@Query() { type }: IAvailableQuery) {
+  @Get('futures')
+  public async getAvailableFutures(@Query() { type }: IAvailableQuery) {
     if (!type) throw new BadRequestException('Type is required');
-    const result = await this.availableService.getAvailableFuture(type);
+    const result = await this.availableService.getAvailableFutures(type);
     return result;
   }
 
-  @Get('future/:id')
-  public async getAvailableFutureDate(
+  @Get('futures/:id')
+  public async getAvailableFuturesDate(
     @Param('id') id: string,
     @Query() { type }: IAvailableQuery,
   ) {
     if (!type) throw new BadRequestException('Type is required');
-    const result = await this.availableService.getAvailableFutureDate(id, type);
+    const result = await this.availableService.getAvailableFuturesDate(
+      id,
+      type,
+    );
     return result;
   }
 }
