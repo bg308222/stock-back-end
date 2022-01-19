@@ -19,14 +19,8 @@ import {
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Role } from 'src/common/entity/role.entity';
 import * as nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  service: 'Gmail',
-  auth: {
-    user: 'B10715063@gapps.ntust.edu.tw',
-    pass: 'Bg36671439',
-  },
-});
+import { ConfigService } from '@nestjs/config';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 const alpha = [
   'A',
@@ -57,47 +51,61 @@ const alpha = [
   'Z',
 ];
 
-const getAuthenticationKey = () => {
-  let key = '';
-  for (let i = 0; i < 6; i++) {
-    key += alpha[Math.floor(Math.random() * 26)];
-  }
-  return key;
-};
-
-const getOption = (account: string, key: string) => {
-  return {
-    //寄件者
-    // from: '林 子傑<b10715063@gapps.ntust.edu.tw>',
-    //收件者
-    to: 'bg308222@gmail.com',
-    //副本
-    //   cc: "account3@gmail.com",
-    //密件副本
-    //   bcc: "account4@gmail.com",
-    //主旨
-    subject: 'LOB系統會員認證信', // Subject line
-    //純文字
-    //嵌入 html 的內文
-    html: `<a>http://140.118.118.173:20023/api/investor/authentication/${account}/${key}</a>`,
-    //附件檔案
-  };
-};
-
 const privateKey = 'STOCK_PRIVATE_KEY';
 export class InvestorService {
   private mailList: Record<
     string,
     { time: number; investor: Investor | string }
   >;
+  private transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   constructor(
     @InjectRepository(Investor)
     private readonly investorRepository: Repository<Investor>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly configService: ConfigService,
   ) {
     this.mailList = {};
+    const user = configService.get('MAIL_SENDER_ACCOUNT');
+    const pass = configService.get('MAIL_SENDER_PASSWORD');
+    const auth = {
+      user,
+      pass,
+    };
+
+    this.transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth,
+    });
   }
+
+  private getAuthenticationKey = () => {
+    let key = '';
+    for (let i = 0; i < 6; i++) {
+      key += alpha[Math.floor(Math.random() * 26)];
+    }
+    return key;
+  };
+
+  private getMailSenderOption = (account: string, key: string, to: string) => {
+    return {
+      //寄件者
+      // from: '林 子傑<b10715063@gapps.ntust.edu.tw>',
+      //收件者
+      to,
+      //副本
+      //   cc: "account3@gmail.com",
+      //密件副本
+      //   bcc: "account4@gmail.com",
+      //主旨
+      subject: 'LOB系統會員認證信', // Subject line
+      //純文字
+      //嵌入 html 的內文
+      // html: `<a>http://localhost:8080/api/investor/authentication/${account}/${key}</a>`,
+      html: `<a>http://140.118.118.173:20023/api/investor/authentication/${account}/${key}</a>`,
+      //附件檔案
+    };
+  };
 
   private checkRestApiTime(investor: Investor) {
     const { role, restApiTime, updatedTime } = investor;
@@ -158,8 +166,7 @@ export class InvestorService {
     investor.role = role;
     investor.mail = mail;
 
-    this.sendMail(investor);
-    return true;
+    return await this.sendMail(investor);
   }
 
   public async sendMail(investor: Investor | string) {
@@ -167,15 +174,22 @@ export class InvestorService {
       // investor exist but need to authentication
     } else {
       // create and authenticate investor
-      const key = getAuthenticationKey();
-      transporter.sendMail(getOption(investor.account, key), (err, info) => {
-        if (err) console.log(err);
-        else {
-          this.mailList[key] = {
-            investor,
-            time: new Date().getTime() + 600000,
-          };
-        }
+      const key = this.getAuthenticationKey();
+      return new Promise((res) => {
+        this.transporter.sendMail(
+          this.getMailSenderOption(investor.account, key, investor.mail),
+          (err) => {
+            if (err) {
+              res(false);
+            } else {
+              this.mailList[key] = {
+                investor,
+                time: new Date().getTime() + 600000,
+              };
+              res(true);
+            }
+          },
+        );
       });
     }
   }

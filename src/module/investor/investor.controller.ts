@@ -36,8 +36,7 @@ export class InvestorController {
 
   @Post()
   public async createInvestor(@Body() body: IInvestorInsert) {
-    await this.investService.createInvestor(body);
-    return true;
+    return await this.investService.createInvestor(body);
   }
 
   @Get('authentication/:account/:key')
@@ -47,7 +46,7 @@ export class InvestorController {
   ) {
     if (await this.investService.authenticateMail(account, key))
       res.send('Authentication successfully');
-    else res.send('Authentication fail');
+    else res.send('Authentication unsuccessfully');
   }
 
   @ApiSecurity('login')
