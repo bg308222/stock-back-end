@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,16 +18,86 @@ import {
 } from './investor.dto';
 import { getQueryBuilderContent } from 'src/common/helper/database.helper';
 import { Role } from 'src/common/entity/role.entity';
-const privateKey = 'STOCK_PRIVATE_KEY';
+import * as nodemailer from 'nodemailer';
 
-@Injectable()
+const transporter = nodemailer.createTransport({
+  service: 'Gmail',
+  auth: {
+    user: 'B10715063@gapps.ntust.edu.tw',
+    pass: 'Bg36671439',
+  },
+});
+
+const alpha = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z',
+];
+
+const getAuthenticationKey = () => {
+  let key = '';
+  for (let i = 0; i < 6; i++) {
+    key += alpha[Math.floor(Math.random() * 26)];
+  }
+  return key;
+};
+
+const getOption = (account: string, key: string) => {
+  return {
+    //寄件者
+    // from: '林 子傑<b10715063@gapps.ntust.edu.tw>',
+    //收件者
+    to: 'bg308222@gmail.com',
+    //副本
+    //   cc: "account3@gmail.com",
+    //密件副本
+    //   bcc: "account4@gmail.com",
+    //主旨
+    subject: 'LOB系統會員認證信', // Subject line
+    //純文字
+    //嵌入 html 的內文
+    html: `<a>http://140.118.118.173:20023/api/investor/authentication/${account}/${key}</a>`,
+    //附件檔案
+  };
+};
+
+const privateKey = 'STOCK_PRIVATE_KEY';
 export class InvestorService {
+  private mailList: Record<
+    string,
+    { time: number; investor: Investor | string }
+  >;
   constructor(
     @InjectRepository(Investor)
     private readonly investorRepository: Repository<Investor>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-  ) {}
+  ) {
+    this.mailList = {};
+  }
 
   private checkRestApiTime(investor: Investor) {
     const { role, restApiTime, updatedTime } = investor;
@@ -72,41 +141,66 @@ export class InvestorService {
   }
 
   public async createInvestor(body: IInvestorInsert) {
-    const { account, password } = body;
+    const { account, password, mail } = body;
     if (!account || !password)
       throw new BadRequestException('Missing account or password');
     const hash = hashSync(password, 10);
     if (await this.investorRepository.findOne({ account }))
       throw new ForbiddenException('This account has already existed');
+
     const role = new Role();
     role.id = 1;
 
-    await this.investorRepository.insert({
-      account,
-      password: hash,
-      expiredTime: this.getExpiredTime(),
-      role,
-    });
+    const investor = new Investor();
+    investor.account = account;
+    investor.password = hash;
+    investor.expiredTime = this.getExpiredTime();
+    investor.role = role;
+    investor.mail = mail;
+
+    this.sendMail(investor);
     return true;
   }
 
-  public async createStudent(body: IInvestorInsert) {
-    const { account, password } = body;
-    if (!account || !password)
-      throw new BadRequestException('Missing account or password');
-    const hash = hashSync(password, 10);
-    if (await this.investorRepository.findOne({ account }))
-      throw new ForbiddenException('This account has already existed');
-    const role = new Role();
-    role.id = 6;
+  public async sendMail(investor: Investor | string) {
+    if (typeof investor === 'string') {
+      // investor exist but need to authentication
+    } else {
+      // create and authenticate investor
+      const key = getAuthenticationKey();
+      transporter.sendMail(getOption(investor.account, key), (err, info) => {
+        if (err) console.log(err);
+        else {
+          this.mailList[key] = {
+            investor,
+            time: new Date().getTime() + 600000,
+          };
+        }
+      });
+    }
+  }
 
-    await this.investorRepository.insert({
-      account,
-      password: hash,
-      expiredTime: this.getExpiredTime(),
-      role,
-    });
-    return true;
+  public async authenticateMail(account: string, key: string) {
+    const mail = this.mailList[key];
+    if (!mail) throw new ForbiddenException("Authentication key doesn't exist");
+
+    const { investor, time } = mail;
+    if (typeof investor === 'string') {
+      // investor exist but need to authentication
+    } else {
+      // create and authenticate investor
+      if (investor.account !== account)
+        throw new ForbiddenException('This is not your authentication key');
+      if (time > new Date().getTime()) {
+        await this.investorRepository.insert(investor);
+        delete mail[key];
+        return true;
+      } else
+        throw new ForbiddenException(
+          'This authentication key has already expired',
+        );
+    }
+    return false;
   }
 
   public async updateInvestor({

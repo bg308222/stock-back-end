@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NestMiddleware,
-} from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { Investor } from 'src/common/entity/investor.entity';
 import { RbacService } from 'src/module/rbac/rbac.service';
@@ -12,6 +8,13 @@ export class RbacMiddleware implements NestMiddleware {
   constructor(private readonly rbacService: RbacService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     const investor = req.query.investor as any as Investor;
+    if (
+      (req.method === 'POST' && req.baseUrl === '/api/investor') ||
+      req.baseUrl.startsWith('/api/investor/authentication')
+    ) {
+      next();
+      return;
+    }
     if (!investor && req.baseUrl === '/api/investor/login') next();
     else {
       const role = await this.rbacService.getRole({ id: investor.roleId });

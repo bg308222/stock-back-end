@@ -19,6 +19,9 @@ export class Investor {
   @Column({ type: 'varchar' })
   password: string;
 
+  @Column({ type: 'varchar' })
+  mail: string;
+
   @Column({ type: 'int', default: 5 })
   restApiTime: number;
 

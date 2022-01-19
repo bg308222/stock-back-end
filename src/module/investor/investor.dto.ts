@@ -22,6 +22,9 @@ export class IInvestorInsert {
 
   @ApiProperty({ example: 'admin' })
   password: string;
+
+  @ApiProperty({ example: 'admin@gmail.com' })
+  mail: string;
 }
 
 export class IInvestorUpdate {

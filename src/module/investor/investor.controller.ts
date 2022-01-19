@@ -3,9 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Post,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
 import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InvestorService } from './investor.service';
@@ -18,6 +20,7 @@ import {
   IInvestorUpdate,
 } from './investor.dto';
 import { Investor } from 'src/common/entity/investor.entity';
+import { Response } from 'express';
 
 @ApiTags('Investor')
 @Controller('investor')
@@ -31,18 +34,20 @@ export class InvestorController {
     return await this.investService.getInvestor(query);
   }
 
-  @ApiSecurity('login')
   @Post()
   public async createInvestor(@Body() body: IInvestorInsert) {
     await this.investService.createInvestor(body);
     return true;
   }
 
-  @ApiSecurity('login')
-  @Post('student')
-  public async createStudent(@Body() body: IInvestorInsert) {
-    await this.investService.createStudent(body);
-    return true;
+  @Get('authentication/:account/:key')
+  public async authenticateMail(
+    @Param() { account, key }: { account: string; key: string },
+    @Res() res: Response,
+  ) {
+    if (await this.investService.authenticateMail(account, key))
+      res.send('Authentication successfully');
+    else res.send('Authentication fail');
   }
 
   @ApiSecurity('login')

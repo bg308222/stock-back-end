@@ -89,6 +89,14 @@ export class ApiMiddleware implements NestMiddleware {
       checkRequest(req);
     }
 
+    if (
+      (req.method === 'POST' && req.baseUrl === '/api/investor') ||
+      req.baseUrl.startsWith('/api/investor/authentication')
+    ) {
+      next();
+      return;
+    }
+
     if (req.baseUrl !== '/api/investor/login') {
       const token = req.headers.token as string;
       const investor = await this.investorService.getByToken(
