@@ -63,6 +63,7 @@ export class ApiMiddleware implements NestMiddleware {
     });
 
     if (req.baseUrl === '/api/stock/reset' && req.method === 'PUT') {
+      req.body.id = req.body.id.trim();
       const { startTime, replayTime, endTime } = req.body;
       if (endTime && replayTime && !(new Date(endTime) > new Date(replayTime)))
         throw new BadRequestException('endTime must greater than replayTime');
