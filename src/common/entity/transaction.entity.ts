@@ -22,7 +22,7 @@ export class Transaction {
 
   @Column()
   investorId: number;
-  @ManyToOne(() => Investor, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Investor, { nullable: true, onDelete: 'CASCADE' })
   investor: Investor;
 
   @CreateDateColumn()

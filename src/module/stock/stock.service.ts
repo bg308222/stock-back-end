@@ -32,15 +32,18 @@ export class StockService {
     const { fullQueryBuilder, totalSize } =
       await getQueryBuilderContent<IStockSchema>(
         'stock',
-        this.stockRepository.createQueryBuilder('stock'),
+        this.stockRepository
+          .createQueryBuilder('stock')
+          .where("stock.id NOT LIKE 'REPLAY%'"),
         queryStrategy,
         query,
       );
 
     fullQueryBuilder.leftJoinAndSelect('stock.groups', 'groups');
+    console.log(fullQueryBuilder.getSql());
     const content = await fullQueryBuilder.getMany();
     return {
-      content: content.filter((stock) => !stock.id.startsWith('REPLAY')),
+      content,
       totalSize,
     };
   }

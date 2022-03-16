@@ -200,7 +200,7 @@ export class MatchService {
     transactions: ITransactionInsert[],
   ): ITransactionInsert[] {
     return transactions.filter((v) => {
-      return v.investorId !== null;
+      return true || v.investorId !== null;
     });
   }
 
@@ -266,7 +266,7 @@ export class MatchService {
 
           if (order.createdTime === undefined && transactions.length !== 0) {
             const inserTransactions = transactions.filter((transaction) => {
-              return transaction.investorId !== null;
+              return true || transaction.investorId !== null;
             });
 
             if (inserTransactions.length !== 0)
