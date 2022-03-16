@@ -161,12 +161,16 @@ export class VirtualOrderController {
   })
   @Post()
   public async insertOrder(@Body() body: IVirtualOrderInsert) {
+    const { stockId } = await this.virtualOrderService.getContainerDetail(
+      body.virtualOrderContainerId,
+    );
     const marketName = this.getMarketName(body.virtualOrderContainerId);
     await this.virtualOrderService.insertOrder(body);
     const display = await this.matchService.dispatchOrder(
       {
         ...body,
         investorId: 0,
+        stockId,
       },
       marketName,
     );
